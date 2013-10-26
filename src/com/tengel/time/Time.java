@@ -6,6 +6,7 @@
 
 package com.tengel.time;
 
+import java.text.SimpleDateFormat;
 import net.milkbowl.vault.Vault;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -78,8 +79,9 @@ public final class Time extends JavaPlugin {
         return this.economy;
     }    
     
-     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if(cmd.getName().equalsIgnoreCase("ghost") && args.length == 1) {
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        String command = cmd.getName();
+        if(command.equalsIgnoreCase("ghost") && args.length == 1) {
             if (!(sender instanceof Player)) {
                 sender.sendMessage("Only players can use this command!");
                 return true;
@@ -96,6 +98,45 @@ public final class Time extends JavaPlugin {
             // Hides a given Player (s) from someone (target).
             target.hidePlayer(s);
             return true;
+        }
+        else if (command.equalsIgnoreCase("life") && args.length == 1){
+            
+        }
+        else if (command.equalsIgnoreCase("life")){
+            //SimpleDateFormat df = new SimpleDateFormat("'You have' HH 'hour(s)' mm 'minute(s)' ss 'second(s) left to live.'");
+            int seconds = (int) this.getEconomy().getBalance(sender.getName());
+            int minutes = 0;
+            int hours = 0;
+            int days = 0;
+            int years = 0;
+            
+            if (seconds > 60){
+                minutes = (int)Math.floor(seconds/60);
+                seconds -= minutes*60;
+            }
+            if (minutes > 60){
+                hours = (int)Math.floor(minutes/60);
+                minutes -= hours*60;
+            }
+            if (hours > 24){
+                days = (int)Math.floor(hours/60);
+                hours -= days*60;
+            }
+            if (days > 365){
+                years = (int)Math.floor(days/365);
+                days -= years*60;
+            }
+            
+            if (years > 1)
+                sender.sendMessage(this.pluginName + "You have: " + Integer.toString(years) + " year(s) and " + Integer.toString(days) + " day(s) left to live.");
+            else if (days > 1)
+                sender.sendMessage(this.pluginName + "You have: " + Integer.toString(days) + " day(s) and " + Integer.toString(hours) + " hour(s) left to live.");
+            else if (hours > 1)
+                sender.sendMessage(this.pluginName + "You have: " + Integer.toString(hours) + " hour(s) and " + Integer.toString(minutes) + " minute(s) left to live.");
+            else if (minutes > 1)
+                sender.sendMessage(this.pluginName + "You have: " + Integer.toString(minutes) + " minute(s) and " + Integer.toString(seconds) + " second(s) left to live.");
+            else
+                sender.sendMessage(this.pluginName + "You have: " + Integer.toString(seconds) + " second(s) left to live.");
         }
         return false;
     }

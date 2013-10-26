@@ -7,3 +7,5 @@ authors: [Engeltj]
 commands:
   ghost:
     description: Makes you invisible to another player
+  life:
+    description: Checks how much life you have left remaining

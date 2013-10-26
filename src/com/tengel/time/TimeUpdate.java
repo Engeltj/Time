@@ -6,6 +6,7 @@
 
 package com.tengel.time;
 
+import java.io.File;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.entity.Player;
 
@@ -32,6 +33,11 @@ public class TimeUpdate implements Runnable {
             EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), 1*updateInterval);
             if (!es.transactionSuccess()){
                 //resetPlayer
+                player.kickPlayer("You ran out of time! You're entire profile has been reset.");
+                File f = new File("Essentials\\userdata\\" + player.getName().toLowerCase() + ".yml");
+                f.delete();
+                f = new File("..\\world\\players\\" + player.getName().toLowerCase() + ".yml");
+                f.delete();
             }
         }
     }
