@@ -4,3 +4,6 @@ main: com.tengel.time.Time
 version: 0.1
 description: Provides additional events to the server
 authors: [Engeltj]
+commands:
+  ghost:
+    description: Makes you invisible to another player

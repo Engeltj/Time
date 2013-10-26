@@ -6,6 +6,7 @@
 
 package com.tengel.time;
 
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -13,5 +14,5 @@ import org.bukkit.plugin.Plugin;
  * @author Tim
  */
 public interface ITime extends Plugin {
-    
+    public Economy getEconomyManager();
 }

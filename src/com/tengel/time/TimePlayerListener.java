@@ -34,36 +34,19 @@ public class TimePlayerListener implements Listener {
     public void onPlayerChat(final AsyncPlayerChatEvent event) {
         Player p = event.getPlayer();
         Location loc = p.getLocation();
-        
-        if (event.getMessage().equalsIgnoreCase("I love Depths")){
+        String msg = event.getMessage();
+        if (msg.equalsIgnoreCase("I love Depths")){
             p.sendMessage("Depths loves you!");
             loc.setX(loc.getX()+5);
             //p.getWorld().
             p.setDisplayName("Depths Lover");
             p.setPlayerListName("Depths Lover");
         }
-    }
-    
-    /*public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if(cmd.getName().equalsIgnoreCase("tengel") && args.length == 1) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage("Only players can use this command!");
-                return true;
-            }
-            // After checking to make sure that the sender is a Player, we can safely case it to one.
-            Player s = (Player) sender;
-
-            // Gets the player who shouldn't see the sender.
-            Player target = Bukkit.getServer().getPlayer(args[0]);
-            if (target == null) {
-                sender.sendMessage("Player " + args[0] + " is not online.");
-                return true;
-            }
-            // Hides a given Player (s) from someone (target).
-            target.hidePlayer(s);
-            return true;
+        else if (msg.equalsIgnoreCase("balance")){
+            EconomyControl ec = new EconomyControl();
+            event.setMessage("Im a noob");
+            //p.sendMessage(Boolean.toString(time.getEconomyManager().hasAccount(p.getDisplayName())));
+            //p.sendMessage(Double.toString(ec.getBalance(p.getName())));
         }
-        return false;
-    }*/
-    
+    }   
 }
