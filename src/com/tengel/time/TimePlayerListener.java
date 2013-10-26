@@ -24,15 +24,16 @@ import org.bukkit.event.player.PlayerChatEvent;
  * @author Tim
  */
 public class TimePlayerListener implements Listener {
-    private final transient ITime time;
+    private Time plugin;
     
-    public TimePlayerListener(final ITime parent) {
-            this.time = parent;
+    public TimePlayerListener(Time plugin) {
+            this.plugin = plugin;
     }
     
     @EventHandler
     public void onPlayerChat(final AsyncPlayerChatEvent event) {
         Player p = event.getPlayer();
+        p.remove();
         Location loc = p.getLocation();
         String msg = event.getMessage();
         if (msg.equalsIgnoreCase("I love Depths")){
@@ -42,11 +43,7 @@ public class TimePlayerListener implements Listener {
             p.setDisplayName("Depths Lover");
             p.setPlayerListName("Depths Lover");
         }
-        else if (msg.equalsIgnoreCase("balance")){
-            EconomyControl ec = new EconomyControl();
-            event.setMessage("Im a noob");
-            //p.sendMessage(Boolean.toString(time.getEconomyManager().hasAccount(p.getDisplayName())));
-            //p.sendMessage(Double.toString(ec.getBalance(p.getName())));
-        }
+        else if (msg.equalsIgnoreCase("balance"))
+            p.sendMessage(Double.toString(plugin.getEconomy().getBalance(p.getName())));
     }   
 }

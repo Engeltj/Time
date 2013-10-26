@@ -65,7 +65,7 @@ public class EconomyControl implements Economy {
     }
 
     public double getBalance(String string) {
-        double balance = time.getEconomyManager().getBalance(string);
+        double balance = time.getEconomy().getBalance(string);
         try {
             balance = balance + 0;
             return balance;

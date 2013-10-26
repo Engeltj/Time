@@ -15,12 +15,12 @@ import org.bukkit.util.StringUtil;
  * @author Tim
  */
 public class UserData {
-        protected final transient ITime time;
+        private Time time;
         protected Player base;
         private final PlayerConfig config;
         private final File folder;
         
-    	protected UserData(Player player, ITime time)
+    	protected UserData(Player player, Time time)
 	{
 		this.base = base;
 		this.time = time;
