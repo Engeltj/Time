@@ -11,43 +11,43 @@
   <url>http://maven.apache.org</url>
 
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 <scm>
-        <connection>scm:git:https://github.com/engeltj/Time.git</connection>
-        <developerConnection>scm:git:https://github.com/engeltj/Time.git</developerConnection>
-        <url>https://github.com/essentials/Time</url>
+		<connection>scm:git:https://github.com/engeltj/Time.git</connection>
+		<developerConnection>scm:git:https://github.com/engeltj/Time.git</developerConnection>
+		<url>https://github.com/essentials/Time</url>
 </scm>
   <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-            <groupId>org.bukkit</groupId>
-            <artifactId>bukkit</artifactId>
-            <version>1.6.4-R0.1-SNAPSHOT</version>
-    </dependency>
+	<dependency>
+	  <groupId>junit</groupId>
+	  <artifactId>junit</artifactId>
+	  <version>3.8.1</version>
+	  <scope>test</scope>
+	</dependency>
+	<dependency>
+			<groupId>org.bukkit</groupId>
+			<artifactId>bukkit</artifactId>
+			<version>1.6.4-R0.1-SNAPSHOT</version>
+	</dependency>
   </dependencies>
   
   
-    <build>
-            <sourceDirectory>src</sourceDirectory>
-            <testSourceDirectory>test</testSourceDirectory>
+	<build>
+		<sourceDirectory>src</sourceDirectory>
+		<testSourceDirectory>test</testSourceDirectory>
 
-            <resources>
-                    <resource>
-                            <directory>src</directory>
-                            <includes>
-                                    <include>*.properties</include>
-                                    <include>*.yml</include>
-                                    <include>*.csv</include>
-                                    <include>*.txt</include>
-                            </includes>
-                            <filtering>true</filtering>
-                    </resource>
-            </resources>
-    </build>
+		<resources>
+				<resource>
+						<directory>src</directory>
+						<includes>
+								<include>*.properties</include>
+								<include>*.yml</include>
+								<include>*.csv</include>
+								<include>*.txt</include>
+						</includes>
+						<filtering>true</filtering>
+				</resource>
+		</resources>
+	</build>
 </project>

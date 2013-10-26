@@ -1,2 +1,6 @@
- ## YAML Template.
----
+name: Time
+main: com.tengel.time.Time
+# Note to developers: This next line cannot change, or the automatic versioning system will break.
+version: 0.1
+description: Provides additional events to the server
+authors: [Engeltj]

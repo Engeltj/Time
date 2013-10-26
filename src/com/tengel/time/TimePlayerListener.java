@@ -6,7 +6,11 @@
 
 package com.tengel.time;
 
+import org.bukkit.Bukkit;
 import static org.bukkit.Bukkit.getServer;
+import org.bukkit.Location;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -29,7 +33,37 @@ public class TimePlayerListener implements Listener {
     @EventHandler
     public void onPlayerChat(final AsyncPlayerChatEvent event) {
         Player p = event.getPlayer();
-        p.sendMessage("Hello!");
+        Location loc = p.getLocation();
+        
+        //p.sendMessage(Double.toString(loc.getX()));
+        if (event.getMessage().equalsIgnoreCase("I love Depths")){
+            loc.setX(loc.getX()+5);
+            //p.getWorld().
+            p.setDisplayName("Depths Lover");
+            p.setPlayerListName("Depths Lover");
+        }
     }
+    
+    /*public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        if(cmd.getName().equalsIgnoreCase("tengel") && args.length == 1) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("Only players can use this command!");
+                return true;
+            }
+            // After checking to make sure that the sender is a Player, we can safely case it to one.
+            Player s = (Player) sender;
+
+            // Gets the player who shouldn't see the sender.
+            Player target = Bukkit.getServer().getPlayer(args[0]);
+            if (target == null) {
+                sender.sendMessage("Player " + args[0] + " is not online.");
+                return true;
+            }
+            // Hides a given Player (s) from someone (target).
+            target.hidePlayer(s);
+            return true;
+        }
+        return false;
+    }*/
     
 }
