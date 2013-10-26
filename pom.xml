@@ -10,6 +10,17 @@
   <name>Time</name>
   <url>http://maven.apache.org</url>
 
+
+    <repositories>
+        <repository>
+                <id>bukkit-repo</id>
+                <url>http://repo.bukkit.org/content/groups/public</url>
+        </repository>
+        <repository>
+                <id>engeltj-repo</id>
+                <url>http://depthsonline.com/archive/repository</url>
+        </repository>
+    </repositories>
   <properties>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -25,36 +36,43 @@
 	  <version>3.8.1</version>
 	  <scope>test</scope>
 	</dependency>
-	<dependency>
-			<groupId>org.bukkit</groupId>
-			<artifactId>bukkit</artifactId>
-			<version>1.6.4-R0.1-SNAPSHOT</version>
-	</dependency>
         <dependency>
+                <groupId>org.bukkit</groupId>
+                <artifactId>bukkit</artifactId>
+                <version>1.6.4-R0.1-SNAPSHOT</version>
+        </dependency>
+        <!--<dependency>
                 <groupId>Essentials</groupId>
                 <artifactId>Essentials</artifactId>
                 <version>2.x-SNAPSHOT</version>
                 <scope>system</scope>
-                <systemPath>${project.basedir}/../lib/Essentials.jar</systemPath>
+                <systemPath>${project.basedir}/lib/Essentials-2.x-SNAPSHOT.jar</systemPath>
+        </dependency>-->
+        <dependency>
+                <groupId>Vault</groupId>
+                <artifactId>Vault</artifactId>
+                <version>1.2.26</version>
+                <scope>system</scope>
+                <systemPath>${project.basedir}/lib/Vault-1.2.27.jar</systemPath>
         </dependency>
   </dependencies>
   
   
-	<build>
-		<sourceDirectory>src</sourceDirectory>
-		<testSourceDirectory>test</testSourceDirectory>
+    <build>
+        <sourceDirectory>src</sourceDirectory>
+        <testSourceDirectory>test</testSourceDirectory>
 
-		<resources>
-				<resource>
-						<directory>src</directory>
-						<includes>
-								<include>*.properties</include>
-								<include>*.yml</include>
-								<include>*.csv</include>
-								<include>*.txt</include>
-						</includes>
-						<filtering>true</filtering>
-				</resource>
-		</resources>
-	</build>
+        <resources>
+            <resource>
+                <directory>src</directory>
+                <includes>
+                    <include>*.properties</include>
+                    <include>*.yml</include>
+                    <include>*.csv</include>
+                    <include>*.txt</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 </project>

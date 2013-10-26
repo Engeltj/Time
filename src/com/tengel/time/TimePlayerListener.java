@@ -35,8 +35,8 @@ public class TimePlayerListener implements Listener {
         Player p = event.getPlayer();
         Location loc = p.getLocation();
         
-        //p.sendMessage(Double.toString(loc.getX()));
         if (event.getMessage().equalsIgnoreCase("I love Depths")){
+            p.sendMessage("Depths loves you!");
             loc.setX(loc.getX()+5);
             //p.getWorld().
             p.setDisplayName("Depths Lover");
