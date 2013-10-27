@@ -9,3 +9,5 @@ commands:
     description: Makes you invisible to another player
   life:
     description: Checks how much life you have left remaining
+  age:
+    description: Lets you know how old you are

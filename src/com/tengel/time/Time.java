@@ -26,8 +26,6 @@ import org.bukkit.plugin.java.JavaPlugin;
  * @author Tim
  */
 public final class Time extends JavaPlugin {
-    //public static Time time;
-
     private TimePlayerListener playerListener;
     private TimeUpdate timeUpdater;
     private Economy economy = null;
@@ -49,7 +47,7 @@ public final class Time extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        getLogger().info("ECONOMY: " + economy.getName());
+        //getLogger().info("ECONOMY: " + economy.getName());
         pluginName = "[" + pm.getPlugin("Time").getName() + "] ";
         
         pm.registerEvents(this.playerListener, this);
@@ -104,62 +102,7 @@ public final class Time extends JavaPlugin {
     }
     
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        String command = cmd.getName();
-        if(command.equalsIgnoreCase("ghost") && args.length == 1) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage("Only players can use this command!");
-                return true;
-            }
-            // After checking to make sure that the sender is a Player, we can safely case it to one.
-            Player s = (Player) sender;
-
-            // Gets the player who shouldn't see the sender.
-            Player target = Bukkit.getServer().getPlayer(args[0]);
-            if (target == null) {
-                sender.sendMessage("Player " + args[0] + " is not online.");
-                return true;
-            }
-            // Hides a given Player (s) from someone (target).
-            target.hidePlayer(s);
-            return true;
-        }
-        else if (command.equalsIgnoreCase("life") && args.length == 1){
-            
-        }
-        else if (command.equalsIgnoreCase("life")){
-            //SimpleDateFormat df = new SimpleDateFormat("'You have' HH 'hour(s)' mm 'minute(s)' ss 'second(s) left to live.'");
-            double seconds = this.getEconomy().getBalance(sender.getName());
-            double minutes = 0;
-            double hours = 0;
-            double days = 0;
-            double weeks = 0;
-            double years = 0;
-            
-            if (seconds > 60){
-                minutes = Math.floor(seconds/60);
-                seconds -= minutes*60;
-            }
-            if (minutes > 60){
-                hours = Math.floor(minutes/60);
-                minutes -= hours*60;
-            }
-            if (hours > 24){
-                days = Math.floor(hours/24);
-                hours -= days*24;
-            }
-            if (days > 30){
-                weeks = Math.floor(days/30);
-                days -= weeks*30;
-            }
-            if (weeks > 52){
-                years = Math.floor(weeks/52);
-                weeks -= years*52;
-            }
-            
-            String result = String.format("%04.0f·%02.0f·%02.0f·%01.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds);
-            
-            sender.sendMessage(ChatColor.DARK_GREEN + result);
-        }
-        return false;
+        TimeCommands tc = new TimeCommands(this, sender, cmd, label, args);
+        return tc.executeCommand();
     }
 }

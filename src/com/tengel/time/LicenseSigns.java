@@ -71,9 +71,10 @@ public class LicenseSigns {
             }
            
             try {
-                cost = Integer.parseInt(event.getLine(1));
+                cost = Integer.parseInt(event.getLine(2));
             }catch (Exception e){
-                //plugin.sendConsole("Failed to parse cost (" + event.getLine(1) + ") in licenseSignCreate");
+                player.sendMessage(plugin.getPluginName() + "Invalid cost on line 3.");
+                dropSign(event.getBlock().getLocation());
             }
             
             event.setLine(2, "Time: " + String.valueOf(cost) + "mins");

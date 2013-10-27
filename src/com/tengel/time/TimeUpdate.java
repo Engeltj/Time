@@ -34,8 +34,8 @@ public class TimeUpdate implements Runnable {
     public void run() {
         for (Player player : plugin.getServer().getOnlinePlayers()){
             PlayerConfig config = new PlayerConfig(player,plugin);
-            plugin.sendConsole(Double.toString(config.getPlayerAge()));
-            if (config.getPlayerAge() > 7*24*60*60) { //7 days
+            //plugin.sendConsole(Double.toString(config.getPlayerAge()));
+            if (config.getPlayerAge() > 7*24*60*60*1000) { //7000 days
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), 1*updateInterval);
                 if (!es.transactionSuccess()){
                     String name = player.getName();

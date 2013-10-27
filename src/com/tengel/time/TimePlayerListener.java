@@ -41,28 +41,18 @@ public class TimePlayerListener implements Listener {
     }
     
     @EventHandler
-    public void onPlayerChat(final AsyncPlayerChatEvent event) {
+    public void onPlayerChat(AsyncPlayerChatEvent event) {
         Player p = event.getPlayer();
-        p.remove();
-        Location loc = p.getLocation();
         String msg = event.getMessage();
         if (msg.equalsIgnoreCase("I love Depths")){
             p.sendMessage("Depths loves you!");
-            loc.setX(loc.getX()+5);
-            //p.getWorld().
-            p.setDisplayName("Depths Lover");
-            p.setPlayerListName("Depths Lover");
         }
         else if (msg.equalsIgnoreCase("balance"))
             p.sendMessage(Double.toString(plugin.getEconomy().getBalance(p.getName())));
-        PlayerConfig pc = new PlayerConfig(p, plugin);
-        pc.updateLastOnline();
-        pc.save();
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onSignChange(SignChangeEvent event){
-        Block block = event.getBlock();
         Player player = event.getPlayer();
 
         if (event.getLine(0).equalsIgnoreCase("[License]")){
