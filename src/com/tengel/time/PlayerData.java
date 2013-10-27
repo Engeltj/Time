@@ -15,20 +15,20 @@ import org.bukkit.util.StringUtil;
  * @author Tim
  */
 public class PlayerData {
-        private Time time;
+        private Time plugin;
         protected Player base;
         private final PlayerConfig config;
         private final File folder;
         
-    	protected PlayerData(Player player, Time time)
+    	public PlayerData(Player player, Time plugin)
 	{
 		this.base = base;
-		this.time = time;
-		folder = new File(time.getDataFolder(), "players");
+		this.plugin = plugin;
+		folder = new File(plugin.getDataFolder(), "players");
 		if (!folder.exists())
 			folder.mkdirs();
                 
-		config = new PlayerConfig(player);
+		config = new PlayerConfig(player, plugin);
                 
 	}
 }

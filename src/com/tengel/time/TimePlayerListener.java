@@ -45,5 +45,8 @@ public class TimePlayerListener implements Listener {
         }
         else if (msg.equalsIgnoreCase("balance"))
             p.sendMessage(Double.toString(plugin.getEconomy().getBalance(p.getName())));
+        PlayerConfig pc = new PlayerConfig(p, plugin);
+        pc.updateLastOnline();
+        pc.save();
     }   
 }

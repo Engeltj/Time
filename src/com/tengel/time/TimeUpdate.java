@@ -7,6 +7,8 @@
 package com.tengel.time;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.util.concurrent.atomic.AtomicInteger;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -31,25 +33,30 @@ public class TimeUpdate implements Runnable {
     
     public void run() {
         for (Player player : plugin.getServer().getOnlinePlayers()){
-            EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), 1*updateInterval);
-            if (!es.transactionSuccess()){
-                //resetPlayer
-                String name = player.getName();
-                player.kickPlayer("You ran out of time! You're entire profile has been reset.");
-                try{
-                    File f = new File(System.getProperty("user.dir") + "\\plugins\\Essentials\\userdata\\" + name.toLowerCase() + ".yml");
-                    f.delete();
+            PlayerConfig config = new PlayerConfig(player,plugin);
+            plugin.sendConsole(Double.toString(config.getPlayerAge()));
+            if (config.getPlayerAge() > 7*24*60*60) { //7 days
+                EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), 1*updateInterval);
+                if (!es.transactionSuccess()){
+                    String name = player.getName();
+                    player.kickPlayer("You ran out of time! You're entire profile has been reset.");
+                    for (World world : plugin.getServer().getWorlds()){
+                        try {
+                            File f = new File(System.getProperty("user.dir") + "\\" + world.getName() + "\\players\\" + name + ".dat");
+                            f.delete();
+                        }catch(Exception e){}
+                    }
+                    
+                    try{
+                        FileOutputStream writer = new FileOutputStream(System.getProperty("user.dir") + "\\plugins\\Essentials\\userdata\\" + name.toLowerCase() + ".yml");
+                        writer.write(0);
+                        writer.close();
+                    }
+                    catch (Exception e){
+                        plugin.sendConsole(plugin.pluginName + "Failed to delete " + "Essentials\\userdata\\" + name.toLowerCase() + ".yml");
+                    }
+                   config.removePlayer();
                 }
-                catch (Exception e){
-                    plugin.sendConsole(plugin.pluginName + "Failed to delete " + "Essentials\\userdata\\" + name.toLowerCase() + ".yml");
-                }
-                
-                for (World world : plugin.getServer().getWorlds()){
-                    try {
-                        File f = new File(System.getProperty("user.dir") + "\\" + world.getName() + "\\players\\" + name + ".dat");
-                        f.delete();
-                    }catch(Exception e){}
-                }                
             }
         }
     }
