@@ -53,9 +53,12 @@ public class TimeUpdate implements Runnable {
                         writer.close();
                     }
                     catch (Exception e){
-                        plugin.sendConsole(plugin.pluginName + "Failed to delete " + "Essentials\\userdata\\" + name.toLowerCase() + ".yml");
+                        plugin.sendConsole(plugin.getPluginName() + "Failed to delete " + "Essentials\\userdata\\" + name.toLowerCase() + ".yml");
                     }
-                   config.removePlayer();
+                    synchronized(config.getConfigFile()){
+                         config.removePlayer();
+                    }
+                  
                 }
             }
         }

@@ -28,20 +28,22 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class Time extends JavaPlugin {
     //public static Time time;
 
-    public final TimePlayerListener playerListener;
+    private TimePlayerListener playerListener;
     private TimeUpdate timeUpdater;
     private Economy economy = null;
-    String pluginName;
+    private String pluginName;
+    private TimePlayers players;
 
     public Time() {
-        playerListener = new TimePlayerListener(this);
+        players = new TimePlayers(this);
+        playerListener = new TimePlayerListener(this,players);
         timeUpdater = new TimeUpdate(this,1);
     }
     
     @Override
     public void onEnable(){
         PluginManager pm = getServer().getPluginManager();
-
+        populateTimePlayers();
         if (!setupEconomy() ) {
             getLogger().info(String.format("[%s] - Disabled due to no Vault dependency found!", getDescription().getName()));
             getServer().getPluginManager().disablePlugin(this);
@@ -67,6 +69,12 @@ public final class Time extends JavaPlugin {
         getLogger().info(message);
     }
     
+    public void populateTimePlayers(){
+        for (Player player: getServer().getOnlinePlayers()){
+            players.addPlayer(player);
+        }
+    }
+    
     private boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
             return false;
@@ -81,7 +89,19 @@ public final class Time extends JavaPlugin {
     
     public Economy getEconomy(){
         return this.economy;
-    }    
+    }
+    
+    public TimePlayers getTimePlayers(){
+        return this.players;
+    }
+    
+    public TimePlayerListener getPlayerListener(){
+        return this.playerListener;
+    }
+    
+    public String getPluginName(){
+        return this.pluginName;
+    }
     
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         String command = cmd.getName();

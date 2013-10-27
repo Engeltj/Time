@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
@@ -21,9 +22,12 @@ public class PlayerConfig  extends YamlConfiguration{
     private File configFile;
     //private Player player;
     private Time plugin;
+    private String playerName;
     
     public PlayerConfig(Player player, Time plugin){
         super();
+        playerName = player.getName();
+        
         File folder = new File(plugin.getDataFolder(), "players");
         if (!folder.exists())
                 folder.mkdirs();
@@ -44,6 +48,10 @@ public class PlayerConfig  extends YamlConfiguration{
             }catch (Exception e){}
     }
     
+    public String getPlayerName(){
+        return this.playerName;
+    }
+    
     public void updateLastOnline(){
         set("lastonline", System.currentTimeMillis()/1000);
         save();
@@ -52,6 +60,19 @@ public class PlayerConfig  extends YamlConfiguration{
     public void setPlayerStart(){
         set("start", System.currentTimeMillis()/1000);
         save();
+    }
+    
+    public boolean addLicense(String name, int id){
+        ConfigurationSection section = this.getConfigurationSection("license");
+        if (section == null)
+            section = createSection("license");
+        if (section.get("name") == null){
+            section.addDefault("name", id);
+            save();
+            return true;
+        }
+        else
+            return false;
     }
     
     public double getPlayerAge(){
@@ -64,6 +85,10 @@ public class PlayerConfig  extends YamlConfiguration{
         }
         double age = System.currentTimeMillis()/1000 - start;
         return age;
+    }
+    
+    public File getConfigFile(){
+        return this.configFile;
     }
     
     public void removePlayer(){
