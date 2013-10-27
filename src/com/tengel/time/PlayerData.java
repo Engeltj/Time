@@ -14,13 +14,13 @@ import org.bukkit.util.StringUtil;
  *
  * @author Tim
  */
-public class UserData {
+public class PlayerData {
         private Time time;
         protected Player base;
         private final PlayerConfig config;
         private final File folder;
         
-    	protected UserData(Player player, Time time)
+    	protected PlayerData(Player player, Time time)
 	{
 		this.base = base;
 		this.time = time;

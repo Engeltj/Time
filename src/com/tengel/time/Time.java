@@ -35,7 +35,7 @@ public final class Time extends JavaPlugin {
 
     public Time() {
         playerListener = new TimePlayerListener(this);
-        timeUpdater = new TimeUpdate(this,5);
+        timeUpdater = new TimeUpdate(this,1);
     }
     
     @Override
@@ -61,6 +61,10 @@ public final class Time extends JavaPlugin {
     @Override
     public void onDisable() {
         getLogger().info("Time by Engeltj has been disabled");
+    }
+    
+    public void sendConsole(String message){
+        getLogger().info(message);
     }
     
     private boolean setupEconomy() {
@@ -104,39 +108,37 @@ public final class Time extends JavaPlugin {
         }
         else if (command.equalsIgnoreCase("life")){
             //SimpleDateFormat df = new SimpleDateFormat("'You have' HH 'hour(s)' mm 'minute(s)' ss 'second(s) left to live.'");
-            int seconds = (int) this.getEconomy().getBalance(sender.getName());
-            int minutes = 0;
-            int hours = 0;
-            int days = 0;
-            int years = 0;
+            double seconds = this.getEconomy().getBalance(sender.getName());
+            double minutes = 0;
+            double hours = 0;
+            double days = 0;
+            double weeks = 0;
+            double years = 0;
             
             if (seconds > 60){
-                minutes = (int)Math.floor(seconds/60);
+                minutes = Math.floor(seconds/60);
                 seconds -= minutes*60;
             }
             if (minutes > 60){
-                hours = (int)Math.floor(minutes/60);
+                hours = Math.floor(minutes/60);
                 minutes -= hours*60;
             }
             if (hours > 24){
-                days = (int)Math.floor(hours/60);
-                hours -= days*60;
+                days = Math.floor(hours/24);
+                hours -= days*24;
             }
-            if (days > 365){
-                years = (int)Math.floor(days/365);
-                days -= years*60;
+            if (days > 30){
+                weeks = Math.floor(days/30);
+                days -= weeks*30;
+            }
+            if (weeks > 52){
+                years = Math.floor(weeks/52);
+                weeks -= years*52;
             }
             
-            if (years > 1)
-                sender.sendMessage(this.pluginName + "You have: " + Integer.toString(years) + " year(s) and " + Integer.toString(days) + " day(s) left to live.");
-            else if (days > 1)
-                sender.sendMessage(this.pluginName + "You have: " + Integer.toString(days) + " day(s) and " + Integer.toString(hours) + " hour(s) left to live.");
-            else if (hours > 1)
-                sender.sendMessage(this.pluginName + "You have: " + Integer.toString(hours) + " hour(s) and " + Integer.toString(minutes) + " minute(s) left to live.");
-            else if (minutes > 1)
-                sender.sendMessage(this.pluginName + "You have: " + Integer.toString(minutes) + " minute(s) and " + Integer.toString(seconds) + " second(s) left to live.");
-            else
-                sender.sendMessage(this.pluginName + "You have: " + Integer.toString(seconds) + " second(s) left to live.");
+            String result = String.format("%04.0f·%02.0f·%02.0f·%01.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds);
+            
+            sender.sendMessage(ChatColor.DARK_GREEN + result);
         }
         return false;
     }
