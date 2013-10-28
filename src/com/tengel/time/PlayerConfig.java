@@ -18,7 +18,7 @@ import org.bukkit.entity.Player;
  *
  * @author Tim
  */
-public class PlayerConfig  extends YamlConfiguration{
+public class PlayerConfig extends YamlConfiguration {
     private File configFile;
     //private Player player;
     private Time plugin;

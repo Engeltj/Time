@@ -61,10 +61,11 @@ public class TimePlayerListener implements Listener {
 
         if (event.getLine(0).equalsIgnoreCase("[License]")){
           LicenseSigns ls = new LicenseSigns(plugin, player);
-          ls.licenseSignCreate(event);
+          ls.create(event);
         }
         else if (event.getLine(0).equalsIgnoreCase("[Time Shop]")){
-            
+            TimeShop ts = new TimeShop(plugin, player);
+            ts.create(event);
         }
     }
     
@@ -82,19 +83,25 @@ public class TimePlayerListener implements Listener {
         
         
         if (b.getType().equals(Material.SIGN_POST) || b.getType().equals(Material.WALL_SIGN)) {
-            LicenseSigns ls = new LicenseSigns(plugin, event.getPlayer());
             Sign s = (Sign) b.getState();
-            String itemName = s.getLine(1);
-            double cost = 0;
-            Pattern p = Pattern.compile("-?\\d+");
-            Matcher m = p.matcher(s.getLine(2));
-            if (m.find()){
-                cost = Double.valueOf(m.group());
-            } else{
-                plugin.sendConsole("SignInteract event, error reading cost");
-                return;
+            if (s.getLine(0).contains("[License]")){
+                LicenseSigns ls = new LicenseSigns(plugin, event.getPlayer());
+                
+                String itemName = s.getLine(1);
+                double cost = 0;
+                Pattern p = Pattern.compile("-?\\d+");
+                Matcher m = p.matcher(s.getLine(2));
+                if (m.find()){
+                    cost = Double.valueOf(m.group());
+                } else{
+                    plugin.sendConsole("SignInteract event, error reading cost");
+                    return;
+                }
+                ls.buy(itemName, cost);
+            } else if (s.getLine(0).contains("[Time Shop]")){
+                event.getPlayer().sendMessage("Not implemented yet.");
             }
-            ls.licenseBuy(itemName, cost);
+                
         }
         
     

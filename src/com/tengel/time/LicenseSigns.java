@@ -22,80 +22,59 @@ import org.bukkit.inventory.ItemStack;
  * @author Tim
  */
 public class LicenseSigns extends TimeSigns{
-    private Time plugin;
-    private Player player;
+    
     
     public LicenseSigns(Time plugin, Player player){
-        this.plugin = plugin;
-        this.player = player;
+        super(plugin, player);
     }
     
-    public void licenseBuy(String block, double cost){
-        int blockId=-1;
-        Material m = null;
-        try {
-            blockId = Integer.parseInt(block);
-        } catch (Exception e){}
-        for (Material mat : Material.values()){
-            final int id = mat.getId();
-            if ((blockId == id) || (block.equalsIgnoreCase(mat.name()))){
-                m = mat;
-                break;
-            }
-        }
+    public void buy(String block, double cost){
+        Material m = getItemMaterial(block);
         if (m == null){
-            plugin.sendConsole("Invalid item via license sign");
+            getPlugin().sendConsole("Invalid item via license sign");
             return;
         }
-        if (plugin.getPlayerListener().checkPermissions(player, "license.buy", false)) {
-            if (plugin.getEconomy().getBalance(player.getName()) >= cost){
-                PlayerConfig configFile = plugin.getTimePlayers().getPlayerConfig(player.getName());
+        if (getPlugin().getPlayerListener().checkPermissions(getPlayer(), "license.buy", false)) {
+            if (getPlugin().getEconomy().getBalance(getPlayer().getName()) >= cost){
+                PlayerConfig configFile = getPlugin().getTimePlayers().getPlayerConfig(getPlayer().getName());
                 
                 if (configFile.addLicense(m.name(), Material.valueOf(m.name()).getId())){
-                    plugin.getEconomy().withdrawPlayer(configFile.getPlayerName(), cost);
-                    player.sendMessage(plugin.getPluginName() + m.name() + " license aquired!");
+                    getPlugin().getEconomy().withdrawPlayer(configFile.getPlayerName(), cost);
+                    getPlayer().sendMessage(getPlugin().getPluginName() + m.name() + " license aquired!");
                 }
                 else {
-                    player.sendMessage(plugin.getPluginName() + "It appears you already own the license to mine " + m.name());
+                    getPlayer().sendMessage(getPlugin().getPluginName() + "It appears you already own the license to mine " + m.name());
                 }
             }
         } else
-            player.sendMessage(plugin.getPluginName() + "You do not have permissions to do that!");
+            getPlayer().sendMessage(getPlugin().getPluginName() + "You do not have permissions to do that!");
     }
     
-    public void licenseSignCreate(SignChangeEvent event){
-        if (plugin.getPlayerListener().checkPermissions(player, "license.createsign", false)) {
-            Material m = null;
-            int blockId = -1;
-            int cost = 10;
-            try {
-                blockId = Integer.parseInt(event.getLine(1));
-            }catch (Exception e){}
-            
-            for (Material mat : Material.values()){
-                if ((mat.getId() == blockId) || (mat.name().equalsIgnoreCase(event.getLine(1)))){
-                    event.setLine(0, ChatColor.BLUE + "[License]");
-                    event.setLine(1, mat.name());
-                } 
+    public void create(SignChangeEvent event){
+        if (getPlugin().getPlayerListener().checkPermissions(getPlayer(), "license.createsign", false)) {
+            Material m = getItemMaterial(event.getLine(1));
+            int cost = 0;
+            if (m == null){
+                getPlayer().sendMessage("Invalid item name or ID on line 2");
+                dropSign(event.getBlock().getLocation());
+                return;
             }
-           
             try {
                 cost = Integer.parseInt(event.getLine(2));
             }catch (Exception e){
-                player.sendMessage(plugin.getPluginName() + "Invalid cost on line 3.");
-                super.dropSign(event.getBlock().getLocation());
+                getPlayer().sendMessage(getPlugin().getPluginName() + "Invalid cost on line 3.");
+                dropSign(event.getBlock().getLocation());
+                return;
             }
-            
+
+            event.setLine(0, ChatColor.BLUE + "[License]");
+            event.setLine(1, m.name());
             event.setLine(2, "Cost: " + String.valueOf(cost) + " mins");
-          }
-          else {
-            player.sendMessage(plugin.getPluginName() + "You do not have permissions to do that!");
-            dropSign(event.getBlock().getLocation());
-          }
+            super.create(event);
+        }
+        else {
+          getPlayer().sendMessage(getPlugin().getPluginName() + "You do not have permissions to do that!");
+          dropSign(event.getBlock().getLocation());
+        }
     }
-    
-    /*private void dropSign(Location location) {
-        location.getBlock().setType(Material.AIR);
-        location.getWorld().dropItemNaturally(location, new ItemStack(Material.SIGN, 1));
-    }*/
 }
