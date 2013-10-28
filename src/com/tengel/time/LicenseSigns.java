@@ -9,16 +9,19 @@ package com.tengel.time;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
 /**
  *
  * @author Tim
  */
-public class LicenseSigns {
+public class LicenseSigns extends TimeSigns{
     private Time plugin;
     private Player player;
     
@@ -27,23 +30,28 @@ public class LicenseSigns {
         this.player = player;
     }
     
-    public void licenseAdd(String block, double cost){
-        int b=0;
+    public void licenseBuy(String block, double cost){
+        int blockId=-1;
         Material m = null;
         try {
-            b = Integer.parseInt(block);
-        } catch (Exception e){
-            return;
-        }
+            blockId = Integer.parseInt(block);
+        } catch (Exception e){}
         for (Material mat : Material.values()){
             final int id = mat.getId();
-            if (b == id)
+            if ((blockId == id) || (block.equalsIgnoreCase(mat.name()))){
                 m = mat;
+                break;
+            }
         }
-        if (plugin.getPlayerListener().checkPermissions(player, "license.add", false)) {
+        if (m == null){
+            plugin.sendConsole("Invalid item via license sign");
+            return;
+        }
+        if (plugin.getPlayerListener().checkPermissions(player, "license.buy", false)) {
             if (plugin.getEconomy().getBalance(player.getName()) >= cost){
                 PlayerConfig configFile = plugin.getTimePlayers().getPlayerConfig(player.getName());
-                if (configFile.addLicense(m.name(), b)){
+                
+                if (configFile.addLicense(m.name(), Material.valueOf(m.name()).getId())){
                     plugin.getEconomy().withdrawPlayer(configFile.getPlayerName(), cost);
                     player.sendMessage(plugin.getPluginName() + m.name() + " license aquired!");
                 }
@@ -51,7 +59,8 @@ public class LicenseSigns {
                     player.sendMessage(plugin.getPluginName() + "It appears you already own the license to mine " + m.name());
                 }
             }
-        }
+        } else
+            player.sendMessage(plugin.getPluginName() + "You do not have permissions to do that!");
     }
     
     public void licenseSignCreate(SignChangeEvent event){
@@ -74,10 +83,10 @@ public class LicenseSigns {
                 cost = Integer.parseInt(event.getLine(2));
             }catch (Exception e){
                 player.sendMessage(plugin.getPluginName() + "Invalid cost on line 3.");
-                dropSign(event.getBlock().getLocation());
+                super.dropSign(event.getBlock().getLocation());
             }
             
-            event.setLine(2, "Time: " + String.valueOf(cost) + "mins");
+            event.setLine(2, "Cost: " + String.valueOf(cost) + " mins");
           }
           else {
             player.sendMessage(plugin.getPluginName() + "You do not have permissions to do that!");
@@ -85,8 +94,8 @@ public class LicenseSigns {
           }
     }
     
-    private void dropSign(Location location) {
+    /*private void dropSign(Location location) {
         location.getBlock().setType(Material.AIR);
         location.getWorld().dropItemNaturally(location, new ItemStack(Material.SIGN, 1));
-    }
+    }*/
 }

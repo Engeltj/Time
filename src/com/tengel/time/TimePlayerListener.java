@@ -6,6 +6,8 @@
 
 package com.tengel.time;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import static org.bukkit.Bukkit.getServer;
 import org.bukkit.ChatColor;
@@ -13,6 +15,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
+import org.bukkit.block.Sign;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -23,6 +26,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
@@ -59,6 +63,41 @@ public class TimePlayerListener implements Listener {
           LicenseSigns ls = new LicenseSigns(plugin, player);
           ls.licenseSignCreate(event);
         }
+        else if (event.getLine(0).equalsIgnoreCase("[Time Shop]")){
+            
+        }
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onInteract(PlayerInteractEvent event){
+        Block b = null;
+        if (!event.hasBlock()) {
+            try {
+                b = event.getPlayer().getTargetBlock(null, 5);
+            } catch (Exception e) {
+                return;
+            }
+        } else
+            b = event.getClickedBlock();
+        
+        
+        if (b.getType().equals(Material.SIGN_POST) || b.getType().equals(Material.WALL_SIGN)) {
+            LicenseSigns ls = new LicenseSigns(plugin, event.getPlayer());
+            Sign s = (Sign) b.getState();
+            String itemName = s.getLine(1);
+            double cost = 0;
+            Pattern p = Pattern.compile("-?\\d+");
+            Matcher m = p.matcher(s.getLine(2));
+            if (m.find()){
+                cost = Double.valueOf(m.group());
+            } else{
+                plugin.sendConsole("SignInteract event, error reading cost");
+                return;
+            }
+            ls.licenseBuy(itemName, cost);
+        }
+        
+    
     }
     
     @EventHandler(priority=EventPriority.NORMAL)

@@ -43,15 +43,15 @@ public class TimePlayers {
     
     public PlayerConfig getPlayerConfig(String name){
         PlayerConfig config = (PlayerConfig) players.get(name);
+        if (config == null){
+            plugin.sendConsole("Error obtaining player config via TimePlayers class");
+        }
         return config;
     }
     
     private boolean isPlayerAdded(String name){
-        try {
-            players.get(name);
-        } catch (Exception e){
+        if (players.get(name) == null)
             return false;
-        }
         return true;
     }
 }

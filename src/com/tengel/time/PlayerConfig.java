@@ -66,8 +66,9 @@ public class PlayerConfig  extends YamlConfiguration{
         ConfigurationSection section = this.getConfigurationSection("license");
         if (section == null)
             section = createSection("license");
-        if (section.get("name") == null){
-            section.addDefault("name", id);
+        if (section.get(name) == null){
+            plugin.sendConsole("Adding license: " + name + " of id: " + String.valueOf(id));
+            this.set("license."+name, id);
             save();
             return true;
         }

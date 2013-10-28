@@ -87,9 +87,9 @@ public class TimeCommands implements Listener{
                 weeks -= years*52;
             }
             
-            String result = String.format("%04.0f·%02.0f·%02.0f·%01.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds);
+            sender.sendMessage(ChatColor.AQUA + String.format("%04.0f·%02.0f·%02.0f·%01.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds));
+            sender.sendMessage("year·ww·dd·hh·mm·ss");
             
-            sender.sendMessage(ChatColor.AQUA + result);
             return true;
         }
         else if (command.equalsIgnoreCase("life")){
@@ -122,9 +122,8 @@ public class TimeCommands implements Listener{
                 weeks -= years*52;
             }
             
-            String result = String.format("%04.0f·%02.0f·%02.0f·%01.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds);
-            
-            sender.sendMessage(ChatColor.DARK_GREEN + result);
+            sender.sendMessage(ChatColor.DARK_GREEN + String.format("%04.0f·%02.0f·%02.0f·%01.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds));
+            sender.sendMessage("year·ww·dd·hh·mm·ss");
             return true;
         }
         return false;
