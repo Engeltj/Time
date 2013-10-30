@@ -16,10 +16,10 @@
                 <id>bukkit-repo</id>
                 <url>http://repo.bukkit.org/content/groups/public</url>
         </repository>
-        <repository>
+        <!--<repository>
                 <id>engeltj-repo</id>
                 <url>http://depthsonline.com/archive/repository</url>
-        </repository>
+        </repository>-->
     </repositories>
   <properties>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

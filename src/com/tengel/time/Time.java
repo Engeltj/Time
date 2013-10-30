@@ -6,11 +6,13 @@
 
 package com.tengel.time;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import net.milkbowl.vault.Vault;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -27,15 +29,16 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public final class Time extends JavaPlugin {
     private TimePlayerListener playerListener;
-    private TimeUpdate timeUpdater;
+    private UpdatePlayers timeUpdater;
     private Economy economy = null;
     private String pluginName;
     private TimePlayers players;
+    private File configSigns;
 
     public Time() {
         players = new TimePlayers(this);
         playerListener = new TimePlayerListener(this,players);
-        timeUpdater = new TimeUpdate(this,1);
+        timeUpdater = new UpdatePlayers(this,1);
     }
     
     @Override
@@ -47,12 +50,12 @@ public final class Time extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        //getLogger().info("ECONOMY: " + economy.getName());
+        
         pluginName = "[" + pm.getPlugin("Time").getName() + "] ";
         
         pm.registerEvents(this.playerListener, this);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, timeUpdater, 0, timeUpdater.getUpdateInterval() * 20);
-        //getServer().getServicesManager().register(Economy.class, new EconomyControl(), this, ServicePriority.Highest);
+        getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 0, 1 * 60 * 20);
         
         
         getLogger().info("Time by Engeltj has been enabled");
@@ -101,8 +104,35 @@ public final class Time extends JavaPlugin {
         return this.pluginName;
     }
     
+    public File getConfigSigns(){
+        if (configSigns == null)
+            configSigns = new File(this.getDataFolder() + "\\signs.yml");
+        if (!this.configSigns.exists()){
+            try {
+                this.configSigns.createNewFile();
+            } catch (Exception e){
+                this.sendConsole("Error creating signs.yml");
+            }
+        }
+        return this.configSigns;
+    }
+    
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         TimeCommands tc = new TimeCommands(this, sender, cmd, label, args);
         return tc.executeCommand();
+    }
+    
+    public Material getItemMaterial(String id_or_name){
+        int blockId = -1;
+        try {
+            blockId = Integer.parseInt(id_or_name);
+        } catch (Exception e){}
+        for (Material mat : Material.values()){
+            final int id = mat.getId();
+            if ((blockId == id) || (id_or_name.equalsIgnoreCase(mat.name()))){
+                return mat;
+            }
+        }
+        return null;
     }
 }

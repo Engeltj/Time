@@ -15,11 +15,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
  *
  * @author Tim
  */
-public class TimeShopConfig extends YamlConfiguration {
+public class ShopConfig extends YamlConfiguration {
     private File configFile;
     private Time plugin;
     
-    public TimeShopConfig(Time plugin){
+    public ShopConfig(Time plugin){
         super();
         this.configFile = new File(plugin.getDataFolder() + "\\item_prices.yml").getAbsoluteFile();
         this.plugin = plugin;

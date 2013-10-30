@@ -24,7 +24,7 @@ public class PlayerConfig extends YamlConfiguration {
     private Time plugin;
     private String playerName;
     
-    public PlayerConfig(Player player, Time plugin){
+    public PlayerConfig(Time plugin, Player player){
         super();
         playerName = player.getName();
         

@@ -15,17 +15,17 @@ import org.bukkit.entity.Player;
  * @author Tim
  */
 public class TimePlayers {
-    private HashMap players;
+    private Map players;
     private Time plugin;
     
     public TimePlayers(Time plugin){
-        players = new HashMap();
+        players = new HashMap<String, PlayerConfig>();
         this.plugin = plugin;
     }
     
     public void addPlayer(Player p){
         if (!isPlayerAdded(p.getName())){
-            players.put(p.getName(), new PlayerConfig(p,plugin));
+            players.put(p.getName(), new PlayerConfig(plugin,p));
         }
     }
     

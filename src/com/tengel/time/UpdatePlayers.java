@@ -17,23 +17,23 @@ import org.bukkit.entity.Player;
  *
  * @author Tim
  */
-public class TimeUpdate implements Runnable {
+public class UpdatePlayers implements Runnable {
     private Time plugin;
     private int updateInterval; //in seconds
     
-    public TimeUpdate(Time plugin){
+    public UpdatePlayers(Time plugin){
         this.plugin = plugin;
         this.updateInterval = 10;
     }
     
-    public TimeUpdate(Time plugin, int updateInterval){
+    public UpdatePlayers(Time plugin, int updateInterval){
         this.plugin = plugin;
         this.updateInterval = updateInterval;
     }
     
     public void run() {
         for (Player player : plugin.getServer().getOnlinePlayers()){
-            PlayerConfig config = new PlayerConfig(player,plugin);
+            PlayerConfig config = new PlayerConfig(plugin, player);
             //plugin.sendConsole(Double.toString(config.getPlayerAge()));
             if (config.getPlayerAge() > 7*24*60*60*1000) { //7000 days
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), 1*updateInterval);

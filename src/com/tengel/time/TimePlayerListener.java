@@ -23,6 +23,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerChatEvent;
@@ -57,21 +58,18 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onSignChange(SignChangeEvent event){
-        Player player = event.getPlayer();
-
-        if (event.getLine(0).equalsIgnoreCase("[License]")){
-          LicenseSigns ls = new LicenseSigns(plugin, player);
-          ls.create(event);
-        }
-        else if (event.getLine(0).equalsIgnoreCase("[Time Shop]")){
-            TimeShop ts = new TimeShop(plugin, player);
-            ts.create(event);
+        String type = event.getLine(0);
+        if (type.contains("[License]") || type.contains("[Shop]")){
+          ShopSigns ss = new ShopSigns(plugin, event.getPlayer());
+          ss.create(event);
         }
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onInteract(PlayerInteractEvent event){
         Block b = null;
+        if (event.getAction()!=Action.RIGHT_CLICK_BLOCK)
+            return;
         if (!event.hasBlock()) {
             try {
                 b = event.getPlayer().getTargetBlock(null, 5);
@@ -84,27 +82,22 @@ public class TimePlayerListener implements Listener {
         
         if (b.getType().equals(Material.SIGN_POST) || b.getType().equals(Material.WALL_SIGN)) {
             Sign s = (Sign) b.getState();
-            if (s.getLine(0).contains("[License]")){
-                LicenseSigns ls = new LicenseSigns(plugin, event.getPlayer());
+            String type = s.getLine(0);
+            if (type.contains("[License]") || type.contains("[Shop]")){
+                ShopSigns ss = new ShopSigns(plugin, event.getPlayer());
                 
-                String itemName = s.getLine(1);
-                double cost = 0;
+                int cost = 0;
                 Pattern p = Pattern.compile("-?\\d+");
                 Matcher m = p.matcher(s.getLine(2));
                 if (m.find()){
-                    cost = Double.valueOf(m.group());
+                    cost = Integer.valueOf(m.group());
                 } else{
                     plugin.sendConsole("SignInteract event, error reading cost");
                     return;
                 }
-                ls.buy(itemName, cost);
-            } else if (s.getLine(0).contains("[Time Shop]")){
-                event.getPlayer().sendMessage("Not implemented yet.");
+                ss.buy(b, cost);
             }
-                
         }
-        
-    
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
