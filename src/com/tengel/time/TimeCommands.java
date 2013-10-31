@@ -58,7 +58,14 @@ public class TimeCommands implements Listener{
             target.hidePlayer(s);
             return true;
         }
-        else if (command.equalsIgnoreCase("age")){//&& args.length == 1){
+        else if (command.equalsIgnoreCase("life") && args.length == 0){
+            sender.sendMessage(ChatColor.YELLOW + "Time format: YYYY/WW/DD/HH/MM/SS");
+            sender.sendMessage(ChatColor.BOLD + "" + ChatColor.GREEN + "Your options are: ");
+            sender.sendMessage(ChatColor.GREEN + "/life age  -- determines how long you've played");
+            sender.sendMessage(ChatColor.GREEN + "/life left  -- determines how long you have left to live");
+        }
+        
+        else if (command.equalsIgnoreCase("life") && args[0].equalsIgnoreCase("age")){
             double seconds = plugin.getTimePlayers().getPlayerConfig(sender.getName()).getPlayerAge();
             double minutes = 0;
             double hours = 0;
@@ -87,12 +94,10 @@ public class TimeCommands implements Listener{
                 weeks -= years*52;
             }
             
-            sender.sendMessage(ChatColor.AQUA + String.format("%04.0f·%02.0f·%02.0f·%01.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds));
-            sender.sendMessage("year·ww·dd·hh·mm·ss");
-            
+            sender.sendMessage(ChatColor.AQUA + String.format("%04.0f·%02.0f·%02.0f·%01.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds));            
             return true;
         }
-        else if (command.equalsIgnoreCase("life")){
+        else if (command.equalsIgnoreCase("life") && args[0].equalsIgnoreCase("left")){
             //SimpleDateFormat df = new SimpleDateFormat("'You have' HH 'hour(s)' mm 'minute(s)' ss 'second(s) left to live.'");
             double seconds = plugin.getEconomy().getBalance(sender.getName());
             double minutes = 0;

@@ -8,6 +8,8 @@ package com.tengel.time;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.milkbowl.vault.Vault;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -23,39 +25,52 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 /**
  *
  * @author Tim
  */
 public final class Time extends JavaPlugin {
     private TimePlayerListener playerListener;
+    private RegionControl worldGuardListener;
     private UpdatePlayers timeUpdater;
     private Economy economy = null;
     private String pluginName;
     private TimePlayers players;
     private File configSigns;
+    public Plugin worldGuard;
 
     public Time() {
         players = new TimePlayers(this);
         playerListener = new TimePlayerListener(this,players);
+        worldGuardListener = new RegionControl(this,players);
         timeUpdater = new UpdatePlayers(this,1);
     }
     
     @Override
     public void onEnable(){
         PluginManager pm = getServer().getPluginManager();
-        populateTimePlayers();
-        if (!setupEconomy() ) {
-            getLogger().info(String.format("[%s] - Disabled due to no Vault dependency found!", getDescription().getName()));
+        Plugin worldGuard = getServer().getPluginManager().getPlugin("WorldGuard");
+        
+        if (worldGuard == null || !(worldGuard instanceof WorldGuardPlugin)) {
+            getLogger().info(String.format("[%s] - Disabled due to no instance of WorldGuard found!", getDescription().getName()));
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        if (!setupEconomy() ) {
+            getLogger().info(String.format("[%s] - Disabled due to no instance of Vault found!", getDescription().getName()));
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        populateTimePlayers();
+        
         
         pluginName = "[" + pm.getPlugin("Time").getName() + "] ";
         
         pm.registerEvents(this.playerListener, this);
+        pm.registerEvents(this.worldGuardListener, this);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, timeUpdater, 0, timeUpdater.getUpdateInterval() * 20);
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 0, 1 * 60 * 20);
+        getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 60, 1800 * 20);
         
         
         getLogger().info("Time by Engeltj has been enabled");
@@ -63,7 +78,9 @@ public final class Time extends JavaPlugin {
  
     @Override
     public void onDisable() {
+        this.getServer().getScheduler().cancelTasks(this);
         getLogger().info("Time by Engeltj has been disabled");
+        
     }
     
     public void sendConsole(String message){

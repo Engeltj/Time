@@ -29,6 +29,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -63,6 +64,10 @@ public class TimePlayerListener implements Listener {
           ShopSigns ss = new ShopSigns(plugin, event.getPlayer());
           ss.create(event);
         }
+    }
+    
+    public void onPlayerMove(PlayerMoveEvent event){
+        //event.
     }
     
     @EventHandler(priority=EventPriority.NORMAL)

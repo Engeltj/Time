@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -63,7 +64,7 @@ public class UpdateSigns implements Runnable {
                                 if (itemName.equalsIgnoreCase(mat.name())){
                                     ShopConfig tsc = new ShopConfig(plugin);
                                     double cost = tsc.getDouble(String.valueOf(mat.getId()));
-                                    s.setLine(2, "Cost: " + Integer.toString((int)cost)+ " mins");
+                                    s.setLine(2, ChatColor.GREEN + Integer.toString((int)cost)+ " mins");
                                     s.update();
                                 }
                             }

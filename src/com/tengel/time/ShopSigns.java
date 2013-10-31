@@ -120,11 +120,14 @@ public class ShopSigns extends YamlConfiguration {
                 return false;
             }
             if (event.getLine(0).contains("License"))
-                event.setLine(0, ChatColor.BLUE + "[License]");
-            else if (event.getLine(0).contains("Shop"))
-                event.setLine(0, ChatColor.BLUE + "[Shop]");
+                event.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "[License]");
+            else if (event.getLine(0).contains("Shop")){
+                event.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "[Shop]");
+                ShopConfig sc = new ShopConfig(plugin);
+                sc.updateItem(m.getId(), cost);
+            }
             event.setLine(1, m.name());
-            event.setLine(2, "Life: " + String.valueOf(cost) + " mins");
+            event.setLine(2, ChatColor.GREEN + String.valueOf(cost) + " mins");
             Sign s = (Sign) block.getState();
             s.update();
         } else{
