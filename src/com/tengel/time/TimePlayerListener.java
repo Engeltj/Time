@@ -129,13 +129,10 @@ public class TimePlayerListener implements Listener {
     public boolean checkPermissions(CommandSender sender, String permission, boolean sendMessage){
         if (!(sender instanceof Player))
             return true;
-
-        if (sender.hasPermission("time." + permission)) {
+        if (sender.hasPermission("time." + permission))
             return true;
-        }
-        if (sendMessage) {
+        if (sendMessage)
             sender.sendMessage(plugin.getPluginName() + "You do not have the permissions to do this.");
-        }
         return false;
     }
 

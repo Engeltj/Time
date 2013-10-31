@@ -6,8 +6,11 @@
 
 package com.tengel.time;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 /**
@@ -19,13 +22,13 @@ public class TimePlayers {
     private Time plugin;
     
     public TimePlayers(Time plugin){
-        players = new HashMap<String, PlayerConfig>();
+        players = new HashMap<String, ConfigPlayer>();
         this.plugin = plugin;
     }
     
     public void addPlayer(Player p){
         if (!isPlayerAdded(p.getName())){
-            players.put(p.getName(), new PlayerConfig(plugin,p));
+            players.put(p.getName(), new ConfigPlayer(plugin,p));
         }
     }
     
@@ -41,8 +44,8 @@ public class TimePlayers {
         }catch (Exception e){}
     }
     
-    public PlayerConfig getPlayerConfig(String name){
-        PlayerConfig config = (PlayerConfig) players.get(name);
+    public ConfigPlayer getPlayerConfig(String name){
+        ConfigPlayer config = (ConfigPlayer) players.get(name);
         if (config == null){
             plugin.sendConsole("Error obtaining player config via TimePlayers class");
         }
@@ -53,5 +56,29 @@ public class TimePlayers {
         if (players.get(name) == null)
             return false;
         return true;
+    }
+    
+    public void resetPlayer(Player player){
+        ConfigPlayer config = new ConfigPlayer(plugin, player);
+        String name = player.getName();
+        player.kickPlayer("You ran out of time! You're entire profile has been reset.");
+        for (World world : plugin.getServer().getWorlds()){
+            try {
+                File f = new File(System.getProperty("user.dir") + "\\" + world.getName() + "\\players\\" + name + ".dat");
+                f.delete();
+            }catch(Exception e){}
+        }
+
+        try{
+            FileOutputStream writer = new FileOutputStream(System.getProperty("user.dir") + "\\plugins\\Essentials\\userdata\\" + name.toLowerCase() + ".yml");
+            writer.write(0);
+            writer.close();
+        }
+        catch (Exception e){
+            plugin.sendConsole(plugin.getPluginName() + "Failed to delete " + "Essentials\\userdata\\" + name.toLowerCase() + ".yml");
+        }
+        synchronized(config.getConfigFile()){
+             config.removePlayer();
+        }
     }
 }

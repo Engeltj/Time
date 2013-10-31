@@ -15,24 +15,20 @@ import org.bukkit.configuration.file.YamlConfiguration;
  *
  * @author Tim
  */
-public class ShopConfig extends YamlConfiguration {
-    private File configFile;
-    private Time plugin;
-    
-    public ShopConfig(Time plugin){
-        super();
-        this.configFile = new File(plugin.getDataFolder() + "\\item_prices.yml").getAbsoluteFile();
-        this.plugin = plugin;
+public class ConfigShop extends Config {    
+    public ConfigShop(Time plugin){
+        super(plugin);
+        setConfigFile(new File(plugin.getDataFolder() + "\\item_prices.yml").getAbsoluteFile());
         
-        if (!this.configFile.exists()){
+        if (!getConfigFile().exists()){
             try {
-                this.configFile.createNewFile();
+                getConfigFile().createNewFile();
             } catch (Exception e){
                 plugin.sendConsole("Error creating item_prices.yml");
             }
         } else
             try{
-                super.load(this.configFile);
+                load(getConfigFile());
             }catch (Exception e){}
     }
     
@@ -45,14 +41,5 @@ public class ShopConfig extends YamlConfiguration {
     public double getItemPrice(int id){
         String item = Integer.toString(id);
         return getDouble(item);
-    }
-    
-    public void save(){
-        try{
-            save(configFile);
-        }
-        catch (IOException e) {
-            plugin.sendConsole("Failed to correctly save item prices config file");
-        }
     }
 }

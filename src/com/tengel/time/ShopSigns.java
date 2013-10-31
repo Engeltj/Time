@@ -47,7 +47,7 @@ public class ShopSigns extends YamlConfiguration {
     }
     
     private boolean buyLicense(Material m, int cost){
-        PlayerConfig config = new PlayerConfig(plugin, player);
+        ConfigPlayer config = new ConfigPlayer(plugin, player);
         EconomyResponse es = getPlugin().getEconomy().withdrawPlayer(player.getName(), cost*60);
         if (es.transactionSuccess()){
             if (config.addLicense(m.name(), m.getId())){
@@ -83,7 +83,7 @@ public class ShopSigns extends YamlConfiguration {
         }
         
         if (plugin.getEconomy().getBalance(player.getName()) >= cost){
-            PlayerConfig configFile = plugin.getTimePlayers().getPlayerConfig(player.getName());
+            ConfigPlayer configFile = plugin.getTimePlayers().getPlayerConfig(player.getName());
             if (s.getLine(0).contains("License")){
                 if (plugin.getPlayerListener().checkPermissions(player, "buy.license", false))
                     buyLicense(m, cost);
@@ -123,7 +123,7 @@ public class ShopSigns extends YamlConfiguration {
                 event.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "[License]");
             else if (event.getLine(0).contains("Shop")){
                 event.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "[Shop]");
-                ShopConfig sc = new ShopConfig(plugin);
+                ConfigShop sc = new ConfigShop(plugin);
                 sc.updateItem(m.getId(), cost);
             }
             event.setLine(1, m.name());

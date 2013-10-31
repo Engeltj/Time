@@ -62,7 +62,7 @@ public class UpdateSigns implements Runnable {
                             String itemName = s.getLine(1);
                             for (Material mat : Material.values()){
                                 if (itemName.equalsIgnoreCase(mat.name())){
-                                    ShopConfig tsc = new ShopConfig(plugin);
+                                    ConfigShop tsc = new ConfigShop(plugin);
                                     double cost = tsc.getDouble(String.valueOf(mat.getId()));
                                     s.setLine(2, ChatColor.GREEN + Integer.toString((int)cost)+ " mins");
                                     s.update();

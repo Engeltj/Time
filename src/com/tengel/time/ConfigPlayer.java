@@ -18,33 +18,29 @@ import org.bukkit.entity.Player;
  *
  * @author Tim
  */
-public class PlayerConfig extends YamlConfiguration {
-    private File configFile;
-    //private Player player;
-    private Time plugin;
+public class ConfigPlayer extends Config {
     private String playerName;
     
-    public PlayerConfig(Time plugin, Player player){
-        super();
+    public ConfigPlayer(Time plugin, Player player){
+        super(plugin);
         playerName = player.getName();
         
         File folder = new File(plugin.getDataFolder(), "players");
         if (!folder.exists())
                 folder.mkdirs();
         
-        this.configFile = new File(plugin.getDataFolder() + "\\players", player.getName() + ".yml").getAbsoluteFile();
-        //this.player = player;
-        this.plugin = plugin;
-        if (!this.configFile.exists()){
+        setConfigFile(new File(plugin.getDataFolder() + "\\players", player.getName() + ".yml").getAbsoluteFile());
+        
+        if (!getConfigFile().exists()){
             try {
-                this.configFile.createNewFile();
+                getConfigFile().createNewFile();
                 setPlayerStart();
             } catch (Exception e){
                 plugin.sendConsole("Error creating profile for player: " + player.getName());
             }
         } else
             try{
-                super.load(this.configFile);
+                load(getConfigFile());
             }catch (Exception e){}
     }
     
@@ -67,7 +63,7 @@ public class PlayerConfig extends YamlConfiguration {
         if (section == null)
             section = createSection("license");
         if (section.get(name) == null){
-            plugin.sendConsole("Adding license: " + name + " of id: " + String.valueOf(id));
+            getPlugin().sendConsole("Adding license: " + name + " of id: " + String.valueOf(id));
             this.set("license."+name, id);
             save();
             return true;
@@ -88,35 +84,13 @@ public class PlayerConfig extends YamlConfiguration {
         return age;
     }
     
-    public File getConfigFile(){
-        return this.configFile;
-    }
-    
     public void removePlayer(){
         try {
-            configFile.delete();
+            getConfigFile().delete();
         } catch (Exception e){}
     }
     
-    public void save()
-    {
-        try{
-            save(configFile);
-        }
-        catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, e.getMessage(), e);
-        }
-    }
     
-    @Override
-    public synchronized long getLong(String path)
-    {
-            return super.getLong(path);
-    }
     
-    @Override
-    public synchronized void set(String path, Object value)
-    {
-            super.set(path, value);
-    }
+    
 }

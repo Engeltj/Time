@@ -33,33 +33,13 @@ public class UpdatePlayers implements Runnable {
     
     public void run() {
         for (Player player : plugin.getServer().getOnlinePlayers()){
-            PlayerConfig config = new PlayerConfig(plugin, player);
-            //plugin.sendConsole(Double.toString(config.getPlayerAge()));
+            ConfigPlayer config = new ConfigPlayer(plugin, player);
             if (config.getPlayerAge() > 7*24*60*60*1000) { //7000 days
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), 1*updateInterval);
                 if (!es.transactionSuccess()){
-                    String name = player.getName();
-                    player.kickPlayer("You ran out of time! You're entire profile has been reset.");
-                    for (World world : plugin.getServer().getWorlds()){
-                        try {
-                            File f = new File(System.getProperty("user.dir") + "\\" + world.getName() + "\\players\\" + name + ".dat");
-                            f.delete();
-                        }catch(Exception e){}
-                    }
-                    
-                    try{
-                        FileOutputStream writer = new FileOutputStream(System.getProperty("user.dir") + "\\plugins\\Essentials\\userdata\\" + name.toLowerCase() + ".yml");
-                        writer.write(0);
-                        writer.close();
-                    }
-                    catch (Exception e){
-                        plugin.sendConsole(plugin.getPluginName() + "Failed to delete " + "Essentials\\userdata\\" + name.toLowerCase() + ".yml");
-                    }
-                    synchronized(config.getConfigFile()){
-                         config.removePlayer();
-                    }
-                  
+                    plugin.getTimePlayers().resetPlayer(player);
                 }
+                //BukkitTask task = new ExampleTask(this.plugin).runTaskLater(this.plugin, 20);
             }
         }
     }
