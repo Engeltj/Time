@@ -8,30 +8,23 @@ package com.tengel.time;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.bukkit.Bukkit;
-import static org.bukkit.Bukkit.getServer;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.ItemStack;
 
 /**
  *
@@ -115,6 +108,25 @@ public class TimePlayerListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event){
         Player player = event.getPlayer();
         players.removePlayer(player);
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onAttack(EntityDamageByEntityEvent event){
+        if (!(event.getDamager() instanceof Player))
+            return;
+        if (!(event.getEntity() instanceof Player))
+            return;
+        Player attacker = (Player)event.getDamager();
+        if (plugin.getTimePlayers().getPlayerConfig(attacker.getName()).getProfession().equalsIgnoreCase("Cop")){
+            Player defender = (Player) event.getEntity();
+            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(defender.getName());
+            int zone = cp.getPlayerTimeZone();
+            if (cp.getBounty() > 0){
+                defender.teleport(plugin.getLocation(zone, "jail"));
+            }
+        }
+        
+   
     }
     
     public boolean playerExists(String playername){

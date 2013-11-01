@@ -38,6 +38,39 @@ public class TimeCommands implements Listener{
         this.args = args;
     }
     
+    
+    private String convertSecondsToTime(double seconds){
+        double minutes = 0;
+        double hours = 0;
+        double days = 0;
+        double weeks = 0;
+        double years = 0;
+
+        if (seconds > 60){
+            minutes = Math.floor(seconds/60);
+            seconds -= minutes*60;
+        }
+        if (minutes > 60){
+            hours = Math.floor(minutes/60);
+            minutes -= hours*60;
+        }
+        if (hours > 24){
+            days = Math.floor(hours/24);
+            hours -= days*24;
+        }
+        if (days > 30){
+            weeks = Math.floor(days/30);
+            days -= weeks*30;
+        }
+        if (weeks > 52){
+            years = Math.floor(weeks/52);
+            weeks -= years*52;
+        }
+
+        return String.format("%04.0f·%02.0f·%02.0f·%01.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds);
+        
+    }
+    
     public boolean executeCommand(){
         String command = cmd.getName();
         if(command.equalsIgnoreCase("ghost") && args.length == 1) {
@@ -61,75 +94,32 @@ public class TimeCommands implements Listener{
         else if (command.equalsIgnoreCase("life") && args.length == 0){
             sender.sendMessage(ChatColor.YELLOW + "Time format: YYYY/WW/DD/HH/MM/SS");
             sender.sendMessage(ChatColor.BOLD + "" + ChatColor.GREEN + "Your options are: ");
-            sender.sendMessage(ChatColor.GREEN + "/life age  -- determines how long you've played");
-            sender.sendMessage(ChatColor.GREEN + "/life left  -- determines how long you have left to live");
+            sender.sendMessage(ChatColor.GREEN + "/life age  -- How long you've played");
+            sender.sendMessage(ChatColor.GREEN + "/life left  -- How long you have left to live");
+            sender.sendMessage(ChatColor.GREEN + "/life bounty  -- The bounty on your head to be captured");
         }
         
         else if (command.equalsIgnoreCase("life") && args[0].equalsIgnoreCase("age")){
             double seconds = plugin.getTimePlayers().getPlayerConfig(sender.getName()).getPlayerAge();
-            double minutes = 0;
-            double hours = 0;
-            double days = 0;
-            double weeks = 0;
-            double years = 0;
+            String time = convertSecondsToTime(seconds);
             
-            if (seconds > 60){
-                minutes = Math.floor(seconds/60);
-                seconds -= minutes*60;
-            }
-            if (minutes > 60){
-                hours = Math.floor(minutes/60);
-                minutes -= hours*60;
-            }
-            if (hours > 24){
-                days = Math.floor(hours/24);
-                hours -= days*24;
-            }
-            if (days > 30){
-                weeks = Math.floor(days/30);
-                days -= weeks*30;
-            }
-            if (weeks > 52){
-                years = Math.floor(weeks/52);
-                weeks -= years*52;
-            }
-            
-            sender.sendMessage(ChatColor.AQUA + String.format("%04.0f·%02.0f·%02.0f·%01.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds));            
+            sender.sendMessage(plugin.getPluginName() + ChatColor.AQUA + time);            
             return true;
         }
         else if (command.equalsIgnoreCase("life") && args[0].equalsIgnoreCase("left")){
-            //SimpleDateFormat df = new SimpleDateFormat("'You have' HH 'hour(s)' mm 'minute(s)' ss 'second(s) left to live.'");
             double seconds = plugin.getEconomy().getBalance(sender.getName());
-            double minutes = 0;
-            double hours = 0;
-            double days = 0;
-            double weeks = 0;
-            double years = 0;
-            
-            if (seconds > 60){
-                minutes = Math.floor(seconds/60);
-                seconds -= minutes*60;
-            }
-            if (minutes > 60){
-                hours = Math.floor(minutes/60);
-                minutes -= hours*60;
-            }
-            if (hours > 24){
-                days = Math.floor(hours/24);
-                hours -= days*24;
-            }
-            if (days > 30){
-                weeks = Math.floor(days/30);
-                days -= weeks*30;
-            }
-            if (weeks > 52){
-                years = Math.floor(weeks/52);
-                weeks -= years*52;
-            }
-            
-            sender.sendMessage(ChatColor.DARK_GREEN + String.format("%04.0f·%02.0f·%02.0f·%01.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds));
-            sender.sendMessage("year·ww·dd·hh·mm·ss");
+            String time = convertSecondsToTime(seconds);
+            sender.sendMessage(plugin.getPluginName() + ChatColor.DARK_GREEN + time); 
             return true;
+        }
+        else if (command.equalsIgnoreCase("life") && args[0].equalsIgnoreCase("bounty")){
+            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
+            double bounty = cp.getBounty();
+            String time = convertSecondsToTime(bounty);
+            if (bounty > 0)
+                sender.sendMessage(plugin.getPluginName() + ChatColor.RED + time);
+            else
+                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You are not on the bounty list");
         }
         return false;
     }

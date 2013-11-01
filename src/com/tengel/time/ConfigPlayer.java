@@ -58,6 +58,34 @@ public class ConfigPlayer extends Config {
         save();
     }
     
+    public void setPlayerTimeZone(int id){
+        set("zone", id);
+        save();
+    }
+    
+    public void setProfession(String profession){
+        set("profession", profession);
+        save();
+    }
+    
+    public String getProfession(){
+        return getString("profession");
+    }
+    
+    public int getPlayerTimeZone(){
+        return getInt("zone");
+    }
+    
+    public int getBounty(){
+        return getInt("bounty");
+    }
+    
+    public void addBounty(int amount){
+        int bounty = getInt("bounty");
+        set("bounty", bounty+amount);
+        save();
+    }
+    
     public boolean addLicense(String name, int id){
         ConfigurationSection section = this.getConfigurationSection("license");
         if (section == null)

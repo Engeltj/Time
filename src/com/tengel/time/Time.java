@@ -26,6 +26,8 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import org.bukkit.Location;
+import org.bukkit.World;
 /**
  *
  * @author Tim
@@ -38,7 +40,7 @@ public final class Time extends JavaPlugin {
     private String pluginName;
     private TimePlayers players;
     private File configSigns;
-    public Plugin worldGuard;
+    public WorldGuardPlugin worldGuard;
 
     public Time() {
         players = new TimePlayers(this);
@@ -50,7 +52,7 @@ public final class Time extends JavaPlugin {
     @Override
     public void onEnable(){
         PluginManager pm = getServer().getPluginManager();
-        Plugin worldGuard = getServer().getPluginManager().getPlugin("WorldGuard");
+        worldGuard = (WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard");
         
         if (worldGuard == null || !(worldGuard instanceof WorldGuardPlugin)) {
             getLogger().info(String.format("[%s] - Disabled due to no instance of WorldGuard found!", getDescription().getName()));
@@ -117,6 +119,10 @@ public final class Time extends JavaPlugin {
         return this.playerListener;
     }
     
+    public RegionControl getRegionControl(){
+        return this.worldGuardListener;
+    }
+    
     public String getPluginName(){
         return this.pluginName;
     }
@@ -132,6 +138,17 @@ public final class Time extends JavaPlugin {
             }
         }
         return this.configSigns;
+    }
+    
+    public Location getLocation(int zone, String type){
+        Location loc = null;
+        World world = this.getServer().getWorld("Time");
+        if (type.equalsIgnoreCase("jail")){
+            if (zone == 0)
+                loc.add(370, 65, 390);
+            loc.setWorld(world);
+        }
+        return loc;
     }
     
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
