@@ -57,7 +57,8 @@ public class UpdatePlayers implements Runnable {
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), 1*updateInterval);
                     
                 if (!es.transactionSuccess()){
-                    plugin.getTimePlayers().resetPlayer(player);
+                    if (!cp.isJailed())
+                        plugin.getTimePlayers().resetPlayer(player);
                 }
                 //BukkitTask task = new ExampleTask(this.plugin).runTaskLater(this.plugin, 20);
             }

@@ -6,6 +6,7 @@
 
 package com.tengel.time;
 
+import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.item.Items;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -30,6 +31,10 @@ public class TimeCommands implements Listener{
     private String label;
     private String[] args;
     
+    public TimeCommands(){
+        
+    }
+    
     public TimeCommands(Time plugin, CommandSender sender, Command cmd, String label, String[] args) {
         this.sender = sender;
         this.plugin = plugin;
@@ -39,7 +44,7 @@ public class TimeCommands implements Listener{
     }
     
     
-    private String convertSecondsToTime(double seconds){
+    public String convertSecondsToTime(double seconds){
         double minutes = 0;
         double hours = 0;
         double days = 0;
@@ -91,28 +96,28 @@ public class TimeCommands implements Listener{
             target.hidePlayer(s);
             return true;
         }
-        else if (command.equalsIgnoreCase("life") && args.length == 0){
+        if (!command.equalsIgnoreCase("life"))
+            return false;
+        else if (args.length == 0){
             sender.sendMessage(ChatColor.YELLOW + "Time format: YYYY/WW/DD/HH/MM/SS");
             sender.sendMessage(ChatColor.BOLD + "" + ChatColor.GREEN + "Your options are: ");
             sender.sendMessage(ChatColor.GREEN + "/life age  -- How long you've played");
             sender.sendMessage(ChatColor.GREEN + "/life left  -- How long you have left to live");
             sender.sendMessage(ChatColor.GREEN + "/life bounty  -- The bounty on your head to be captured");
+            sender.sendMessage(ChatColor.GREEN + "/life bail  -- Pays off the price on your head so you may leave jail");
         }
         
-        else if (command.equalsIgnoreCase("life") && args[0].equalsIgnoreCase("age")){
+        else if (args[0].equalsIgnoreCase("age")){
             double seconds = plugin.getTimePlayers().getPlayerConfig(sender.getName()).getPlayerAge();
             String time = convertSecondsToTime(seconds);
-            
-            sender.sendMessage(plugin.getPluginName() + ChatColor.AQUA + time);            
-            return true;
+            sender.sendMessage(plugin.getPluginName() + ChatColor.AQUA + time);
         }
-        else if (command.equalsIgnoreCase("life") && args[0].equalsIgnoreCase("left")){
+        else if (args[0].equalsIgnoreCase("left")){
             double seconds = plugin.getEconomy().getBalance(sender.getName());
             String time = convertSecondsToTime(seconds);
             sender.sendMessage(plugin.getPluginName() + ChatColor.DARK_GREEN + time); 
-            return true;
         }
-        else if (command.equalsIgnoreCase("life") && args[0].equalsIgnoreCase("bounty")){
+        else if (args[0].equalsIgnoreCase("bounty")){
             ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
             double bounty = cp.getBounty();
             String time = convertSecondsToTime(bounty);
@@ -121,7 +126,20 @@ public class TimeCommands implements Listener{
             else
                 sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You are not on the bounty list");
         }
-        return false;
+        else if (args[0].equalsIgnoreCase("bail")){
+            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
+            if (cp.isJailed()){
+                int bounty = cp.getBounty();
+                EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), bounty);
+                if (es.transactionSuccess()){
+                    sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You've been freed at the cost of " + ChatColor.RED + cp.getBountyString());
+                    //free user
+                } else
+                    sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "You cannot afford bail, you must wait this one out.");
+            } else
+                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You are not in jail");
+        }
+        return true;
     }
     
     

@@ -63,13 +63,30 @@ public class ConfigPlayer extends Config {
         save();
     }
     
+    public void setJailed(boolean inJail){
+        set("jail", inJail);
+        save();
+    }
+    
     public void setProfession(String profession){
         set("profession", profession);
         save();
     }
     
+    
+    public boolean getJailed(){
+        return getBoolean("jail");
+    }
+    
+    public boolean isJailed(){
+        return getJailed();
+    }
+    
     public String getProfession(){
-        return getString("profession");
+        String prof = getString("profession");
+        if (prof == null)
+            return "";
+        return prof;
     }
     
     public int getPlayerTimeZone(){
@@ -78,6 +95,11 @@ public class ConfigPlayer extends Config {
     
     public int getBounty(){
         return getInt("bounty");
+    }
+    
+    public String getBountyString(){
+        TimeCommands tc = new TimeCommands();
+        return tc.convertSecondsToTime(getDouble("bounty"));
     }
     
     public void addBounty(int amount){

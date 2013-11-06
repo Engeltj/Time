@@ -6,6 +6,7 @@
 
 package com.tengel.time;
 
+import com.tengel.time.profs.Police;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bukkit.Material;
@@ -66,6 +67,7 @@ public class TimePlayerListener implements Listener {
     @EventHandler(priority=EventPriority.NORMAL)
     public void onInteract(PlayerInteractEvent event){
         Block b = null;
+        
         if (event.getAction()!=Action.RIGHT_CLICK_BLOCK)
             return;
         if (!event.hasBlock()) {
@@ -117,13 +119,15 @@ public class TimePlayerListener implements Listener {
         if (!(event.getEntity() instanceof Player))
             return;
         Player attacker = (Player)event.getDamager();
-        if (plugin.getTimePlayers().getPlayerConfig(attacker.getName()).getProfession().equalsIgnoreCase("Cop")){
+        
+        Player player = (Player) event.getDamager();
+        String prof = plugin.getTimePlayers().getPlayerConfig(player.getName()).getProfession();
+        
+        //player.sendMessage(prof);
+        if ((player.getItemInHand().getType() == Material.STICK) && prof.equalsIgnoreCase("Cop")){
             Player defender = (Player) event.getEntity();
-            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(defender.getName());
-            int zone = cp.getPlayerTimeZone();
-            if (cp.getBounty() > 0){
-                defender.teleport(plugin.getLocation(zone, "jail"));
-            }
+            Police police = new Police(plugin);
+            police.arrestPlayer(player, defender);
         }
         
    

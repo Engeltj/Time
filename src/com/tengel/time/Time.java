@@ -7,25 +7,18 @@
 package com.tengel.time;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import net.milkbowl.vault.Vault;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.event.EventPriority;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
-import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import org.bukkit.Location;
 import org.bukkit.World;
 /**
@@ -144,9 +137,15 @@ public final class Time extends JavaPlugin {
         Location loc = null;
         World world = this.getServer().getWorld("Time");
         if (type.equalsIgnoreCase("jail")){
+            
+            if (zone == 0){
+                Random r = new Random(4);
+                int rand = r.nextInt();
+                loc = new Location(world, 370, 66, 390+rand*4);
+            }
+        } else if (type.equalsIgnoreCase("freedom")){
             if (zone == 0)
-                loc.add(370, 65, 390);
-            loc.setWorld(world);
+                loc = new Location(world, 362, 66, 391);
         }
         return loc;
     }
