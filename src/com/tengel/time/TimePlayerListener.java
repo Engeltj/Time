@@ -54,7 +54,7 @@ public class TimePlayerListener implements Listener {
     @EventHandler(priority=EventPriority.NORMAL)
     public void onSignChange(SignChangeEvent event){
         String type = event.getLine(0);
-        if (type.contains("[License]") || type.contains("[Shop]")){
+        if (type.contains("[License]") || type.contains("[Shop]") || type.contains("[Job]")){
           ShopSigns ss = new ShopSigns(plugin, event.getPlayer());
           ss.create(event);
         }
@@ -96,6 +96,9 @@ public class TimePlayerListener implements Listener {
                     return;
                 }
                 ss.buy(b, cost);
+            } else if (type.contains("[Job]")){
+                ShopSigns ss = new ShopSigns(plugin, event.getPlayer());
+                ss.buyProfession(s.getLine(1));
             }
         }
     }

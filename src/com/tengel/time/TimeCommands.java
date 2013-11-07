@@ -6,6 +6,7 @@
 
 package com.tengel.time;
 
+import com.tengel.time.profs.TimeProfession;
 import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.item.Items;
 import org.bukkit.Bukkit;
@@ -138,6 +139,11 @@ public class TimeCommands implements Listener{
                     sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "You cannot afford bail, you must wait this one out.");
             } else
                 sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You are not in jail");
+        } else if (args[0].equalsIgnoreCase("unemploy")){
+            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
+            TimeProfession tp = TimeProfession.UNEMPLOYED;
+            int cost = tp.getUnemployCost(cp.getPlayerTimeZone());
+            EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), cost);
         }
         return true;
     }

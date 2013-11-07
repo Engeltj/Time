@@ -20,6 +20,7 @@ import org.bukkit.entity.Player;
  */
 public class ConfigPlayer extends Config {
     private String playerName;
+    //private boolean
     
     public ConfigPlayer(Time plugin, Player player){
         super(plugin);

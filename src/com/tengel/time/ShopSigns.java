@@ -6,6 +6,7 @@
 
 package com.tengel.time;
 
+import com.tengel.time.profs.TimeProfession;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -73,6 +74,16 @@ public class ShopSigns extends YamlConfiguration {
             player.sendMessage(plugin.getPluginName() + ChatColor.RED + "Insufficent life, transaction cancelled");
     }
     
+    public void buyProfession(String prof){
+        if (plugin.getPlayerListener().checkPermissions(player, "buy.profession", false)){
+            String p_prof = plugin.getTimePlayers().getPlayerConfig(player.getName()).getProfession();
+            TimeProfession ptp = TimeProfession.valueOf(p_prof);
+            TimeProfession tp = ptp;
+            tp.give(plugin, player, prof);
+        } else
+            player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have permissions to do that!");
+    }
+    
     public void buy(Block block, int cost){
         Sign s = (Sign) block.getState();
         Material m = plugin.getItemMaterial(s.getLine(1));
@@ -95,7 +106,6 @@ public class ShopSigns extends YamlConfiguration {
                 else
                     player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have permissions to do that!");
             }
-
         }
     }
     
@@ -104,6 +114,11 @@ public class ShopSigns extends YamlConfiguration {
         
         int cost = 0;
         if (getPlugin().getPlayerListener().checkPermissions(player, "create.signshop", false)){
+            if (event.getLine(0).contains("[Job]")){
+                event.setLine(0, ChatColor.BOLD + "" + ChatColor.AQUA + "  [Job]");
+                return true;
+            }
+            
             Material m = plugin.getItemMaterial(event.getLine(1));
             //plugin.sendConsole("line: " + s.getLine(1) +".");
             if (m == null){
@@ -119,10 +134,10 @@ public class ShopSigns extends YamlConfiguration {
                 dropSign(block.getLocation());
                 return false;
             }
-            if (event.getLine(0).contains("License"))
-                event.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "[License]");
-            else if (event.getLine(0).contains("Shop")){
-                event.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "[Shop]");
+            if (event.getLine(0).contains("[License]"))
+                event.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "  [License]");
+            else if (event.getLine(0).contains("[Shop]")){
+                event.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "  [Shop]");
                 ConfigShop sc = new ConfigShop(plugin);
                 sc.updateItem(m.getId(), cost);
             }
