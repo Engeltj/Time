@@ -6,6 +6,7 @@
 
 package com.tengel.time;
 
+import com.tengel.time.profs.TimeProfession;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,11 +21,13 @@ import org.bukkit.entity.Player;
  */
 public class ConfigPlayer extends Config {
     private String playerName;
+    public boolean flag_jobLeave = false;
     //private boolean
     
     public ConfigPlayer(Time plugin, Player player){
         super(plugin);
         playerName = player.getName();
+        
         
         File folder = new File(plugin.getDataFolder(), "players");
         if (!folder.exists())
@@ -74,6 +77,19 @@ public class ConfigPlayer extends Config {
         save();
     }
     
+    public void setProfession(TimeProfession tp){
+        set("profession", tp.toString());
+        save();
+    }
+    
+    public void addSkill(TimeProfession tp){
+        ConfigurationSection section = this.getConfigurationSection("license");
+        if (section == null)
+            section = createSection("skills");
+        int skill = section.getInt(tp.toString());
+        this.set("skills."+tp.toString(), 1+skill);
+        //DOES NOT SAVE :)
+    }
     
     public boolean getJailed(){
         return getBoolean("jail");
@@ -86,7 +102,7 @@ public class ConfigPlayer extends Config {
     public String getProfession(){
         String prof = getString("profession");
         if (prof == null)
-            return "";
+            return "UNEMPLOYED";
         return prof;
     }
     

@@ -67,4 +67,5 @@ public enum TimeProfession {
     public void take(Time plugin, Player p, int id){
         
     }
+    
 }

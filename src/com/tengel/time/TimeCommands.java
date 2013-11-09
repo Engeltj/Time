@@ -20,6 +20,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 /**
  *
@@ -140,11 +142,31 @@ public class TimeCommands implements Listener{
             } else
                 sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You are not in jail");
         } else if (args[0].equalsIgnoreCase("unemploy")){
-            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
+            final ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
+            Runnable usetJobLeave = new BukkitRunnable() {
+                public void run() {
+                    cp.flag_jobLeave = false;
+                }
+            };
+            
+            plugin.getServer().getScheduler().runTaskLater(plugin, usetJobLeave, 20*10);
             TimeProfession tp = TimeProfession.UNEMPLOYED;
             int cost = tp.getUnemployCost(cp.getPlayerTimeZone());
-            EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), cost);
-        }
+            
+            if (!cp.flag_jobLeave){
+                cp.flag_jobLeave = true;
+                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Type '/life unemploy' again to leave your job at the cost of " + 
+                                        ChatColor.RED + convertSecondsToTime(cost));
+            } else {
+                EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), cost);
+                if (es.transactionSuccess()){
+                    cp.setProfession("UNEMPLOYED");
+                    sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You have left your job! You are now unemployed.");
+                } else
+                    sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "It seems you cannot afford to lose your job.");
+            }
+        } else
+            sender.sendMessage(plugin.getPluginName() + ChatColor.GRAY + "Invalid command, type " + ChatColor.GREEN + "/life" + ChatColor.GRAY + " for more info");
         return true;
     }
     
