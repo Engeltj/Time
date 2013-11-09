@@ -7,24 +7,30 @@
 package com.tengel.time;
 
 import com.tengel.time.profs.Police;
+import com.tengel.time.profs.TimeProfession;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 /**
@@ -32,8 +38,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
  * @author Tim
  */
 public class TimePlayerListener implements Listener {
-    private Time plugin;
-    private TimePlayers players;
+    private final Time plugin;
+    private final TimePlayers players;
     
     public TimePlayerListener(Time plugin, TimePlayers players) {
             this.plugin = plugin;
@@ -59,6 +65,40 @@ public class TimePlayerListener implements Listener {
           ss.create(event);
         }
     }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onBlockBreak(BlockBreakEvent event){
+        Player player = event.getPlayer();
+        World world = player.getWorld();
+        Block block = event.getBlock();
+        if (!world.getName().equalsIgnoreCase("Time")){
+            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
+            event.setCancelled(true);
+            if (cp.getProfession() == TimeProfession.MINER){
+                if (plugin.prof_miner.getMinerBlacklist().contains(block.getType())){
+                    player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need a " + ChatColor.BLUE + "license" + ChatColor.RED + " to obtain this material.");
+                } else {
+                    int earned = plugin.prof_miner.getSkillEarned(block.getType());
+                    cp.addSkill(TimeProfession.MINER, earned);
+                    event.getBlock().setType(Material.AIR);
+                    for (int i=0;i<earned;i++)
+                        world.spawnEntity(player.getLocation(), EntityType.EXPERIENCE_ORB);
+                }
+            } 
+        }
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onPlayerPickupItem(PlayerPickupItemEvent event){
+        Player player = event.getPlayer();
+        if (event.getItem().getType() == EntityType.EXPERIENCE_ORB){
+            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
+            event.setCancelled(true);
+            event.getItem().remove();
+            player.setExp(cp.getSkill());
+        }
+    }
+    
     
     public void onPlayerMove(PlayerMoveEvent event){
         //event.
@@ -121,13 +161,12 @@ public class TimePlayerListener implements Listener {
             return;
         if (!(event.getEntity() instanceof Player))
             return;
-        Player attacker = (Player)event.getDamager();
         
         Player player = (Player) event.getDamager();
-        String prof = plugin.getTimePlayers().getPlayerConfig(player.getName()).getProfession();
+        TimeProfession prof = plugin.getTimePlayers().getPlayerConfig(player.getName()).getProfession();
         
         //player.sendMessage(prof);
-        if ((player.getItemInHand().getType() == Material.STICK) && prof.equalsIgnoreCase("Cop")){
+        if ((player.getItemInHand().getType() == Material.STICK) && (prof == TimeProfession.OFFICER)){
             Player defender = (Player) event.getEntity();
             Police police = new Police(plugin);
             police.arrestPlayer(player, defender);

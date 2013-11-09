@@ -76,15 +76,15 @@ public class ShopSigns extends YamlConfiguration {
     
     public void buyProfession(String prof){
         if (plugin.getPlayerListener().checkPermissions(player, "buy.profession", false)){
-            String p_prof = plugin.getTimePlayers().getPlayerConfig(player.getName()).getProfession();
-            TimeProfession ptp;
-            try {
-                ptp = TimeProfession.valueOf(p_prof);
-            } catch (Exception e){
-                player.sendMessage(plugin.getPluginName() + ChatColor.RED + "Your current job is invalid, please speak to an admin!");
-                return;
-            }
-            TimeProfession tp = ptp;
+            //String p_prof = 
+            //TimeProfession ptp;
+            //try {
+            //    ptp = TimeProfession.valueOf(p_prof);
+            //} catch (Exception e){
+            //    player.sendMessage(plugin.getPluginName() + ChatColor.RED + "Your current job is invalid, please speak to an admin!");
+            //    return;
+            //}
+            TimeProfession tp = plugin.getTimePlayers().getPlayerConfig(player.getName()).getProfession();
             tp.give(plugin, player, prof);
         } else
             player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have permissions to do that!");

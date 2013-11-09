@@ -51,8 +51,8 @@ public enum TimeProfession {
     }
     
     public TimeProfession get(Time plugin, Player p){
-        String prof = plugin.getTimePlayers().getPlayerConfig(p.getName()).getProfession();
-        return TimeProfession.valueOf(prof);
+        return plugin.getTimePlayers().getPlayerConfig(p.getName()).getProfession();
+        //return TimeProfession.valueOf(prof);
     }
     
     public int getUnemployCost(int zone){

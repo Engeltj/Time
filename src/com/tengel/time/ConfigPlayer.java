@@ -8,11 +8,7 @@ package com.tengel.time;
 
 import com.tengel.time.profs.TimeProfession;
 import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 /**
@@ -82,13 +78,17 @@ public class ConfigPlayer extends Config {
         save();
     }
     
-    public void addSkill(TimeProfession tp){
+    public void addSkill(TimeProfession tp, int amount){
         ConfigurationSection section = this.getConfigurationSection("license");
         if (section == null)
             section = createSection("skills");
         int skill = section.getInt(tp.toString());
-        this.set("skills."+tp.toString(), 1+skill);
+        this.set("skills."+tp.toString(), amount+skill);
         //DOES NOT SAVE :)
+    }
+    
+    public int getSkill() {
+        return this.getInt("skills." + this.getProfession().name());
     }
     
     public boolean getJailed(){
@@ -99,11 +99,12 @@ public class ConfigPlayer extends Config {
         return getJailed();
     }
     
-    public String getProfession(){
+    public TimeProfession getProfession(){
+        TimeProfession tp = TimeProfession.UNEMPLOYED;
         String prof = getString("profession");
         if (prof == null)
-            return "UNEMPLOYED";
-        return prof;
+            tp = TimeProfession.valueOf(prof);
+        return tp;
     }
     
     public int getPlayerTimeZone(){
@@ -140,7 +141,6 @@ public class ConfigPlayer extends Config {
     }
     
     public double getPlayerAge(){
-        //plugin.sendConsole(Long.toString(getLong("start")));
         double start = 0;
         try {
             start = Double.valueOf(getString("start"));
@@ -156,8 +156,4 @@ public class ConfigPlayer extends Config {
             getConfigFile().delete();
         } catch (Exception e){}
     }
-    
-    
-    
-    
 }

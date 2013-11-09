@@ -16,6 +16,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.tengel.time.profs.Miner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -26,14 +27,16 @@ import org.bukkit.World;
  * @author Tim
  */
 public final class Time extends JavaPlugin {
-    private TimePlayerListener playerListener;
-    private RegionControl worldGuardListener;
-    private UpdatePlayers timeUpdater;
+    private final TimePlayerListener playerListener;
+    private final RegionControl worldGuardListener;
+    private final UpdatePlayers timeUpdater;
     private Economy economy = null;
     private String pluginName;
-    private TimePlayers players;
+    private final TimePlayers players;
     private File configSigns;
     public WorldGuardPlugin worldGuard;
+    
+    public Miner prof_miner;
 
     public Time() {
         players = new TimePlayers(this);
@@ -46,7 +49,7 @@ public final class Time extends JavaPlugin {
     public void onEnable(){
         PluginManager pm = getServer().getPluginManager();
         worldGuard = (WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard");
-        
+        prof_miner = new Miner(this);
         if (worldGuard == null || !(worldGuard instanceof WorldGuardPlugin)) {
             getLogger().info(String.format("[%s] - Disabled due to no instance of WorldGuard found!", getDescription().getName()));
             getServer().getPluginManager().disablePlugin(this);
