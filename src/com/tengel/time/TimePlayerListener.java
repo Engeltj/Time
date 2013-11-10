@@ -11,13 +11,16 @@ import com.tengel.time.profs.TimeProfession;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -75,16 +78,24 @@ public class TimePlayerListener implements Listener {
             ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
             event.setCancelled(true);
             if (cp.getProfession() == TimeProfession.MINER){
-                if (plugin.prof_miner.getMinerBlacklist().contains(block.getType())){
-                    player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need a " + ChatColor.BLUE + "license" + ChatColor.RED + " to obtain this material.");
-                } else {
+                if (!cp.hasLicense(block.toString()))//(plugin.prof_miner.getMinerBlacklist().contains(block.getType())){
+                    player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need a " + ChatColor.BLUE + "license" + ChatColor.RED + " to obtain this material");
+                else {
                     int earned = plugin.prof_miner.getSkillEarned(block.getType());
                     cp.addSkill(TimeProfession.MINER, earned);
+                    //event.setExpToDrop(earned);
+                    //player.setExp((float)earned);
                     event.getBlock().setType(Material.AIR);
-                    for (int i=0;i<earned;i++)
-                        world.spawnEntity(player.getLocation(), EntityType.EXPERIENCE_ORB);
+                    for (int i=0;i<earned;i++){
+                        Location loc = block.getLocation();
+                        loc.setY(loc.getY()+1);
+                        ExperienceOrb orb = (ExperienceOrb) world.spawnEntity(loc, EntityType.EXPERIENCE_ORB);
+                        orb.setExperience(1);
+                    }
                 }
-            } 
+            } else {
+                player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need a to be a miner to obtain this material");
+            }
         }
     }
     
@@ -93,9 +104,8 @@ public class TimePlayerListener implements Listener {
         Player player = event.getPlayer();
         if (event.getItem().getType() == EntityType.EXPERIENCE_ORB){
             ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
-            event.setCancelled(true);
-            event.getItem().remove();
-            player.setExp(cp.getSkill());
+            //event.setCancelled(true);
+            //event.getItem().remove();
         }
     }
     
@@ -118,7 +128,6 @@ public class TimePlayerListener implements Listener {
             }
         } else
             b = event.getClickedBlock();
-        
         
         if (b.getType().equals(Material.SIGN_POST) || b.getType().equals(Material.WALL_SIGN)) {
             Sign s = (Sign) b.getState();

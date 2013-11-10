@@ -9,6 +9,7 @@ package com.tengel.time.profs;
 import com.tengel.time.Config;
 import com.tengel.time.Time;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import org.bukkit.Material;
 
@@ -16,31 +17,39 @@ import org.bukkit.Material;
  *
  * @author Tim
  */
-public class Miner {
+public class Gatherer {
     private final Time plugin;
     private ArrayList blacklist;
     private Map<Material, Integer> earnings;
+    private Config blocks_worth;
+    private TimeProfession prof;
     
-    public Miner(Time plugin){
+    public Gatherer(Time plugin, TimeProfession prof){
         this.plugin = plugin;
+        this.prof = prof;
         loadEarnings();
     }
     
     private void loadEarnings(){
-        Config c = new Config(this.plugin,"block_worth.yml");
+        earnings = new HashMap<Material, Integer>();
+        if (prof == TimeProfession.MINER)
+            blocks_worth = new Config(this.plugin,"exp_miner.yml");
+        else if (prof == TimeProfession.FARMER)
+            blocks_worth = new Config(this.plugin,"exp_farmer.yml");
         for (Material m : Material.values()){
-            if (!c.contains(m.name())){
-                c.set(m.name(), 0);
+            if (!blocks_worth.contains(m.name())){
+                blocks_worth.set(m.name(), 0);
+                blocks_worth.save();
                 earnings.put(m, 0);
             } else {
-                int worth = c.getInt(m.name());
+                int worth = blocks_worth.getInt(m.name());
                 earnings.put(m, worth);
             }
         }
-        
     }
     
-    public ArrayList getMinerBlacklist(){
+    @Deprecated
+    public ArrayList getBlacklist(){
         Material.values();
         if (blacklist == null){
             blacklist = new ArrayList();

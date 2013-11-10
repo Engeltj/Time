@@ -102,8 +102,8 @@ public class ConfigPlayer extends Config {
     public TimeProfession getProfession(){
         TimeProfession tp = TimeProfession.UNEMPLOYED;
         String prof = getString("profession");
-        if (prof == null)
-            tp = TimeProfession.valueOf(prof);
+        if (prof != null)
+            tp = TimeProfession.valueOf(prof.toUpperCase());
         return tp;
     }
     
@@ -138,6 +138,9 @@ public class ConfigPlayer extends Config {
         }
         else
             return false;
+    }
+    public boolean hasLicense(String name){
+        return (this.getString("license."+name) != null);
     }
     
     public double getPlayerAge(){

@@ -40,19 +40,19 @@ public enum TimeProfession {
         return value;
     }
     
-    public void give(Time plugin, Player p, String prof){
+    public void give(Time plugin, Player p){
         if (get(plugin, p) != TimeProfession.UNEMPLOYED){
             p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You already have a profession! Please '/life unemploy' first.");
             return;
         }
-        
+        else 
+            p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You have now become a " + this.toString().toLowerCase() + "!");
         ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
-        cp.setProfession(prof);
+        cp.setProfession(this.toString());
     }
     
     public TimeProfession get(Time plugin, Player p){
         return plugin.getTimePlayers().getPlayerConfig(p.getName()).getProfession();
-        //return TimeProfession.valueOf(prof);
     }
     
     public int getUnemployCost(int zone){
