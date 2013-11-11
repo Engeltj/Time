@@ -6,6 +6,7 @@
 
 package com.tengel.time;
 
+import com.tengel.time.homes.Homes;
 import com.tengel.time.profs.TimeProfession;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
@@ -157,6 +158,42 @@ public class TimeCommands implements Listener{
                     sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You have left your job! You are now unemployed.");
                 } else
                     sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "It seems you cannot afford to lose your job.");
+            }
+        } else if (args[0].equalsIgnoreCase("home")){
+            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
+            Player p = plugin.getServer().getPlayer(sender.getName());
+            if (args.length == 1)
+                return true;
+            if (args[1].equalsIgnoreCase("rent")){
+                Homes h = new Homes(plugin);
+                h.rent(p);
+            } else if (args[1].equalsIgnoreCase("buy")){
+                Homes h = new Homes(plugin);
+                if (cp.getProfession() == TimeProfession.LANDLORD)
+                    h.buy(p);
+                else
+                    sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need to be a landlord to purchase this home");
+                return true;
+            } else if (args[1].equalsIgnoreCase("create")){
+                if (plugin.getPlayerListener().checkPermissions(sender, "home.create", false)){
+                    if (args.length < 4){
+                        sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "/life create <region> <price> [farm]");
+                        return true;
+                    } else {
+                        Homes h = new Homes(plugin);
+                        double price = 0;
+                        try {
+                            price = Double.valueOf(args[3]);
+                        } catch (Exception e){
+                            sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Invalid price specified");
+                            return true;
+                        }
+                        h.create(p, args[2], price, (args.length == 5));
+                        return true;
+                    }
+                } else
+                    return false;
+                
             }
         } else
             sender.sendMessage(plugin.getPluginName() + ChatColor.GRAY + "Invalid command, type " + ChatColor.GREEN + "/life" + ChatColor.GRAY + " for more info");

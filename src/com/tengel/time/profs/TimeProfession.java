@@ -26,7 +26,7 @@ public enum TimeProfession {
     ALCHEMIST(6), 
     LUMBERJACK(7), 
     FARMER(8), 
-    LAND_LORD(9), 
+    LANDLORD(9), 
     ROBBER(10), 
     DRUG_DEALER(11),
     DOCTOR(12), 

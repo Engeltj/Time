@@ -63,6 +63,18 @@ public class ConfigPlayer extends Config {
         save();
     }
     
+    public void addHome(String home){
+        ConfigurationSection section = this.getConfigurationSection("homes");
+        if (section == null)
+            section = createSection("homes");
+        section.set(home, true);
+    }
+    
+    public void removeHome(String home){
+        this.set("homes."+home, null);
+        save();
+    }
+    
     public void setJailed(boolean inJail){
         set("jail", inJail);
         save();

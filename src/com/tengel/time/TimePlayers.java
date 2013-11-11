@@ -47,7 +47,11 @@ public class TimePlayers {
     public ConfigPlayer getPlayerConfig(String name){
         ConfigPlayer config = (ConfigPlayer) players.get(name);
         if (config == null){
-            plugin.sendConsole("Error obtaining player config via TimePlayers class");
+            Player p = plugin.getServer().getPlayer(name);
+            if (p == null){
+                plugin.sendConsole("Player not found ..");
+            } else
+                config = new ConfigPlayer(plugin, p);
         }
         return config;
     }

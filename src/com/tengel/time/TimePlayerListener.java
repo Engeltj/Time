@@ -74,7 +74,7 @@ public class TimePlayerListener implements Listener {
         Player player = event.getPlayer();
         World world = player.getWorld();
         Block block = event.getBlock();
-        if (!world.getName().equalsIgnoreCase("Time")){
+        if (world.getName().equalsIgnoreCase("Mine")){
             ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
             event.setCancelled(true);
             if (cp.getProfession() == TimeProfession.MINER){

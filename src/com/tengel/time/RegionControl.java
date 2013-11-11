@@ -18,6 +18,9 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import static com.sk89q.worldguard.bukkit.BukkitUtil.*;
+import com.tengel.time.homes.Homes;
+import com.tengel.time.profs.TimeProfession;
+import org.bukkit.Material;
 /**
  *
  * @author Tim
@@ -34,18 +37,35 @@ public class RegionControl implements Listener {
     @EventHandler
     public void onRegionEnter(RegionEnterEvent e){
         String rgName = e.getRegion().getId();
-        Player player = e.getPlayer();
-        if (isWrongTimeZone(player.getName(), getZoneId(rgName)))
-            player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You are in a the wrong time zone! Please leave immediately.");
-        //if (rgName.equalsIgnoreCase("Poor") || rgName.equalsIgnoreCase("Wealthy") || rgName.equalsIgnoreCase("Rich")){
-            //plugin.sendConsole("ENTERED POOR");
-            //if (!checkPermissions(player,"timezone."+rgName.toLowerCase(),false)){
-                
-                //BukkitTask task = new RunLater(player, plugin.getPluginName() + "You've been added to the wanted list!", "").runTaskLater(plugin, 20*1);
-                //ConfigWanted cw = new ConfigWanted(plugin);
-                //cw.addPlayer(player, 150);
-            //}
-       // }
+        Player p = e.getPlayer();
+        if (isWrongTimeZone(p.getName(), getZoneId(rgName)))
+            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You are in a the wrong time zone! Please leave immediately.");
+        Homes h = new Homes(plugin);
+        if (h.isHome(rgName)){
+            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
+            TimeCommands tc = new TimeCommands();
+            if (h.isAvailable(rgName)){
+                double price = h.getPrice(rgName);
+                p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "This home is available for " + ChatColor.GRAY + tc.convertSecondsToTime(price) +
+                    ChatColor.GREEN + " per day. Type " + ChatColor.GRAY + "/life home rent" + ChatColor.GREEN + " to rent.");
+            } else {
+                String renter = h.getRenter(rgName);
+                if (renter.equalsIgnoreCase(p.getName()))
+                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Welcome home " + p.getName());
+                else if (renter.length() > 0)
+                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Welcome to " + renter + "'s" + " home");
+            }
+            if (cp.getProfession() == TimeProfession.LANDLORD){
+                String lord = h.getLandlord(rgName);
+                if (lord.length() > 0 && !h.getRenter(rgName).equalsIgnoreCase(p.getName()))
+                    p.sendMessage(plugin.getPluginName() + ChatColor.GRAY + "The landlord of this apartment is " + lord);
+                else if (lord.length() == 0){
+                    double price = h.getPrice(rgName) * 14;
+                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "This home may be owned by you for renting out for " + ChatColor.GRAY + tc.convertSecondsToTime(price) +
+                            ChatColor.GREEN + ". Type " + ChatColor.GRAY + "/life home buy" + ChatColor.GREEN + " to purchase.");
+                }
+            }
+        }
     }
     
     public void onRegionLeave(RegionLeaveEvent e){
