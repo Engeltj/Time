@@ -98,10 +98,11 @@ public class TimeCommands implements Listener{
         else if (args.length == 0){
             sender.sendMessage(ChatColor.YELLOW + "Time format: YYYY/WW/DD/HH/MM/SS");
             sender.sendMessage(ChatColor.BOLD + "" + ChatColor.GREEN + "Your options are: ");
-            sender.sendMessage(ChatColor.GREEN + "/life age  -- How long you've played");
-            sender.sendMessage(ChatColor.GREEN + "/life left  -- How long you have left to live");
-            sender.sendMessage(ChatColor.GREEN + "/life bounty  -- The bounty on your head to be captured");
-            sender.sendMessage(ChatColor.GREEN + "/life bail  -- Pays off the price on your head so you may leave jail");
+            sender.sendMessage(ChatColor.GRAY + "/life age" + ChatColor.GREEN + "  > How long you've played");
+            sender.sendMessage(ChatColor.GRAY + "/life left" + ChatColor.GREEN + "  > How long you have left to live");
+            sender.sendMessage(ChatColor.GRAY + "/life bounty" + ChatColor.GREEN + "  > The bounty on your head to be captured");
+            sender.sendMessage(ChatColor.GRAY + "/life bail" + ChatColor.GREEN + "  > Pays off the price on your head so you may leave jail");
+            sender.sendMessage(ChatColor.GRAY + "/life password" + ChatColor.GREEN + "  > Sets your website account password");
         }
         
         else if (args[0].equalsIgnoreCase("age")){
@@ -195,6 +196,12 @@ public class TimeCommands implements Listener{
                     return false;
                 
             }
+        } else if (args[0].equalsIgnoreCase("password")){
+            if (args.length > 1){
+                plugin.getSql().addPlayer(sender.getName(), args[1]);
+                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Password has been set, visit " + ChatColor.GRAY + "http://depthsonline.com/minecraft" + ChatColor.GREEN + " to login");
+            } else 
+                sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Please specify a password!");
         } else
             sender.sendMessage(plugin.getPluginName() + ChatColor.GRAY + "Invalid command, type " + ChatColor.GREEN + "/life" + ChatColor.GRAY + " for more info");
         return true;

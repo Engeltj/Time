@@ -16,11 +16,13 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.tengel.time.mysql.TimeSQL;
 import com.tengel.time.profs.Gatherer;
 import com.tengel.time.profs.TimeProfession;
 import java.util.Random;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 /**
  *
  * @author Tim
@@ -34,6 +36,7 @@ public final class Time extends JavaPlugin {
     private final TimePlayers players;
     private File configSigns;
     public WorldGuardPlugin worldGuard;
+    private TimeSQL sql;
     
     public Gatherer prof_miner;
     public Gatherer prof_farmer;
@@ -47,6 +50,7 @@ public final class Time extends JavaPlugin {
     
     @Override
     public void onEnable(){
+        setupSql();
         PluginManager pm = getServer().getPluginManager();
         worldGuard = (WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard");
         prof_miner = new Gatherer(this, TimeProfession.MINER);
@@ -81,6 +85,42 @@ public final class Time extends JavaPlugin {
         this.getServer().getScheduler().cancelTasks(this);
         getLogger().info("Time by Engeltj has been disabled");
         
+    }
+    
+    public void setupSql(){
+        Config c = new Config(this, "config.yml");
+        ConfigurationSection section = c.getConfigurationSection("sql");
+        if (section == null)
+            section = c.createSection("sql");
+        String host = c.getString("sql.host");
+        String db = c.getString("sql.db");
+        String user = c.getString("sql.user");
+        String pass = c.getString("sql.pass");
+        
+        if (host == null){
+            host = "127.0.0.1";
+            section.set("host", host);
+        }
+        if (db == null){
+            db = "minecraft";
+            section.set("db", db);
+        }
+        if (user == null){
+            user = "root";
+            section.set("user", user);
+        }
+        if (pass == null){
+            pass = "";
+            section.set("pass", pass);
+        }
+        c.save();
+        sql = new TimeSQL(this, host, db, user, pass);
+    }
+    
+    public TimeSQL getSql(){
+        if (sql == null)
+            setupSql();
+        return this.sql;
     }
     
     public void sendConsole(String message){
