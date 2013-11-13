@@ -6,7 +6,7 @@
 
 package com.tengel.time;
 
-import com.tengel.time.homes.Homes;
+import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;

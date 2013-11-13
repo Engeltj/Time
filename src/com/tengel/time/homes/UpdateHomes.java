@@ -9,6 +9,7 @@ package com.tengel.time.homes;
 import com.tengel.time.ConfigPlayer;
 import com.tengel.time.Time;
 import com.tengel.time.TimeCommands;
+import com.tengel.time.mysql.Homes;
 import java.util.Set;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
@@ -57,7 +58,7 @@ public class UpdateHomes implements Runnable {
                     if (!chargePlayer(p, rent)){
                         ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
                         cp.removeHome(home);
-                        h.removeRenter(home);
+                        h.setRenter(home, "");
                     } else {
                         String landlord = h.getLandlord(home);
                         Player p_lord = plugin.getServer().getPlayer(landlord);

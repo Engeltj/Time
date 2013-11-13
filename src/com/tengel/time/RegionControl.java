@@ -18,7 +18,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import static com.sk89q.worldguard.bukkit.BukkitUtil.*;
-import com.tengel.time.homes.Homes;
+import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
 import org.bukkit.Material;
 /**

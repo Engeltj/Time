@@ -147,4 +147,8 @@ public class TimeSQL {
         }
     }
     
+    
+    public Connection getConnection(){
+        return this.con;
+    }
 }
