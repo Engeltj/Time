@@ -81,40 +81,6 @@ public class TimeSQL {
             plugin.sendConsole(ex.getMessage());
         }
     }
-    
-    public void addHome(String home, double price, boolean farm){
-        verifyConnection();
-        try {
-            Statement st = con.createStatement();
-            st.executeUpdate("INSERT INTO `homes` (name, price, farm) VALUES ('"+home+"',"+String.valueOf(price)+","+String.valueOf(farm)+");");
-        } catch (SQLException ex) {
-            plugin.sendConsole(ex.getMessage());
-        }    
-    }
-    
-    public void setHomeOwner(String home, String owner){
-        verifyConnection();
-        try {
-            Statement st = con.createStatement();
-            st.executeUpdate("UPDATE `homes` SET owner='"+owner+"' WHERE name='"+home+"';");
-        } catch (SQLException ex) {
-            plugin.sendConsole(ex.getMessage());
-        }    
-    }
-    
-    public void setHomeRenter(String home, String renter){
-        verifyConnection();
-        try {
-            Statement st = con.createStatement();
-            st.executeUpdate("UPDATE `homes` SET renter='"+renter+"' WHERE name='"+home+"';");
-        } catch (SQLException ex) {
-            plugin.sendConsole(ex.getMessage());
-        }    
-    }
-    
-    public void removeHome(String home){
-        verifyConnection();
-    }
         
     private String md5(String md5) {
         try {
@@ -146,7 +112,6 @@ public class TimeSQL {
             plugin.sendConsole(ex.getMessage());
         }
     }
-    
     
     public Connection getConnection(){
         return this.con;

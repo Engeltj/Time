@@ -6,8 +6,16 @@
 
 package com.tengel.time;
 
+import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
 import java.io.File;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
@@ -17,31 +25,24 @@ import org.bukkit.entity.Player;
  */
 public class ConfigPlayer extends Config {
     private String playerName;
+    private long life_left;
     public boolean flag_jobLeave = false;
     //private boolean
     
-    public ConfigPlayer(Time plugin, Player player){
+    public ConfigPlayer(Time plugin, Player p){
         super(plugin);
-        playerName = player.getName();
+        playerName = p.getName();
         
-        
-        File folder = new File(plugin.getDataFolder(), "players");
-        if (!folder.exists())
-                folder.mkdirs();
-        
-        setConfigFile(new File(plugin.getDataFolder() + "\\players", player.getName() + ".yml").getAbsoluteFile());
-        
-        if (!getConfigFile().exists()){
-            try {
-                getConfigFile().createNewFile();
-                setPlayerStart();
-            } catch (Exception e){
-                plugin.sendConsole("Error creating profile for player: " + player.getName());
-            }
-        } else
-            try{
-                load(getConfigFile());
-            }catch (Exception e){}
+        Connection con = plugin.getSql().getConnection();
+        try {
+            Statement st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT * FROM `players` WHERE name='"+playerName+"';");
+            String start = String.valueOf(System.currentTimeMillis()/1000);
+            if (!rs.first())
+                st.executeUpdate("INSERT INTO `players` (name, start, lastlogin) VALUES ('"+playerName+"', "+start+", "+start+");");
+        } catch (SQLException ex) {
+            plugin.sendConsole("Failed to setup or create player: "+playerName);
+        }
     }
     
     public String getPlayerName(){
