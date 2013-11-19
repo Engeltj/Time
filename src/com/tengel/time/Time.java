@@ -6,6 +6,7 @@
 
 package com.tengel.time;
 
+import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import java.io.File;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Material;
@@ -36,6 +37,7 @@ public final class Time extends JavaPlugin {
     private final TimePlayers players;
     private File configSigns;
     public WorldGuardPlugin worldGuard;
+    public WorldEditPlugin worldEdit;
     private TimeSQL sql;
     
     public Gatherer prof_miner;
@@ -53,6 +55,7 @@ public final class Time extends JavaPlugin {
         setupSql();
         PluginManager pm = getServer().getPluginManager();
         worldGuard = (WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard");
+        worldEdit = (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
         prof_miner = new Gatherer(this, TimeProfession.MINER);
         prof_farmer = new Gatherer(this, TimeProfession.FARMER);
         

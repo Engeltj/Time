@@ -6,11 +6,17 @@
 
 package com.tengel.time;
 
+import com.sk89q.worldedit.Vector;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
+import java.awt.Dimension;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -174,7 +180,7 @@ public class TimeCommands implements Listener{
                     h.buy(p);
                 else
                     sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need to be a landlord to purchase this home");
-                return true;
+                return true;                
             } else if (args[1].equalsIgnoreCase("create")){
                 if (plugin.getPlayerListener().checkPermissions(sender, "home.create", false)){
                     if (args.length < 4){
@@ -196,6 +202,20 @@ public class TimeCommands implements Listener{
                     return false;
                 
             }
+        } else if (args[0].equalsIgnoreCase("test")){
+            WorldGuardUtil wgu = new WorldGuardUtil(plugin);
+            try {
+                Vector vec = wgu.getSchematicDimensions(sender, "test.schematic");
+                plugin.sendConsole(String.valueOf(vec));
+                Location start = new Location(plugin.getServer().getWorld("Build"), 188, 65, 250);
+                Location end = new Location(plugin.getServer().getWorld("Build"), 188+vec.getX(), 65+vec.getY(), 250+vec.getZ());
+                //sender.sendMessage(String.valueOf());
+                ProtectedRegion pr = wgu.updateProtectedRegion(sender.getName(), start, end);
+                //wgu.pasteFirstLayer(pr);
+            } catch (Exception ex) {
+                Logger.getLogger(TimeCommands.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return true;
         } else if (args[0].equalsIgnoreCase("password")){
             if (args.length > 1){
                 plugin.getSql().addPlayer(sender.getName(), args[1]);

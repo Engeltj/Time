@@ -48,9 +48,9 @@ public class Homes {
             st = con.createStatement();
             ResultSet rs = st.executeQuery("SELECT * FROM `homes` WHERE name='"+region+"';");
             if (rs.first())
-                updated =st.executeUpdate("UPDATE homes SET (price, type) VALUES ("+price+", "+farm+") WHERE name='"+region+"';");
+                updated =st.executeUpdate("UPDATE homes SET (price, type, x, y, z) VALUES ("+price+", "+farm+", "+p.getLocation().getX()+", "+p.getLocation().getY()+", "+p.getLocation().getZ()+") WHERE name='"+region+"';");
             else
-                updated = st.executeUpdate("INSERT INTO homes (name, price, type) VALUES ('"+region+"', "+price+", "+farm+");");
+                updated = st.executeUpdate("INSERT INTO homes (name, price, type, x, y, z) VALUES ('"+region+"', "+price+", "+farm+", "+p.getLocation().getX()+", "+p.getLocation().getY()+", "+p.getLocation().getZ()+");");
             if (updated > 0)
                 p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Successfully create home");
             else

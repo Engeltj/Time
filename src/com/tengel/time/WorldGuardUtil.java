@@ -7,8 +7,9 @@
 package com.tengel.time;
 
 
-import com.mysql.jdbc.log.Log;
 import com.sk89q.minecraft.util.commands.CommandContext;
+import com.sk89q.minecraft.util.commands.CommandException;
+import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.CuboidClipboard;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.LocalConfiguration;
@@ -27,7 +28,6 @@ import com.sk89q.worldedit.bukkit.selections.Selection;
 import com.sk89q.worldedit.commands.SchematicCommands;
 import com.sk89q.worldedit.data.DataException;
 import com.sk89q.worldedit.regions.Region;
-import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.domains.DefaultDomain;
@@ -40,11 +40,14 @@ import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -59,19 +62,25 @@ import org.bukkit.plugin.Plugin;
  */
 
 public class WorldGuardUtil {
-	public static WorldGuardPlugin wgp;
+	private static WorldGuardPlugin wgp;
+        private Time plugin;
 	public static boolean hasWorldGuard = false;
 	static Map<String,Set<String>> trackedRegions = new ConcurrentHashMap<String,Set<String>>();
 
+        public WorldGuardUtil(Time plugin){
+            this.wgp = plugin.worldGuard;
+            this.plugin = plugin;
+        }
+        
 	public static boolean hasWorldGuard() {
 		return WorldEditUtil.hasWorldEdit() && hasWorldGuard;
 	}
         
-        public static ProtectedRegion updateProtectedRegion(String playerName, Location start, Location end) throws Exception {
+        public ProtectedRegion updateProtectedRegion(String playerName, Location start, Location end) throws Exception {
 		return createRegion(playerName, start, end);
 	}
 
-	private static ProtectedRegion createRegion(String playerName, Location start, Location end)
+	private ProtectedRegion createRegion(String playerName, Location start, Location end)
 			throws ProtectionDatabaseException {
             Selection sel = new WorldEditSelection(start,end);
             String id = "buildplot_"+playerName;
@@ -79,17 +88,18 @@ public class WorldGuardUtil {
             RegionManager mgr = wgp.getGlobalRegionManager().get(w);
             mgr.removeRegion(id);
             ProtectedRegion region;
+            
+            BlockVector bv_start = new BlockVector(start.getX(), start.getY(), start.getZ());
+            BlockVector bv_end = new BlockVector(end.getX(), end.getY(), end.getZ());
                   // Detect the type of region from WorldEdit
-            if (sel instanceof Polygonal2DSelection) {
-                Polygonal2DSelection polySel = (Polygonal2DSelection) sel;
-                int minY = polySel.getNativeMinimumPoint().getBlockY();
-                int maxY = polySel.getNativeMaximumPoint().getBlockY();
-                region = new ProtectedPolygonalRegion(id, polySel.getNativePoints(), minY, maxY);
-            } else { /// default everything to cuboid
-                region = new ProtectedCuboidRegion(id,
-                            sel.getNativeMinimumPoint().toBlockVector(),
-                            sel.getNativeMaximumPoint().toBlockVector());
-            }
+            //if (sel instanceof Polygonal2DSelection) {
+                //Polygonal2DSelection polySel = (Polygonal2DSelection) sel;
+                //int minY = polySel.getNativeMinimumPoint().getBlockY();
+                //int maxY = polySel.getNativeMaximumPoint().getBlockY();
+                //region = new ProtectedPolygonalRegion(id, polySel.getNativePoints(), minY, maxY);
+           // } else { /// default everything to cuboid
+            region = new ProtectedCuboidRegion(id, bv_start, bv_end);
+            //}
             region.setPriority(11); /// some relatively high priority
             //region.setFlag(DefaultFlag.PVP,State.ALLOW);
             wgp.getRegionManager(w).addRegion(region);
@@ -205,6 +215,11 @@ public class WorldGuardUtil {
 			return;
 		mgr.removeRegion(id);
 	}
+        
+        public void pasteFirstLayer(ProtectedRegion pr, String schematic){
+            
+            
+        }
 
 	public static boolean pasteSchematic(CommandSender sender, ProtectedRegion pr, String schematic, World world) {
 		CommandContext cc = null;
@@ -219,7 +234,7 @@ public class WorldGuardUtil {
 		Vector pos = new Vector(pr.getMinimumPoint());
 		try {
 			cc = new CommandContext(args);
-			return loadAndPaste(cc, we, session, bcs,editSession,pos);
+			return loadAndPaste(cc, we, session, bcs, editSession, pos);
 		} catch (Exception e) {
                         
 			//Log.printStackTrace(e);
@@ -271,6 +286,23 @@ public class WorldGuardUtil {
                     return false;
             }
 	}
+        
+        public Vector getSchematicDimensions(CommandSender sender, String schematic){
+            WorldEditPlugin wep = plugin.worldEdit;
+            WorldEdit we = wep.getWorldEdit();
+            LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(),sender, plugin.getServer().getWorld("Build"));
+            File dir = new File(plugin.getDataFolder() + "/schematics/");
+            try {
+		File f = we.getSafeOpenFile(bcs, dir, schematic, "schematic", new String[] {"schematic"});
+                SchematicFormat format = SchematicFormat.getFormat(f);
+                CuboidClipboard cc = format.load(f);
+                Vector vec = new Vector(cc.getWidth(), cc.getHeight(), cc.getLength());
+                return vec;
+            } catch (Exception e){
+                plugin.sendConsole("Something went wrong getting schemtic dimensions on: " + schematic);
+            }
+            return null;
+        }
 
 	/**
 	 * This is just copied and pasted from world edit source, with small changes to also paste
@@ -281,7 +313,7 @@ public class WorldGuardUtil {
 	 * @param editSession
 	 */
 	public static boolean loadAndPaste(CommandContext args, WorldEdit we,
-			LocalSession session, com.sk89q.worldedit.LocalPlayer player, EditSession editSession, Vector pos) {
+		LocalSession session, com.sk89q.worldedit.LocalPlayer player, EditSession editSession, Vector pos) {
 
 		LocalConfiguration config = we.getConfiguration();
 

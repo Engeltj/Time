@@ -22,8 +22,8 @@ public class WorldEditSelection implements Selection {
     private Location start,end;
     
     public WorldEditSelection(Location start, Location end){
-        nativeMinPoint = new Vector(start.getBlockX(),start.getBlockY(),start.getBlockZ());
-        nativeMinPoint = new Vector(end.getBlockX(),end.getBlockY(),end.getBlockZ());
+        nativeMinPoint = new Vector(start.getX(),start.getY(),start.getZ());
+        nativeMaxPoint = new Vector(end.getX(),end.getY(),end.getBlockZ());
         this.start = start;
         this.end = end;
     }
