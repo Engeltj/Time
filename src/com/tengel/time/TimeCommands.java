@@ -211,7 +211,7 @@ public class TimeCommands implements Listener{
                 Location end = new Location(plugin.getServer().getWorld("Build"), 188+vec.getX(), 65+vec.getY(), 250+vec.getZ());
                 //sender.sendMessage(String.valueOf());
                 ProtectedRegion pr = wgu.updateProtectedRegion(sender.getName(), start, end);
-                //wgu.pasteFirstLayer(pr);
+                wgu.pasteFirstLayer(sender, pr, "test.schematic");
             } catch (Exception ex) {
                 Logger.getLogger(TimeCommands.class.getName()).log(Level.SEVERE, null, ex);
             }

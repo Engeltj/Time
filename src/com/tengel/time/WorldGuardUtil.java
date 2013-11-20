@@ -8,7 +8,6 @@ package com.tengel.time;
 
 
 import com.sk89q.minecraft.util.commands.CommandContext;
-import com.sk89q.minecraft.util.commands.CommandException;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.CuboidClipboard;
 import com.sk89q.worldedit.EditSession;
@@ -23,7 +22,6 @@ import com.sk89q.worldedit.bukkit.BukkitCommandSender;
 import com.sk89q.worldedit.bukkit.BukkitPlayer;
 import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import com.sk89q.worldedit.bukkit.selections.Polygonal2DSelection;
 import com.sk89q.worldedit.bukkit.selections.Selection;
 import com.sk89q.worldedit.commands.SchematicCommands;
 import com.sk89q.worldedit.data.DataException;
@@ -38,18 +36,15 @@ import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag.State;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
-import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Item;
@@ -71,10 +66,6 @@ public class WorldGuardUtil {
             this.wgp = plugin.worldGuard;
             this.plugin = plugin;
         }
-        
-	public static boolean hasWorldGuard() {
-		return WorldEditUtil.hasWorldEdit() && hasWorldGuard;
-	}
         
         public ProtectedRegion updateProtectedRegion(String playerName, Location start, Location end) throws Exception {
 		return createRegion(playerName, start, end);
@@ -163,12 +154,6 @@ public class WorldGuardUtil {
 		return true;
 	}
 
-	public static boolean setWorldGuard(Plugin plugin) {
-		wgp = (WorldGuardPlugin) plugin;
-		hasWorldGuard = true;
-		return hasWorldGuard();
-	}
-
 	public static boolean allowEntry(ProtectedRegion pr, Player player, String regionWorld) {
 		World w = Bukkit.getWorld(regionWorld);
 		if (w == null)
@@ -216,7 +201,36 @@ public class WorldGuardUtil {
 		mgr.removeRegion(id);
 	}
         
-        public void pasteFirstLayer(ProtectedRegion pr, String schematic){
+        public void pasteFirstLayer(CommandSender sender, ProtectedRegion pr, String schematic){
+            String args[] = {"load", schematic};
+            final WorldEditPlugin wep = plugin.worldEdit;
+            final WorldEdit we = wep.getWorldEdit();
+            LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(), sender, plugin.getServer().getWorld("Build"));
+            final LocalSession session = wep.getWorldEdit().getSession(bcs);
+            session.setUseInventory(false);
+            EditSession editSession = session.createEditSession(bcs);
+            Vector pos = new Vector(pr.getMinimumPoint());
+            try {
+                    CommandContext cc = new CommandContext(args);
+                    File f = new File(plugin.getDataFolder() + "/schematics/" + schematic);
+                    SchematicFormat format = SchematicFormat.getFormat(f);
+                    session.setClipboard(format.load(f));
+                    session.getClipboard().paste(editSession, pos, false, false);                    
+                    
+                    for (double x= pr.getMinimumPoint().getX(); x < pr.getMaximumPoint().getX(); x++){
+                        for (double y= pr.getMinimumPoint().getY()+2; y < pr.getMaximumPoint().getY(); y++){
+                            for (double z= pr.getMinimumPoint().getZ(); z < pr.getMaximumPoint().getZ(); z++){
+                                Location loc = new Location(plugin.getServer().getWorld("Build"),x,y,z);
+                                loc.getBlock().setType(Material.AIR);//.breakNaturally();
+                                clearRegion(pr, "Build");
+                            }
+                        }
+                    }
+                    
+                    //loadAndPaste(cc, we, session, bcs, editSession, pos);
+            } catch (Exception e) {
+            }
+            
             
             
         }
