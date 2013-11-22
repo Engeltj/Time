@@ -20,7 +20,6 @@ import org.bukkit.event.Listener;
 import static com.sk89q.worldguard.bukkit.BukkitUtil.*;
 import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
-import org.bukkit.Material;
 /**
  *
  * @author Tim
@@ -68,7 +67,7 @@ public class RegionControl implements Listener {
         }
     }
     
-    public void onRegionLeave(RegionLeaveEvent e){
+    /*public void onRegionLeave(RegionLeaveEvent e){
         String rgName = e.getRegion().getId();
         Player player = e.getPlayer();
         if (rgName.equalsIgnoreCase("Poor") || rgName.equalsIgnoreCase("Wealthy") || rgName.equalsIgnoreCase("Rich")){
@@ -77,7 +76,7 @@ public class RegionControl implements Listener {
                 //playerConfig.set("wanted_expirey", System.currentTimeMillis()/1000+120*1);
             }
         }
-    }
+    }*/
     
     private int getZoneId(String timezone){
         if (timezone.equalsIgnoreCase("Rich"))

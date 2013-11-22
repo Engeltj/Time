@@ -55,7 +55,6 @@ public class UpdatePlayers implements Runnable {
             
             if ((cp.getPlayerAge() > 7*24*60*60*1000)){ //7000 days
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), 1*updateInterval);
-                    
                 if (!es.transactionSuccess()){
                     if (!cp.isJailed())
                         plugin.getTimePlayers().resetPlayer(player);

@@ -51,7 +51,7 @@ public class ShopSigns extends YamlConfiguration {
         ConfigPlayer config = new ConfigPlayer(plugin, player);
         EconomyResponse es = getPlugin().getEconomy().withdrawPlayer(player.getName(), cost*60);
         if (es.transactionSuccess()){
-            if (config.addLicense(m.name(), m.getId())){
+            if (config.addLicense(m.getId())){
                 player.sendMessage(plugin.getPluginName() + ChatColor.BLUE + m.name().toLowerCase() + ChatColor.YELLOW + " license aquired!");
             }
             else {

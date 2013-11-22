@@ -132,7 +132,8 @@ public final class Time extends JavaPlugin {
     
     public void populateTimePlayers(){
         for (Player player: getServer().getOnlinePlayers()){
-            players.addPlayer(player);
+            ConfigPlayer cp = players.addPlayer(player);
+            cp.loadPlayer();
         }
     }
     

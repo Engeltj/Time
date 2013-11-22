@@ -22,7 +22,6 @@ public class Config extends YamlConfiguration {
     public Config(Time plugin){
         this.plugin = plugin;
     }
-            
     
     public Config(Time plugin, String filename){
         this.plugin = plugin;

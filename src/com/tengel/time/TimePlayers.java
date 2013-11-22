@@ -18,7 +18,7 @@ import org.bukkit.entity.Player;
  * @author Tim
  */
 public class TimePlayers {
-    private Map players;
+    private Map<String, ConfigPlayer> players;
     private Time plugin;
     
     public TimePlayers(Time plugin){
@@ -26,10 +26,11 @@ public class TimePlayers {
         this.plugin = plugin;
     }
     
-    public void addPlayer(Player p){
+    public ConfigPlayer addPlayer(Player p){
         if (!isPlayerAdded(p.getName())){
-            players.put(p.getName(), new ConfigPlayer(plugin,p));
-        }
+            return (ConfigPlayer) players.put(p.getName(), new ConfigPlayer(plugin,p));
+        } else
+            return players.get(p.getName());
     }
     
     public void removePlayer(String name){

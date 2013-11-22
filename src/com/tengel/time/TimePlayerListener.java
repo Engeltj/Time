@@ -18,7 +18,6 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Player;
@@ -78,11 +77,11 @@ public class TimePlayerListener implements Listener {
             ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
             event.setCancelled(true);
             if (cp.getProfession() == TimeProfession.MINER){
-                if (!cp.hasLicense(block.toString()))//(plugin.prof_miner.getMinerBlacklist().contains(block.getType())){
+                if (!cp.hasLicense(block.getType().getId()))//(plugin.prof_miner.getMinerBlacklist().contains(block.getType())){
                     player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need a " + ChatColor.BLUE + "license" + ChatColor.RED + " to obtain this material");
                 else {
                     int earned = plugin.prof_miner.getSkillEarned(block.getType());
-                    cp.addSkill(TimeProfession.MINER, earned);
+                    cp.updateSkill(TimeProfession.MINER, earned);
                     //event.setExpToDrop(earned);
                     //player.setExp((float)earned);
                     event.getBlock().setType(Material.AIR);
@@ -161,6 +160,7 @@ public class TimePlayerListener implements Listener {
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerQuit(PlayerQuitEvent event){
         Player player = event.getPlayer();
+        players.getPlayerConfig(player.getName()).savePlayer();
         players.removePlayer(player);
     }
     
