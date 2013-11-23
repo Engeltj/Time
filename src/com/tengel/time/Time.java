@@ -21,10 +21,21 @@ import com.tengel.time.mysql.TimeSQL;
 import com.tengel.time.profs.Builder;
 import com.tengel.time.profs.Gatherer;
 import com.tengel.time.profs.TimeProfession;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Random;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.scheduler.BukkitRunnable;
 /**
  *
  * @author Tim
@@ -84,6 +95,7 @@ public final class Time extends JavaPlugin {
         
         
         getLogger().info("Time by Engeltj has been enabled");
+        processSchematics();
     }
  
     @Override
@@ -91,6 +103,39 @@ public final class Time extends JavaPlugin {
         this.getServer().getScheduler().cancelTasks(this);
         getLogger().info("Time by Engeltj has been disabled");
         
+    }
+    
+    public void processSchematics(){
+        final Time plugin = this;
+        Runnable usetJobLeave = new BukkitRunnable() {
+            public void run() {
+                Connection con = plugin.getSql().getConnection();
+                Statement st;
+                try {
+                    st = con.createStatement();
+                    ResultSet rs = st.executeQuery("SELECT filename FROM `schematics` WHERE processed=0 AND approved=1;");
+                    int i = 0;
+                    ArrayList<String> files = new ArrayList<String>();
+                    while (rs.next()){
+                        files.add(rs.getString("filename"));
+                        InputStream in = new URL("http://depthsonline.com/minecraft/schematics/"+rs.getString("filename")).openStream();
+                        Files.copy(in, Paths.get(plugin.getDataFolder().toString(), "schematics", rs.getString("filename")));
+                        i++;
+                    }
+                    for (String file : files){
+                        st.executeUpdate("UPDATE `schematics` SET processed=1 WHERE filename='"+file+"';");
+                    }
+                    if (i>0)
+                        plugin.sendConsole("Processed " + i + " schematic(s).");
+                } catch (IOException ex) {
+                    plugin.sendConsole("Failed to processSchematics\n" + ex);
+                } catch (SQLException ex) {
+                    plugin.sendConsole("Failed to processSchematics\n" + ex);
+                }
+            }
+        };
+        
+        getServer().getScheduler().scheduleSyncRepeatingTask(this, usetJobLeave, 5, 20 * 20);
     }
     
     public void setupSql(){

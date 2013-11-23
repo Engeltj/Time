@@ -109,6 +109,7 @@ public class TimeCommands implements Listener{
             sender.sendMessage(ChatColor.GRAY + "/life bounty" + ChatColor.GREEN + "  > The bounty on your head to be captured");
             sender.sendMessage(ChatColor.GRAY + "/life bail" + ChatColor.GREEN + "  > Pays off the price on your head so you may leave jail");
             sender.sendMessage(ChatColor.GRAY + "/life password" + ChatColor.GREEN + "  > Sets your website account password");
+            sender.sendMessage(ChatColor.GRAY + "/life job" + ChatColor.GREEN + "  > Profession specific commands");
         }
         
         else if (args[0].equalsIgnoreCase("age")){
@@ -203,26 +204,21 @@ public class TimeCommands implements Listener{
                 
             }
         } else if (args[0].equalsIgnoreCase("test")){
-            WorldGuardUtil wgu = new WorldGuardUtil(plugin);
-            try {
-                Vector vec = wgu.getSchematicDimensions(sender, "test.schematic");
-                plugin.sendConsole(String.valueOf(vec));
-                Location start = new Location(plugin.getServer().getWorld("Build"), 188, 65, 250);
-                Location end = new Location(plugin.getServer().getWorld("Build"), 188+vec.getX(), 65+vec.getY(), 250+vec.getZ());
-                //sender.sendMessage(String.valueOf());
-                ProtectedRegion pr = wgu.updateProtectedRegion(sender.getName(), start, end);
-                wgu.pasteFirstLayer(sender, pr, "test.schematic");
-            } catch (Exception ex) {
-                Logger.getLogger(TimeCommands.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            return true;
+            plugin.prof_builder.createBuild(sender, "test.schematic");
         } else if (args[0].equalsIgnoreCase("password")){
             if (args.length > 1){
                 plugin.getSql().addPlayer(sender.getName(), args[1]);
                 sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Password has been set, visit " + ChatColor.GRAY + "http://depthsonline.com/minecraft" + ChatColor.GREEN + " to login");
             } else 
                 sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Please specify a password!");
-        } else
+        } else if (args[0].equalsIgnoreCase("job")){
+            if (plugin.getTimePlayers().getPlayerConfig(sender.getName()).getProfession() == TimeProfession.BUILDER)
+                plugin.prof_builder.commands(command, sender, args);
+            else
+                sender.sendMessage("Commands for your profession aren't implemented yet.");
+        }
+        
+        else
             sender.sendMessage(plugin.getPluginName() + ChatColor.GRAY + "Invalid command, type " + ChatColor.GREEN + "/life" + ChatColor.GRAY + " for more info");
         return true;
     }
