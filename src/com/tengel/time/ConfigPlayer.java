@@ -32,7 +32,7 @@ public class ConfigPlayer {
     private int player_id = 0;
     private int skill = 0;
     private int bounty = 0;
-    private int start_time = 0;
+    private long start_time = 0;
     private Time plugin;
     public boolean flag_jobLeave = false;
     private List<Integer> licenses;
@@ -46,11 +46,11 @@ public class ConfigPlayer {
         try {
             Statement st = con.createStatement();
             ResultSet rs = st.executeQuery("SELECT * FROM `players` WHERE name='"+playerName+"';");
-            String start = String.valueOf(System.currentTimeMillis()/1000);
+            long start = System.currentTimeMillis()/1000;
             if (!rs.first())
                 st.executeUpdate("INSERT INTO `players` (name, start, lastlogin) VALUES ('"+playerName+"', "+start+", "+start+");");
         } catch (SQLException ex) {
-            plugin.sendConsole("Failed to setup or create player: "+playerName);
+            plugin.sendConsole("Failed to setup or create player: " + playerName + "\n" + ex);
         }
     }
     
@@ -84,7 +84,7 @@ public class ConfigPlayer {
                 id = rs.getInt("id");
             //plugin.sendConsole(playerName + " id: " + id + " " + rs.next());
         } catch (SQLException ex) {
-            plugin.sendConsole("Failed to get ID of player " + playerName);
+            plugin.sendConsole("Failed to get ID of player " + playerName + "\n" + ex);
         }
         return id;
     }
@@ -98,7 +98,7 @@ public class ConfigPlayer {
             while (rs.next())
                 licenses.add(rs.getInt("license"));
         } catch (SQLException ex) {
-            plugin.sendConsole("Failed to get licenses of player " + playerName);
+            plugin.sendConsole("Failed to get licenses of player " + playerName + "\n" + ex);
         }
         return licenses;
     }
@@ -109,10 +109,10 @@ public class ConfigPlayer {
         try {
             st = con.createStatement();
             double life = plugin.getEconomy().getBalance(playerName);
-            int rs = st.executeUpdate("UPDATE `players` (life, lastupdate) VALUES ("+(int)life+","+(int)System.currentTimeMillis()/1000+") WHERE name='"+this.playerName+"';");
+            int rs = st.executeUpdate("UPDATE `players` SET life="+life+",lastupdate="+System.currentTimeMillis()/1000+" WHERE name='"+playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
-            plugin.sendConsole("Failed update life of player " + playerName);
+            plugin.sendConsole("Failed update life of player " + playerName + "\n" + ex);
         }
         return false;
         
@@ -123,10 +123,10 @@ public class ConfigPlayer {
         Statement st;
         try {
             st = con.createStatement();
-            int rs = st.executeUpdate("UPDATE `players` SET lastseen="+(int)System.currentTimeMillis()/1000+" WHERE name='"+this.playerName+"';");
+            int rs = st.executeUpdate("UPDATE `players` SET lastseen="+System.currentTimeMillis()/1000+" WHERE name='"+this.playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
-            plugin.sendConsole("Failed to update lastseen of player " + playerName);
+            plugin.sendConsole("Failed to update lastseen of player " + playerName + "\n" + ex);
         }
         return false;
     }
@@ -136,10 +136,10 @@ public class ConfigPlayer {
         Statement st;
         try {
             st = con.createStatement();
-            int rs = st.executeUpdate("UPDATE `players` SET start="+(int)System.currentTimeMillis()/1000+" WHERE name='"+this.playerName+"';");
+            int rs = st.executeUpdate("UPDATE `players` SET start="+System.currentTimeMillis()/1000+" WHERE name='"+playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
-            plugin.sendConsole("Failed to set start time of player " + playerName);
+            plugin.sendConsole("Failed to set start time of player " + playerName + "\n" + ex);
         }
         return false;
     }
@@ -149,10 +149,10 @@ public class ConfigPlayer {
         Statement st;
         try {
             st = con.createStatement();
-            int rs = st.executeUpdate("UPDATE `players` SET zone="+id+" WHERE name='"+this.playerName+"';");
+            int rs = st.executeUpdate("UPDATE `players` SET zone="+id+" WHERE name='"+playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
-            plugin.sendConsole("Failed to set time zone of player " + playerName);
+            plugin.sendConsole("Failed to set time zone of player " + playerName + "\n" + ex);
         }
         return false;
     }
@@ -165,7 +165,7 @@ public class ConfigPlayer {
             int rs = st.executeUpdate("UPDATE players SET jailed="+inJail+" WHERE name='"+this.playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
-            plugin.sendConsole("Failed to set jailed state of player " + playerName);
+            plugin.sendConsole("Failed to set jailed state of player " + playerName + "\n" + ex);
         }
         return false;
     }
@@ -178,7 +178,7 @@ public class ConfigPlayer {
             int rs = st.executeUpdate("UPDATE players SET jobs='"+profession+"' WHERE name='"+this.playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
-            plugin.sendConsole("Failed to set profession of player " + playerName);
+            plugin.sendConsole("Failed to set profession of player " + playerName + "\n" + ex);
         }
         return false;
     }
@@ -195,7 +195,7 @@ public class ConfigPlayer {
             int rs = st.executeUpdate("UPDATE `skills` SET value="+skill+" WHERE player_id="+player_id+" AND skill='"+profession+"';");
             return (rs>0);
        } catch (SQLException ex) {
-            plugin.sendConsole("Failed to set skill of player " + playerName);
+            plugin.sendConsole("Failed to set skill of player " + playerName + "\n" + ex);
         }
         return false;
     }
@@ -213,12 +213,12 @@ public class ConfigPlayer {
             int updated = st.executeUpdate("INSERT INTO `skills` (player_id, skill, value) VALUES ("+player_id+",'"+tp.name()+"',"+amount+");");
             return (updated > 0);
         } catch (SQLException ex) {
-            plugin.sendConsole("Failed to update skill of player " + playerName);
+            plugin.sendConsole("Failed to update skill of player " + playerName + "\n" + ex);
         }
         return false;
     }
     
-    public int getStartTime() {
+    public long getStartTime() {
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -230,7 +230,7 @@ public class ConfigPlayer {
         } catch (SQLException ex) {
             plugin.sendConsole("Failed to get skill of player " + playerName + "\n" + ex);
         }
-        return (int)System.currentTimeMillis()/1000;
+        return System.currentTimeMillis()/1000;
     }
     
     public int getSkill(String profession) {
@@ -289,7 +289,7 @@ public class ConfigPlayer {
         Statement st;
         try {
             st = con.createStatement();
-            ResultSet rs = st.executeQuery("SELECT jobs FROM `players` WHERE name='"+this.playerName+"';");
+            ResultSet rs = st.executeQuery("SELECT jobs FROM `players` WHERE name='"+playerName+"';");
             if (rs.next())
                 prof = rs.getString("jobs");
         } catch (SQLException ex) {
@@ -361,8 +361,8 @@ public class ConfigPlayer {
         return licenses.contains(block_id);
     }
     
-    public int getPlayerAge(){
-        return (int)System.currentTimeMillis()/1000 - start_time;
+    public long getPlayerAge(){
+        return System.currentTimeMillis()/1000 - start_time;
     }
     
     public void removePlayer(){

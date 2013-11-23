@@ -54,20 +54,6 @@
             <artifactId>worldedit</artifactId>
             <version>LATEST</version>
         </dependency>
-        <!--<dependency>
-            <groupId>WorldGuard</groupId>
-            <artifactId>WorldGuard</artifactId>
-            <version>5.8</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/worldguard-5.8.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>WorldEdit</groupId>
-            <artifactId>WorldEdit</artifactId>
-            <version>5.5.8</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/worldedit-5.5.8.jar</systemPath>
-        </dependency>-->
         <dependency>
             <groupId>WGRegionEvents</groupId>
             <artifactId>WGRegionEvents</artifactId>
