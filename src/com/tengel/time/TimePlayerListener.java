@@ -153,8 +153,12 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerJoin(PlayerJoinEvent event){
-        Player player = event.getPlayer();
-        players.addPlayer(player);
+        Player p = event.getPlayer();
+        ConfigPlayer cp = players.addPlayer(p);
+        if (cp == null){
+            plugin.sendConsole("Problematic: ConfigPlayer object exists for newly joined player named " + p.getName());
+        } else
+            cp.loadPlayer();
     }
     
     @EventHandler(priority=EventPriority.NORMAL)

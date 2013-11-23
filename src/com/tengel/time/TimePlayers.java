@@ -28,9 +28,10 @@ public class TimePlayers {
     
     public ConfigPlayer addPlayer(Player p){
         if (!isPlayerAdded(p.getName())){
-            return (ConfigPlayer) players.put(p.getName(), new ConfigPlayer(plugin,p));
-        } else
+            players.put(p.getName(), new ConfigPlayer(plugin,p));
             return players.get(p.getName());
+        }
+        return null;
     }
     
     public void removePlayer(String name){

@@ -78,6 +78,7 @@ public class ConfigPlayer extends Config {
             ResultSet rs = st.executeQuery("SELECT * FROM `players` WHERE name='"+playerName+"';");
             if (rs.first())
                 id = rs.getInt("id");
+            getPlugin().sendConsole(playerName + " id: " + id + " " + rs.next());
         } catch (SQLException ex) {
             getPlugin().sendConsole("Failed to get ID of player " + playerName);
         }
