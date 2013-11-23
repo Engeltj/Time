@@ -1,39 +1,37 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.tengel</groupId>
-  <artifactId>Time</artifactId>
-  <version>0.1-SNAPSHOT</version>
-  <packaging>jar</packaging>
+    <groupId>com.tengel</groupId>
+    <artifactId>Time</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
-  <name>Time</name>
-  <url>http://maven.apache.org</url>
-
-
+    <name>Time</name>
+    <url>http://maven.apache.org</url>
     <repositories>
         <repository>
-                <id>bukkit-repo</id>
-                <url>http://repo.bukkit.org/content/groups/public</url>
+            <id>bukkit-repo</id>
+            <url>http://repo.bukkit.org/content/groups/public</url>
         </repository>
         <repository>
             <id>vault-repo</id>
             <url>http://ci.herocraftonline.com/plugin/repository/everything</url>
         </repository>
-        <!--<repository>
-                <id>engeltj-repo</id>
-                <url>http://depthsonline.com/archive/repository</url>
-        </repository>-->
+        <repository>
+            <id>sk89q-repo</id>
+            <url>http://maven.sk89q.com/repo/</url>
+        </repository>
     </repositories>
-  <properties>
-	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <vault.version>1.2.27-SNAPSHOT</vault.version>
-  </properties>
-<scm>
-		<connection>scm:git:https://github.com/engeltj/Time.git</connection>
-		<developerConnection>scm:git:https://github.com/engeltj/Time.git</developerConnection>
-		<url>https://github.com/essentials/Time</url>
-</scm>
+    </properties>
+    <scm>
+        <connection>scm:git:https://github.com/engeltj/Time.git</connection>
+        <developerConnection>scm:git:https://github.com/engeltj/Time.git</developerConnection>
+        <url>https://github.com/essentials/Time</url>
+    </scm>
   <dependencies>
 	<dependency>
 	  <groupId>junit</groupId>
@@ -47,6 +45,16 @@
             <version>1.6.4-R2.0</version>
         </dependency>
         <dependency>
+            <groupId>com.sk89q</groupId>
+            <artifactId>worldguard</artifactId>
+            <version>LATEST</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sk89q</groupId>
+            <artifactId>worldedit</artifactId>
+            <version>LATEST</version>
+        </dependency>
+        <!--<dependency>
             <groupId>WorldGuard</groupId>
             <artifactId>WorldGuard</artifactId>
             <version>5.8</version>
@@ -59,7 +67,7 @@
             <version>5.5.8</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/worldedit-5.5.8.jar</systemPath>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>WGRegionEvents</groupId>
             <artifactId>WGRegionEvents</artifactId>
