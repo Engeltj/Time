@@ -40,9 +40,7 @@ public class TimePlayers {
     }
     
     public void removePlayer(Player p){
-        try {
-            players.remove(p.getName());
-        }catch (Exception e){}
+        removePlayer(p.getName());
     }
     
     public ConfigPlayer getPlayerConfig(String name){

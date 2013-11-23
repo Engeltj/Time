@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,6 +31,7 @@ public class ConfigPlayer extends Config {
     //private double life;
     private int player_id = 0;
     private int skill = 0;
+    private int bounty = 0;
     public boolean flag_jobLeave = false;
     private List<Integer> licenses;
     //private boolean
@@ -37,7 +39,7 @@ public class ConfigPlayer extends Config {
     public ConfigPlayer(Time plugin, Player p){
         super(plugin);
         playerName = p.getName();
-        
+        licenses = new ArrayList<Integer>();
         Connection con = plugin.getSql().getConnection();
         try {
             Statement st = con.createStatement();
@@ -52,8 +54,9 @@ public class ConfigPlayer extends Config {
     
     
     public void loadPlayer(){
-        skill = this.getSkill(this.getProfession().name());
         player_id = getId();
+        skill = getSkill(getProfession().name());
+        bounty = getBounty();
         licenses = getPlayerLicenses();
     }
     
@@ -72,17 +75,16 @@ public class ConfigPlayer extends Config {
         Statement st;
         try {
             st = con.createStatement();
-            ResultSet rs = st.executeQuery("SELECT id FROM `players` WHERE name='"+this.playerName+"';");
-            if (rs.next())
+            ResultSet rs = st.executeQuery("SELECT * FROM `players` WHERE name='"+playerName+"';");
+            if (rs.first())
                 id = rs.getInt("id");
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed to get ID of player " + playerName);
         }
         return id;
     }
     
     private List<Integer> getPlayerLicenses(){
-        List<Integer> licenses = null;
         Connection con = getPlugin().getSql().getConnection();
         Statement st;
         try {
@@ -91,7 +93,7 @@ public class ConfigPlayer extends Config {
             while (rs.next())
                 licenses.add(rs.getInt("license"));
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed to get licenses of player " + playerName);
         }
         return licenses;
     }
@@ -121,7 +123,7 @@ public class ConfigPlayer extends Config {
             int rs = st.executeUpdate("UPDATE `players` (life, lastupdate) VALUES ("+(int)life+","+(int)System.currentTimeMillis()/1000+") WHERE name='"+this.playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed update life of player " + playerName);
         }
         return false;
         
@@ -135,7 +137,7 @@ public class ConfigPlayer extends Config {
             int rs = st.executeUpdate("UPDATE `players` SET lastseen="+(int)System.currentTimeMillis()/1000+" WHERE name='"+this.playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed to update lastseen of player " + playerName);
         }
         return false;
     }
@@ -148,7 +150,7 @@ public class ConfigPlayer extends Config {
             int rs = st.executeUpdate("UPDATE `players` SET start="+(int)System.currentTimeMillis()/1000+" WHERE name='"+this.playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed to set start time of player " + playerName);
         }
         return false;
     }
@@ -161,7 +163,7 @@ public class ConfigPlayer extends Config {
             int rs = st.executeUpdate("UPDATE `players` SET zone="+id+" WHERE name='"+this.playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed to set time zone of player " + playerName);
         }
         return false;
     }
@@ -174,7 +176,7 @@ public class ConfigPlayer extends Config {
             int rs = st.executeUpdate("UPDATE players SET jailed="+inJail+" WHERE name='"+this.playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed to set jailed state of player " + playerName);
         }
         return false;
     }
@@ -187,7 +189,7 @@ public class ConfigPlayer extends Config {
             int rs = st.executeUpdate("UPDATE players SET jobs='"+profession+"' WHERE name='"+this.playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed to set profession of player " + playerName);
         }
         return false;
     }
@@ -204,7 +206,7 @@ public class ConfigPlayer extends Config {
             int rs = st.executeUpdate("UPDATE `skills` SET value="+skill+" WHERE player_id="+player_id+" AND skill='"+profession+"';");
             return (rs>0);
        } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed to set skill of player " + playerName);
         }
         return false;
     }
@@ -222,7 +224,7 @@ public class ConfigPlayer extends Config {
             int updated = st.executeUpdate("INSERT INTO `skills` (player_id, skill, value) VALUES ("+player_id+",'"+tp.name()+"',"+amount+");");
             return (updated > 0);
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed to update skill of player " + playerName);
         }
         return false;
     }
@@ -239,7 +241,7 @@ public class ConfigPlayer extends Config {
                 }
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed to get skill of player " + playerName);
         }
         return 0;
     }
@@ -253,7 +255,7 @@ public class ConfigPlayer extends Config {
             if (rs.next())
                 return rs.getInt("lastupdate");
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed to get lasted updated for player " + playerName);
         }
         return 0;
     }
@@ -267,7 +269,7 @@ public class ConfigPlayer extends Config {
             if (rs.next())
                 return rs.getBoolean("jailed");
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            getPlugin().sendConsole("Failed to get jailed state of player " + playerName);
         }
         return false;
     }
@@ -278,18 +280,48 @@ public class ConfigPlayer extends Config {
     
     public TimeProfession getProfession(){
         TimeProfession tp = TimeProfession.UNEMPLOYED;
-        String prof = getString("profession");
+        String prof = null;
+        Connection con = getPlugin().getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT jobs FROM `players` WHERE name='"+this.playerName+"';");
+            if (rs.next())
+                prof = rs.getString("jobs");
+        } catch (SQLException ex) {
+            getPlugin().sendConsole("Failed to get profession of player " + playerName);
+        }
         if (prof != null)
             tp = TimeProfession.valueOf(prof.toUpperCase());
         return tp;
     }
     
     public int getPlayerTimeZone(){
-        return getInt("zone");
+        Connection con = getPlugin().getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT zone FROM `players` WHERE name='"+playerName+"';");
+            if (rs.next())
+                return rs.getInt("zone");
+        } catch (SQLException ex) {
+            getPlugin().sendConsole("Failed to get zone of player " + playerName);
+        }
+        return 0;
     }
     
     public int getBounty(){
-        return getInt("bounty");
+        Connection con = getPlugin().getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT bounty FROM `bounty` WHERE player_id='"+player_id+"';");
+            if (rs.next())
+                return rs.getInt("bounty");
+        } catch (SQLException ex) {
+            getPlugin().sendConsole("Failed to get bounty of player " + playerName);
+        }
+        return 0;
     }
     
     public String getBountyString(){
@@ -298,9 +330,7 @@ public class ConfigPlayer extends Config {
     }
     
     public void addBounty(int amount){
-        int bounty = getInt("bounty");
-        set("bounty", bounty+amount);
-        save();
+        bounty = bounty + amount;
     }
     
     public boolean addLicense(int block_id){
@@ -320,11 +350,7 @@ public class ConfigPlayer extends Config {
     }
     
     public boolean hasLicense(int block_id){
-        for (int license : licenses){
-            if (license == block_id)
-                return true;
-        }
-        return false;
+        return licenses.contains(block_id);
     }
     
     public int getPlayerAge(){

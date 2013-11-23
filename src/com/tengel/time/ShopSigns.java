@@ -53,8 +53,7 @@ public class ShopSigns extends YamlConfiguration {
         if (es.transactionSuccess()){
             if (config.addLicense(m.getId())){
                 player.sendMessage(plugin.getPluginName() + ChatColor.BLUE + m.name().toLowerCase() + ChatColor.YELLOW + " license aquired!");
-            }
-            else {
+            } else {
                 player.sendMessage(plugin.getPluginName() + "It appears you already own the license to mine " + m.name().toLowerCase());
                 getPlugin().getEconomy().depositPlayer(player.getName(), cost*60);
             }
