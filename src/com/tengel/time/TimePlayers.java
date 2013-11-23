@@ -50,8 +50,10 @@ public class TimePlayers {
             Player p = plugin.getServer().getPlayer(name);
             if (p == null){
                 plugin.sendConsole("Player not found ..");
-            } else
+            } else{
                 config = new ConfigPlayer(plugin, p);
+                config.loadPlayer();
+            }
         }
         return config;
     }
@@ -62,10 +64,10 @@ public class TimePlayers {
         return true;
     }
     
-    public void resetPlayer(Player player){
-        ConfigPlayer config = new ConfigPlayer(plugin, player);
-        String name = player.getName();
-        player.kickPlayer("You ran out of time! You're entire profile has been reset.");
+    public void resetPlayer(Player p){
+        String name = p.getName();
+        ConfigPlayer config = plugin.getTimePlayers().getPlayerConfig(name);
+        p.kickPlayer("You ran out of time! You're entire profile has been reset.");
         for (World world : plugin.getServer().getWorlds()){
             try {
                 File f = new File(System.getProperty("user.dir") + "\\" + world.getName() + "\\players\\" + name + ".dat");
@@ -81,8 +83,6 @@ public class TimePlayers {
         catch (Exception e){
             plugin.sendConsole(plugin.getPluginName() + "Failed to delete " + "Essentials\\userdata\\" + name.toLowerCase() + ".yml");
         }
-        synchronized(config.getConfigFile()){
-             config.removePlayer();
-        }
+        config.removePlayer();
     }
 }

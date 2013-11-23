@@ -48,10 +48,10 @@ public class ShopSigns extends YamlConfiguration {
     }
     
     private boolean buyLicense(Material m, int cost){
-        ConfigPlayer config = new ConfigPlayer(plugin, player);
+        ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
         EconomyResponse es = getPlugin().getEconomy().withdrawPlayer(player.getName(), cost*60);
         if (es.transactionSuccess()){
-            if (config.addLicense(m.getId())){
+            if (cp.addLicense(m.getId())){
                 player.sendMessage(plugin.getPluginName() + ChatColor.BLUE + m.name().toLowerCase() + ChatColor.YELLOW + " license aquired!");
             } else {
                 player.sendMessage(plugin.getPluginName() + "It appears you already own the license to mine " + m.name().toLowerCase());
