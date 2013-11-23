@@ -114,6 +114,7 @@ public class TimeSQL {
     }
     
     public Connection getConnection(){
+        verifyConnection();
         return this.con;
     }
 }
