@@ -18,6 +18,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.tengel.time.mysql.TimeSQL;
+import com.tengel.time.profs.Builder;
 import com.tengel.time.profs.Gatherer;
 import com.tengel.time.profs.TimeProfession;
 import java.util.Random;
@@ -42,6 +43,7 @@ public final class Time extends JavaPlugin {
     
     public Gatherer prof_miner;
     public Gatherer prof_farmer;
+    public Builder prof_builder;
     
     public Time() {
         players = new TimePlayers(this);
@@ -58,6 +60,7 @@ public final class Time extends JavaPlugin {
         worldEdit = (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
         prof_miner = new Gatherer(this, TimeProfession.MINER);
         prof_farmer = new Gatherer(this, TimeProfession.FARMER);
+        prof_builder = new Builder(this, TimeProfession.BUILDER);
         
         if (worldGuard == null || !(worldGuard instanceof WorldGuardPlugin)) {
             getLogger().info(String.format("[%s] - Disabled due to no instance of WorldGuard found!", getDescription().getName()));

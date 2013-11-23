@@ -32,6 +32,7 @@ public class ConfigPlayer {
     private int player_id = 0;
     private int skill = 0;
     private int bounty = 0;
+    private int start_time = 0;
     private Time plugin;
     public boolean flag_jobLeave = false;
     private List<Integer> licenses;
@@ -57,8 +58,9 @@ public class ConfigPlayer {
     public void loadPlayer(){
         player_id = getId();
         skill = getSkill(getProfession().name());
-        bounty = getBounty();
+        bounty = updateBounty();
         licenses = getPlayerLicenses();
+        start_time = getStartTime();
         plugin.getServer().getPlayer(playerName).setExp(skill);
     }
     
@@ -106,8 +108,7 @@ public class ConfigPlayer {
         Statement st;
         try {
             st = con.createStatement();
-            //int ltr = (int)System.currentTimeMillis()/1000 - getLastUpdate(); //life to be removed
-            double life = plugin.getEconomy().getBalance(playerName);// - ltr;
+            double life = plugin.getEconomy().getBalance(playerName);
             int rs = st.executeUpdate("UPDATE `players` (life, lastupdate) VALUES ("+(int)life+","+(int)System.currentTimeMillis()/1000+") WHERE name='"+this.playerName+"';");
             return (rs > 0);
         } catch (SQLException ex) {
@@ -217,6 +218,21 @@ public class ConfigPlayer {
         return false;
     }
     
+    public int getStartTime() {
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();                
+            ResultSet rs = st.executeQuery("SELECT start FROM `players` WHERE id="+player_id+";");
+            while (rs.next()){
+                return rs.getInt("start");
+            }
+        } catch (SQLException ex) {
+            plugin.sendConsole("Failed to get skill of player " + playerName + "\n" + ex);
+        }
+        return (int)System.currentTimeMillis()/1000;
+    }
+    
     public int getSkill(String profession) {
         Connection con = plugin.getSql().getConnection();
         Statement st;
@@ -298,7 +314,7 @@ public class ConfigPlayer {
         return 0;
     }
     
-    public int getBounty(){
+    private int updateBounty(){
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -310,6 +326,10 @@ public class ConfigPlayer {
             plugin.sendConsole("Failed to get bounty of player " + playerName + "\n" + ex);
         }
         return 0;
+    }
+    
+    public int getBounty(){
+        return bounty;
     }
     
     public String getBountyString(){
@@ -342,20 +362,7 @@ public class ConfigPlayer {
     }
     
     public int getPlayerAge(){
-        int start=0;
-        Connection con = plugin.getSql().getConnection();
-        Statement st;
-        try {
-            st = con.createStatement();
-            ResultSet rs = st.executeQuery("SELECT start FROM `players` WHERE id="+player_id+";");
-            if (rs.next())
-                start = rs.getInt("start");
-        } catch (SQLException ex) {
-           plugin.sendConsole("Failed get age of player " + playerName + "\n" + ex);
-        }
-        if (start == 0) return 0;
-        int age = (int) System.currentTimeMillis()/1000 - start;
-        return age;
+        return (int)System.currentTimeMillis()/1000 - start_time;
     }
     
     public void removePlayer(){
@@ -366,7 +373,7 @@ public class ConfigPlayer {
             st.executeUpdate("DELETE FROM `players` WHERE player='"+playerName+"';");
             st.executeUpdate("DELETE FROM `licenses` WHERE player_id="+player_id+";");
             st.executeUpdate("DELETE FROM `skills` WHERE player_id="+player_id+";");
-            st.executeUpdate("DELETE FROM `prof_builder` WHERE player='"+playerName+"';");
+            st.executeUpdate("DELETE FROM `job_builder` WHERE player='"+playerName+"';");
             st.executeUpdate("UPDATE `homes` SET renter='' WHERE renter='"+playerName+"';");
             st.executeUpdate("UPDATE `homes` SET owner='' WHERE owner='"+playerName+"';");
         } catch (SQLException ex) {
