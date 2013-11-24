@@ -18,8 +18,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -41,9 +43,11 @@ public class Builder {
         this.world = plugin.getServer().getWorld(world_build);
         if (world == null)
             plugin.sendConsole("Problematic: World '"+world_build+"' appears to not exist! Builder object will encounter to problems");
+        
     }
     
     public void commands(String command, CommandSender sender, String [] args){
+        DecimalFormat df = new DecimalFormat("#.##");
         if (args.length == 1){
             command = "/"+ command + " " + args[0] + " ";
             sender.sendMessage("\nYour current job is a " + ChatColor.GREEN + prof.toString().toLowerCase());
@@ -55,8 +59,9 @@ public class Builder {
             if (pr == null)
                 sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Visit "+ChatColor.GRAY+"http://depthsonline.com/minecraft/"+ChatColor.RED+" to sign up for a build");
             else {
-                BlockVector bv = pr.getMinimumPoint();
-                Location loc = new Location(world, bv.getX(), bv.getY()+3, bv.getZ());
+                BlockVector bv_s = pr.getMinimumPoint();
+                BlockVector bv_e = pr.getMaximumPoint();
+                Location loc = new Location(world, (bv_s.getX()+bv_e.getX())/2, bv_e.getY()+4, (bv_s.getZ()+bv_e.getZ())/2);
                 plugin.getServer().getPlayer(sender.getName()).teleport(loc);
             }
                 
@@ -66,13 +71,64 @@ public class Builder {
                 sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Visit "+ChatColor.GRAY+"http://depthsonline.com/minecraft/"+ChatColor.RED+" to sign up for a build");
             else {
                 double progress = checkBuildProgress(sender);
-                DecimalFormat df = new DecimalFormat("#.##");
+                double pay = getBuildWorth(sender) * progress/100*progress/100;
                 sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Progress: "+ChatColor.GRAY+df.format(progress)+ChatColor.RED+"%");
-                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "If you '/life job done' now, you will be awarded "+df.format(progress*progress/100)+"% of maximum earnings");
+                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "If you "+ChatColor.GRAY+"/life job done"+ChatColor.GREEN+" now, you will be awarded "+
+                        ChatColor.GRAY+TimeCommands.convertSecondsToTime(pay)+ChatColor.GREEN+" ("+df.format(progress*progress/100)+"% of maximum earnings)");
             }
         } else if (args[1].equalsIgnoreCase("done")){
-            
+            ProtectedRegion pr = getPlayerRegion(sender.getName());
+            if (pr == null)
+                sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Visit "+ChatColor.GRAY+"http://depthsonline.com/minecraft/"+ChatColor.RED+" to sign up for a build");
+            else {
+                double progress = checkBuildProgress(sender);
+                double pay = getBuildWorth(sender) * progress/100*progress/100;
+                setPlayerBuildComplete(sender.getName(), pr);
+                EconomyResponse er = plugin.getEconomy().depositPlayer(sender.getName(),pay);
+                if (er.transactionSuccess()){
+                    sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Congratulations! You have been given " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(pay) +
+                            ChatColor.GREEN + " life!");
+                    sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You managed to complete " + ChatColor.GRAY + df.format(progress) + ChatColor.GREEN + "% of this construct");
+                } else {
+                    sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "A problem occured while trying to reward you with life. Speak to an admin!");
+                    plugin.sendConsole("Failed rewarding '"+sender.getName()+"' with "+df.format(pay)+" life!");
+                }
+            }
         }
+    }
+    
+    public boolean setPlayerBuildComplete(String player, ProtectedRegion pr){
+        WorldGuardUtil wgu = new WorldGuardUtil(plugin, world);
+        wgu.deleteRegion(pr.getId());
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            int updated = st.executeUpdate("UPDATE `job_builder` SET completed=1 WHERE player='"+player+"';");
+            return (updated > 0);
+        } catch (SQLException ex) {
+           plugin.sendConsole("Failed to get schematics in getSchematics()\n" + ex);
+        }
+        return false;
+    }
+    
+    public ArrayList<String> getSchematics(){
+        ArrayList<String> arr = new ArrayList<String>();
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT filename FROM `schematics`  WHERE approved=1 AND processed=1;");
+            while (rs.next())
+                arr.add(rs.getString("filename"));
+        } catch (SQLException ex) {
+           plugin.sendConsole("Failed to get schematics in getSchematics()\n" + ex);
+        }
+        return arr;
+    }
+    
+    public World getWorld(){
+        return this.world;
     }
     
     public ProtectedRegion getPlayerRegion(String player){
@@ -169,6 +225,26 @@ public class Builder {
             return 0;
         }
         return wgu.compareRegionToSchematic(sender, pr, schem);
+    }
+    
+    public double getBuildWorth(CommandSender sender){
+        String schematic = getBuildSchematicName(sender.getName());
+        if (schematic == null){
+            plugin.sendConsole("Schematic lookup for player '" + sender.getName() +"' failed in getBuildWorth()");
+            return 0;
+        }
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT worth FROM `schematics` WHERE filename='"+schematic+"';");
+            if (rs.first()){
+                return rs.getInt("worth");
+            }
+        } catch (SQLException ex) {
+           plugin.sendConsole("Failed to get worth for schematic '"+schematic+"'\n" + ex);
+        }
+        return 0;
     }
     
     public ProtectedRegion getCurrentBuild(String player){

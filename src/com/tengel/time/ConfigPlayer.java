@@ -6,20 +6,13 @@
 
 package com.tengel.time;
 
-import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
-import java.io.File;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 /**
@@ -48,7 +41,7 @@ public class ConfigPlayer {
             ResultSet rs = st.executeQuery("SELECT * FROM `players` WHERE name='"+playerName+"';");
             long start = System.currentTimeMillis()/1000;
             if (!rs.first())
-                st.executeUpdate("INSERT INTO `players` (name, start, lastlogin) VALUES ('"+playerName+"', "+start+", "+start+");");
+                st.executeUpdate("INSERT INTO `players` (name, start, lastseen) VALUES ('"+playerName+"', "+start+", "+start+");");
         } catch (SQLException ex) {
             plugin.sendConsole("Failed to setup or create player: " + playerName + "\n" + ex);
         }
@@ -333,8 +326,7 @@ public class ConfigPlayer {
     }
     
     public String getBountyString(){
-        TimeCommands tc = new TimeCommands();
-        return tc.convertSecondsToTime(bounty);
+        return TimeCommands.convertSecondsToTime(bounty);
     }
     
     public void addBounty(int amount){

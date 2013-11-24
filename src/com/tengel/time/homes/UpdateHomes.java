@@ -35,8 +35,7 @@ public class UpdateHomes implements Runnable {
             return false;
         } else {
             if (p.isOnline()){
-                TimeCommands tc = new TimeCommands();
-                p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You just paid your daily rent of " + ChatColor.GRAY + tc.convertSecondsToTime(amount));
+                p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You just paid your daily rent of " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(amount));
             }
         }
         return true;
@@ -64,8 +63,7 @@ public class UpdateHomes implements Runnable {
                         if (p_lord != null){
                             plugin.getEconomy().depositPlayer(landlord, rent);
                             if (p_lord.isOnline()){
-                                TimeCommands tc = new TimeCommands();
-                                p_lord.sendMessage(plugin.getPluginName()+ renter + " has paid you his/her daily rent of " + ChatColor.GREEN + tc.convertSecondsToTime(rent));
+                                p_lord.sendMessage(plugin.getPluginName()+ renter + " has paid you his/her daily rent of " + ChatColor.GREEN + TimeCommands.convertSecondsToTime(rent));
                             }
                         }
                     }

@@ -47,7 +47,7 @@ public class TimeCommands implements Listener{
     }
     
     
-    public String convertSecondsToTime(double seconds){
+    public static String convertSecondsToTime(double seconds){
         double minutes = 0;
         double hours = 0;
         double days = 0;
@@ -216,6 +216,11 @@ public class TimeCommands implements Listener{
                 plugin.prof_builder.commands(command, sender, args);
             else
                 sender.sendMessage("Commands for your profession aren't implemented yet.");
+        } else if (args[0].equalsIgnoreCase("admin")){
+            if ((args.length > 1) && (args[1].equalsIgnoreCase("update"))){
+                WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.prof_builder.getWorld());
+                wgu.updateBuildWorth(sender, plugin.prof_builder.getSchematics());
+            }
         }
         
         else

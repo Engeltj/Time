@@ -30,6 +30,11 @@ public class Gatherer {
         loadEarnings();
     }
     
+    public int getBlockWorth(int block_id){
+        Material m = Material.getMaterial(block_id);
+        return earnings.get(m);
+    }
+    
     private void loadEarnings(){
         earnings = new HashMap<Material, Integer>();
         if (prof == TimeProfession.MINER)

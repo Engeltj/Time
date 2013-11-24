@@ -42,10 +42,9 @@ public class RegionControl implements Listener {
         Homes h = new Homes(plugin);
         if (h.isHome(rgName)){
             ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
-            TimeCommands tc = new TimeCommands();
             if (h.isAvailable(rgName)){
                 double price = h.getPrice(rgName);
-                p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "This home is available for " + ChatColor.GRAY + tc.convertSecondsToTime(price) +
+                p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "This home is available for " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(price) +
                     ChatColor.GREEN + " per day. Type " + ChatColor.GRAY + "/life home rent" + ChatColor.GREEN + " to rent.");
             } else {
                 String renter = h.getRenter(rgName);
@@ -60,7 +59,7 @@ public class RegionControl implements Listener {
                     p.sendMessage(plugin.getPluginName() + ChatColor.GRAY + "The landlord of this apartment is " + lord);
                 else if (lord.length() == 0){
                     double price = h.getPrice(rgName) * 14;
-                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "This home may be owned by you for renting out for " + ChatColor.GRAY + tc.convertSecondsToTime(price) +
+                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "This home may be owned by you for renting out for " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(price) +
                             ChatColor.GREEN + ". Type " + ChatColor.GRAY + "/life home buy" + ChatColor.GREEN + " to purchase.");
                 }
             }

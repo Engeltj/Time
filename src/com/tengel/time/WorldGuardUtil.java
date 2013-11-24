@@ -41,6 +41,10 @@ import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +75,34 @@ public class WorldGuardUtil {
             this.wgp = plugin.worldGuard;
             this.world = world;
             this.plugin = plugin;
+        }
+        
+        public void updateBuildWorth(CommandSender sender, ArrayList<String> schematics){
+            for (String schematic : schematics)
+                updateBuildWorth(sender, schematic);
+        }
+        
+        public boolean updateBuildWorth(CommandSender sender, String schematic){
+            CuboidClipboard cc = getClipboard(sender, schematic);
+            Vector size = cc.getSize();
+            int earnings = 0;
+            for (int x=0;x<size.getX();x++)
+                for (int y=0;y<size.getY();y++)
+                    for (int z=0;z<size.getZ();z++){
+                        Vector pos = new Vector(x,y,z);
+                        earnings = earnings + plugin.prof_miner.getBlockWorth(cc.getBlock(pos).getType());
+                    }
+            
+            Connection con = plugin.getSql().getConnection();
+            Statement st;
+            try {
+                st = con.createStatement();
+                int updated = st.executeUpdate("UPDATE `schematics` SET worth="+earnings*5+" WHERE filename='"+schematic+"';");
+                return (updated > 0);
+            } catch (SQLException ex) {
+               plugin.sendConsole("Failed to update worth for '"+schematic+"' in updateBuildWorth\n" + ex);
+            }
+            return false;
         }
         
         public ProtectedRegion updateProtectedRegion(String playerName, Location start, Location end) throws Exception {
@@ -199,42 +231,32 @@ public class WorldGuardUtil {
 		return true;
 	}
 
-	public static void deleteRegion(String worldName, String id) {
-		World w = Bukkit.getWorld(worldName);
-		if (w == null)
-			return;
-		RegionManager mgr = wgp.getRegionManager(w);
+	public void deleteRegion(String region) {
+		RegionManager mgr = wgp.getRegionManager(world);
 		if (mgr == null)
 			return;
-		mgr.removeRegion(id);
+		mgr.removeRegion(region);
 	}
         
         public void pasteFirstLayer(CommandSender sender, ProtectedRegion pr, String schematic){
-            String args[] = {"load", schematic};
             final WorldEditPlugin wep = plugin.worldEdit;
-            //final WorldEdit we = wep.getWorldEdit();
             LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(), sender, world);
             final LocalSession session = wep.getWorldEdit().getSession(bcs);
             session.setUseInventory(false);
             EditSession editSession = session.createEditSession(bcs);
             Vector pos = new Vector(pr.getMinimumPoint());
             try {
-                    //CommandContext cc = new CommandContext(args);
-                    File f = new File(plugin.getDataFolder() + "/schematics/" + schematic);
-                    SchematicFormat format = SchematicFormat.getFormat(f);
-                    session.setClipboard(format.load(f));
-                    session.getClipboard().paste(editSession, pos, false, false);  
-                    for (double x= pr.getMinimumPoint().getX(); x < pr.getMaximumPoint().getX(); x++){
-                        for (double y= pr.getMinimumPoint().getY()+2; y < pr.getMaximumPoint().getY(); y++){
-                            for (double z= pr.getMinimumPoint().getZ(); z < pr.getMaximumPoint().getZ(); z++){
-                                Location loc = new Location(world,x,y,z);
-                                loc.getBlock().setType(Material.AIR);
-                                clearRegion(pr, world.getName());
-                            }
+                session.setClipboard(getClipboard(sender, schematic));
+                session.getClipboard().paste(editSession, pos, false, false);  
+                for (double x= pr.getMinimumPoint().getX(); x < pr.getMaximumPoint().getX(); x++){
+                    for (double y= pr.getMinimumPoint().getY()+2; y < pr.getMaximumPoint().getY(); y++){
+                        for (double z= pr.getMinimumPoint().getZ(); z < pr.getMaximumPoint().getZ(); z++){
+                            Location loc = new Location(world,x,y,z);
+                            loc.getBlock().setType(Material.AIR);
                         }
                     }
-                    
-                    //loadAndPaste(cc, we, session, bcs, editSession, pos);
+                }
+                clearRegion(pr, world.getName());
             } catch (Exception e) {
             }
         }
@@ -278,36 +300,44 @@ public class WorldGuardUtil {
 	}
         
         
-        public double compareRegionToSchematic(CommandSender sender, ProtectedRegion r, String schematic){
-                Vector min = r.getMinimumPoint();
-                Vector max = r.getMaximumPoint();
-		final WorldEditPlugin wep = plugin.worldEdit;
-		LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(), sender, world);
-                CuboidClipboard c_region = new CuboidClipboard(max.subtract(min),min, new Vector(0,0,0));
-		final LocalSession session = wep.getWorldEdit().getSession(bcs);
-		session.setUseInventory(false);
-                session.setClipboard(c_region);
-		EditSession editSession = session.createEditSession(bcs);
-                c_region.copy(editSession);
-                CuboidClipboard c_schematic = load(bcs, schematic);
-                
-                Vector size = c_region.getSize();
-                double same = 0;
-                double total = 0;
-                for (int x = 0; x < size.getX(); x++)
-                    for (int y = 2; y < size.getY(); y++)
-                        for (int z = 0; z < size.getZ(); z++){
-                            Vector vec = new Vector(x,y,z);
-                            if (c_schematic.getBlock(vec).getType() > 0){ //NOT AIR :)
-                                if (c_region.getBlock(vec).getType() == c_schematic.getBlock(vec).getType())
-                                    same++;
-                                total++;
-                            }
-                        }                
-                return (same/total*100D);
+        public double compareRegionToSchematic(CommandSender sender, ProtectedRegion pr, String schematic){
+            CuboidClipboard c_region = getClipboard(sender, pr);
+            CuboidClipboard c_schematic = getClipboard(sender, schematic);
+            Vector size = c_region.getSize();
+            double same = 0;
+            double total = 0;
+            for (int x = 0; x < size.getX(); x++)
+                for (int y = 2; y < size.getY(); y++)
+                    for (int z = 0; z < size.getZ(); z++){
+                        Vector vec = new Vector(x,y,z);
+                        if (c_schematic.getBlock(vec).getType() > 0){ //NOT AIR :)
+                            if (c_region.getBlock(vec).getType() == c_schematic.getBlock(vec).getType())
+                                same++;
+                            total++;
+                        }
+                    }                
+            return (same/total*100D);
         }
         
-	public static boolean saveSchematic(Player p, String schematicName){
+        public double getBuildWorth(CommandSender sender, ProtectedRegion pr, String schematic){
+            CuboidClipboard c_region = getClipboard(sender, pr);
+            CuboidClipboard c_schematic = getClipboard(sender, schematic);
+            Vector size = c_region.getSize();
+            double same = 0;
+            double total = 0;
+            for (int x = 0; x < size.getX(); x++)
+                for (int y = 2; y < size.getY(); y++)
+                    for (int z = 0; z < size.getZ(); z++){
+                        Vector vec = new Vector(x,y,z);
+                        if (c_schematic.getBlock(vec).getType() > 0){ //NOT AIR :)
+                            if (c_region.getBlock(vec).getType() == c_schematic.getBlock(vec).getType())
+                                same++;
+                            total++;
+                        }
+                    }                
+            return (same/total*100D);
+        }
+	/*public static boolean saveSchematic(Player p, String schematicName){
             CommandContext cc = null;
             WorldEditPlugin wep = WorldEditUtil.getWorldEditPlugin();
             final LocalSession session = wep.getSession(p);
@@ -333,7 +363,7 @@ public class WorldGuardUtil {
                     //Log.printStackTrace(e);
                     return false;
             }
-	}
+	}*/
         
         public Vector getSchematicDimensions(CommandSender sender, String schematic){
             WorldEditPlugin wep = plugin.worldEdit;
@@ -353,8 +383,9 @@ public class WorldGuardUtil {
         }
 
         
-        public CuboidClipboard load(LocalPlayer bcs, String schematic){
-            WorldEditPlugin wep = plugin.worldEdit;
+        public CuboidClipboard getClipboard(CommandSender sender, String schematic){
+            final WorldEditPlugin wep = plugin.worldEdit;
+            LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(), sender, world);            
             final WorldEdit we = wep.getWorldEdit();
             File dir = new File(plugin.getDataFolder() + "/schematics/");
             try {
@@ -365,6 +396,21 @@ public class WorldGuardUtil {
                 printError(bcs,"Error : " + e.getMessage());
             }
             return null;
+        }
+        
+        public CuboidClipboard getClipboard(CommandSender sender, ProtectedRegion pr){
+            final WorldEditPlugin wep = plugin.worldEdit;
+            LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(), sender, world);
+            final LocalSession session = wep.getWorldEdit().getSession(bcs);
+            Vector min = pr.getMinimumPoint();
+            Vector max = pr.getMaximumPoint();
+            CuboidClipboard cc = new CuboidClipboard(max.subtract(min),min, new Vector(0,0,0));
+            
+            session.setUseInventory(false);
+            session.setClipboard(cc);
+            EditSession editSession = session.createEditSession(bcs);
+            cc.copy(editSession);
+            return cc;
         }
         
 	/**
