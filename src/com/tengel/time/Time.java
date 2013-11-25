@@ -128,9 +128,9 @@ public final class Time extends JavaPlugin {
                     if (i>0)
                         plugin.sendConsole("Processed " + i + " schematic(s).");
                 } catch (IOException ex) {
-                    plugin.sendConsole("Failed to processSchematics\n" + ex);
+                    plugin.sendConsole("Failed to processSchematics, IOException\n" + ex);
                 } catch (SQLException ex) {
-                    plugin.sendConsole("Failed to processSchematics\n" + ex);
+                    plugin.sendConsole("Failed to processSchematics, SQLException\n" + ex);
                 }
             }
         };

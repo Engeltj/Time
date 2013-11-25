@@ -6,17 +6,11 @@
 
 package com.tengel.time;
 
-import com.sk89q.worldedit.Vector;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
-import java.awt.Dimension;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;

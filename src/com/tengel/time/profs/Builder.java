@@ -6,7 +6,6 @@
 
 package com.tengel.time.profs;
 
-import com.sk89q.minecraft.util.commands.Command;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
@@ -48,51 +47,50 @@ public class Builder {
     
     public void commands(String command, CommandSender sender, String [] args){
         DecimalFormat df = new DecimalFormat("#.##");
+        int build_id = getPlayerBuildSchematicId(sender.getName());
+        ProtectedRegion pr = getPlayerCurrentBuild(sender.getName());
+        
+        if ((build_id > 0) && (pr == null)){
+            pr = createBuild(sender, this.getBuildSchematicName(build_id));
+        }
+        if ((build_id == 0) && (pr != null)){
+            WorldGuardUtil wgu = new WorldGuardUtil(plugin, world);
+            wgu.deleteRegion(pr.getId());
+        }
+        if (pr == null)
+            sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Visit "+ChatColor.GRAY+"http://depthsonline.com/minecraft/"+ChatColor.RED+" to sign up for a build");
         if (args.length == 1){
             command = "/"+ command + " " + args[0] + " ";
             sender.sendMessage("\nYour current job is a " + ChatColor.GREEN + prof.toString().toLowerCase());
             sender.sendMessage(ChatColor.GRAY + command + "teleport" + ChatColor.GREEN + "  > Teleports you to your construct");
             sender.sendMessage(ChatColor.GRAY + command + "check" + ChatColor.GREEN + "  > Checks the % completion/correctness of your construct");
             sender.sendMessage(ChatColor.GRAY + command + "done" + ChatColor.GREEN + "  > If you're finished your construct, run this");
-        } else if (args[1].equalsIgnoreCase("teleport")){
-            ProtectedRegion pr = getPlayerRegion(sender.getName());
-            if (pr == null)
-                sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Visit "+ChatColor.GRAY+"http://depthsonline.com/minecraft/"+ChatColor.RED+" to sign up for a build");
-            else {
-                BlockVector bv_s = pr.getMinimumPoint();
-                BlockVector bv_e = pr.getMaximumPoint();
-                Location loc = new Location(world, (bv_s.getX()+bv_e.getX())/2, bv_e.getY()+4, (bv_s.getZ()+bv_e.getZ())/2);
-                plugin.getServer().getPlayer(sender.getName()).teleport(loc);
-            }
+        } else if (pr == null)
+            return;
+        else if (args[1].equalsIgnoreCase("teleport")){
+            BlockVector bv_s = pr.getMinimumPoint();
+            BlockVector bv_e = pr.getMaximumPoint();
+            Location loc = new Location(world, (bv_s.getX()+bv_e.getX())/2, bv_e.getY()+4, (bv_s.getZ()+bv_e.getZ())/2);
+            plugin.getServer().getPlayer(sender.getName()).teleport(loc);
                 
         } else if (args[1].equalsIgnoreCase("check")){
-            ProtectedRegion pr = getPlayerRegion(sender.getName());
-            if (pr == null)
-                sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Visit "+ChatColor.GRAY+"http://depthsonline.com/minecraft/"+ChatColor.RED+" to sign up for a build");
-            else {
-                double progress = checkBuildProgress(sender);
-                double pay = getBuildWorth(sender) * progress/100*progress/100;
-                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Progress: "+ChatColor.GRAY+df.format(progress)+ChatColor.RED+"%");
-                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "If you "+ChatColor.GRAY+"/life job done"+ChatColor.GREEN+" now, you will be awarded "+
-                        ChatColor.GRAY+TimeCommands.convertSecondsToTime(pay)+ChatColor.GREEN+" ("+df.format(progress*progress/100)+"% of maximum earnings)");
-            }
+            double progress = checkPlayerBuildProgress(sender);
+            double pay = getPlayerBuildWorth(sender) * progress/100*progress/100;
+            sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Progress: "+ChatColor.GRAY+df.format(progress)+ChatColor.RED+"%");
+            sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "If you "+ChatColor.GRAY+"/life job done"+ChatColor.GREEN+" now, you will be awarded "+
+                    ChatColor.GRAY+TimeCommands.convertSecondsToTime(pay)+ChatColor.GREEN+" ("+df.format(progress*progress/100)+"% of maximum earnings)");
         } else if (args[1].equalsIgnoreCase("done")){
-            ProtectedRegion pr = getPlayerRegion(sender.getName());
-            if (pr == null)
-                sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Visit "+ChatColor.GRAY+"http://depthsonline.com/minecraft/"+ChatColor.RED+" to sign up for a build");
-            else {
-                double progress = checkBuildProgress(sender);
-                double pay = getBuildWorth(sender) * progress/100*progress/100;
-                setPlayerBuildComplete(sender.getName(), pr);
-                EconomyResponse er = plugin.getEconomy().depositPlayer(sender.getName(),pay);
-                if (er.transactionSuccess()){
-                    sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Congratulations! You have been given " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(pay) +
-                            ChatColor.GREEN + " life!");
-                    sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You managed to complete " + ChatColor.GRAY + df.format(progress) + ChatColor.GREEN + "% of this construct");
-                } else {
-                    sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "A problem occured while trying to reward you with life. Speak to an admin!");
-                    plugin.sendConsole("Failed rewarding '"+sender.getName()+"' with "+df.format(pay)+" life!");
-                }
+            double progress = checkPlayerBuildProgress(sender);
+            double pay = getPlayerBuildWorth(sender) * progress/100*progress/100;
+            setPlayerBuildComplete(sender.getName(), pr);
+            EconomyResponse er = plugin.getEconomy().depositPlayer(sender.getName(),pay);
+            if (er.transactionSuccess()){
+                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Congratulations! You have been given " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(pay) +
+                        ChatColor.GREEN + " life!");
+                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You managed to complete " + ChatColor.GRAY + df.format(progress) + ChatColor.GREEN + "% of this construct");
+            } else {
+                sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "A problem occured while trying to reward you with life. Speak to an admin!");
+                plugin.sendConsole("Failed rewarding '"+sender.getName()+"' with "+df.format(pay)+" life!");
             }
         }
     }
@@ -131,11 +129,7 @@ public class Builder {
         return this.world;
     }
     
-    public ProtectedRegion getPlayerRegion(String player){
-        return plugin.worldGuard.getRegionManager(world).getRegion("buildplot_"+player);
-    }
-    
-    public boolean createBuild(CommandSender sender, String schematic){
+    public ProtectedRegion createBuild(CommandSender sender, String schematic){
         WorldGuardUtil wgu = new WorldGuardUtil(plugin, world);
         try {
             Vector vec = wgu.getSchematicDimensions(sender, schematic);
@@ -145,14 +139,29 @@ public class Builder {
             Location end = new Location(world, start.getX()+vec.getX(), start.getBlockY()+vec.getY(), start.getZ()+vec.getZ());
             ProtectedRegion pr = wgu.updateProtectedRegion(sender.getName(), start, end);
             wgu.pasteFirstLayer(sender, pr, schematic);
-            addBuild(sender.getName(),schematic, start, end);
+            addPlayerBuild(sender.getName(),schematic, start, end);
+            return pr;
         } catch (Exception ex) {
             Logger.getLogger(TimeCommands.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return true;
+        return null;
     }
     
-    private int getSchematicId(String schematic){
+    public int getPlayerBuildSchematicId(String player){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT schematic_id FROM `job_builder` WHERE player='"+player+"' AND completed=0;");
+            if (rs.first())
+                return rs.getInt("schematic_id");
+        } catch (SQLException ex) {
+           plugin.sendConsole("Failed to obtain player current build for '"+player+"' in getPlayerBuildSchematicId\n" + ex);
+        }
+        return 0;
+    }
+    
+    private int getBuildSchematicId(String schematic){
         Connection con = plugin.getSql().getConnection();
         Statement st;
         int id = 0;
@@ -162,23 +171,28 @@ public class Builder {
             if (rs.first())
                 id = rs.getInt("id");
         } catch (SQLException ex) {
-           plugin.sendConsole("Failed to obtain schematic id for '"+schematic+"' in getSchematicId\n" + ex);
+           plugin.sendConsole("Failed to obtain schematic id for '"+schematic+"' in getBuildSchematicId\n" + ex);
         }
         return id;
     }
     
-    private boolean addBuild(String name, String schematic, Location start, Location end){
+    private boolean addPlayerBuild(String player, String schematic, Location start, Location end){
         Connection con = plugin.getSql().getConnection();
         Statement st;
-        int x = 0;
         try {
             st = con.createStatement();
-            int id = getSchematicId(schematic);
-            String values = String.format("'%s',%d,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f", name, id, start.getX(), start.getY(), start.getZ(), end.getX(), end.getY(), end.getZ());
-            int updated = st.executeUpdate("INSERT INTO `job_builder` (player,schematic_id,x1,y1,z1,x2,y2,z2) VALUES ("+values+");");
+            int id = getBuildSchematicId(schematic);
+            int updated = 0;
+            if (getPlayerBuildSchematicName(player) == null){
+                String values = String.format("'%s',%d,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f", player, id, start.getX(), start.getY(), start.getZ(), end.getX(), end.getY(), end.getZ());
+                updated = st.executeUpdate("INSERT `job_builder` (player,schematic_id,x1,y1,z1,x2,y2,z2) VALUES ("+values+");");
+            }else{
+                String values = String.format("x1=%.0f,y1=%.0f,z1=%.0f,x2=%.0f,y2=%.0f,z2=%.0f", start.getX(), start.getY(), start.getZ(), end.getX(), end.getY(), end.getZ());
+                updated = st.executeUpdate("UPDATE `job_builder` SET "+values+" WHERE player='"+player+"' AND completed=0;");
+            }
             return (updated > 0);
         } catch (SQLException ex) {
-           plugin.sendConsole("Failed to insert new build project for '"+name+"' in `job_builder`\n" + ex);
+           plugin.sendConsole("Failed to insert/update new build project for '"+player+"' in `job_builder`\n" + ex);
         }
         return false;
     }
@@ -198,7 +212,22 @@ public class Builder {
         return new Location(world, x+1, 65, 0);
     }
     
-    public String getBuildSchematicName(String player){
+    public String getBuildSchematicName(int id){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT filename FROM `schematics` WHERE id="+id+";");
+            if (rs.first()){
+                return rs.getString("filename");
+            }
+        } catch (SQLException ex) {
+           plugin.sendConsole("Failed to get build schematic name of id '"+id+"'\n" + ex);
+        }
+        return null;
+    }
+    
+    public String getPlayerBuildSchematicName(String player){
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -216,10 +245,10 @@ public class Builder {
         return null;
     }
     
-    public double checkBuildProgress(CommandSender sender){
-        ProtectedRegion pr = getCurrentBuild(sender.getName());
+    public double checkPlayerBuildProgress(CommandSender sender){
+        ProtectedRegion pr = getPlayerCurrentBuild(sender.getName());
         WorldGuardUtil wgu = new WorldGuardUtil(plugin, world);
-        String schem = getBuildSchematicName(sender.getName());
+        String schem = getPlayerBuildSchematicName(sender.getName());
         if (schem == null){
             plugin.sendConsole("Schematic lookup for player '" + sender.getName() +"' failed.");
             return 0;
@@ -227,10 +256,10 @@ public class Builder {
         return wgu.compareRegionToSchematic(sender, pr, schem);
     }
     
-    public double getBuildWorth(CommandSender sender){
-        String schematic = getBuildSchematicName(sender.getName());
+    public double getPlayerBuildWorth(CommandSender sender){
+        String schematic = getPlayerBuildSchematicName(sender.getName());
         if (schematic == null){
-            plugin.sendConsole("Schematic lookup for player '" + sender.getName() +"' failed in getBuildWorth()");
+            plugin.sendConsole("Schematic lookup for player '" + sender.getName() +"' failed in getPlayerBuildWorth()");
             return 0;
         }
         Connection con = plugin.getSql().getConnection();
@@ -247,11 +276,14 @@ public class Builder {
         return 0;
     }
     
-    public ProtectedRegion getCurrentBuild(String player){
+    public ProtectedRegion getPlayerCurrentBuild(String player){
         if (world==null){
-            plugin.sendConsole("Failed getting world called '"+world_build+"' in getCurrentBuild()");
+            plugin.sendConsole("Failed getting world called '"+world_build+"' in getPlayerCurrentBuild()");
             return null;
         }
-        return plugin.worldGuard.getRegionManager(world).getRegion("buildplot_"+player.toLowerCase());
+        ProtectedRegion pr = plugin.worldGuard.getRegionManager(world).getRegion("buildplot_"+player.toLowerCase());
+        if (pr != null && pr.getId().equalsIgnoreCase("buildplot_"+player.toLowerCase()))
+            return pr;
+        return null;
     }
 }
