@@ -20,16 +20,14 @@ import org.bukkit.entity.Player;
  * @author Tim
  */
 public class ConfigPlayer {
-    private String playerName;
-    //private double life;
+    private final String playerName;
     private int player_id = 0;
     private int skill = 0;
     private int bounty = 0;
     private long start_time = 0;
-    private Time plugin;
+    private final Time plugin;
     public boolean flag_jobLeave = false;
     private List<Integer> licenses;
-    //private boolean
     
     public ConfigPlayer(Time plugin, Player p){
         this.plugin = plugin;
@@ -46,7 +44,6 @@ public class ConfigPlayer {
             plugin.sendConsole("Failed to setup or create player: " + playerName + "\n" + ex);
         }
     }
-    
     
     public void loadPlayer(){
         player_id = getId();

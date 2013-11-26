@@ -32,10 +32,6 @@ public class UpdateSigns implements Runnable {
         this.plugin = plugin;
     }
     
-    public void updateSign(Location loc){
-        
-    }
-    
     public void run() {
         File f = plugin.getConfigSigns();
         List valid = new ArrayList();
@@ -73,7 +69,7 @@ public class UpdateSigns implements Runnable {
             }
             br.close();
         } catch (Exception ex) {
-            Logger.getLogger(UpdateSigns.class.getName()).log(Level.SEVERE, null, ex);
+            plugin.sendConsole("UpdateSigns threw exception: " + ex);
             return;
         }
         if (valid.size() > 0){
@@ -85,7 +81,7 @@ public class UpdateSigns implements Runnable {
                 }
                 out.close();
             } catch (Exception ex) {
-                Logger.getLogger(UpdateSigns.class.getName()).log(Level.SEVERE, null, ex);
+                plugin.sendConsole("Writing signs caused exception: " + ex);
             }
             
         }
