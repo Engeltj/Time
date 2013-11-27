@@ -12,8 +12,10 @@ import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.Config;
+import com.tengel.time.ConfigPlayer;
 import com.tengel.time.Time;
 import com.tengel.time.WorldGuardUtil;
+import com.tengel.time.profs.TimeProfession;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -79,6 +81,21 @@ public class Homes {
     }
     
     public void commands(CommandSender sender, String[] args){
+        ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
+        Player p = plugin.getServer().getPlayer(sender.getName());
+        if (args[1].equalsIgnoreCase("rent")){
+            Homes h = new Homes(plugin);
+            h.rent(p);
+        } else if (args[1].equalsIgnoreCase("buy")){
+            Homes h = new Homes(plugin);
+            if (cp.getProfession() == TimeProfession.LANDLORD)
+                h.buy(p);
+            else
+                sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need to be a landlord to purchase this home");
+        } 
+    }
+    
+    public void adminCommands(CommandSender sender, String[] args){
         if (args.length == 2){
             sender.sendMessage(ChatColor.GRAY + "create <name> [type]" + ChatColor.GREEN + "  > Create a new home, defaults to type apartment");
             sender.sendMessage(ChatColor.GRAY + "update <name>" + ChatColor.GREEN + "  > Update the doorway of a home");
@@ -289,19 +306,23 @@ public class Homes {
     }
     
     public boolean rent(Player p){
-        Map<String, ProtectedRegion> regions = plugin.worldGuard.getRegionManager(p.getWorld()).getRegions();
-        for (ProtectedRegion rg : regions.values()){
-            String region = rg.getId();
-            if (isAvailable(region)){
-                double price = getPrice(region);
-                EconomyResponse es = plugin.getEconomy().withdrawPlayer(p.getName(), price);
-                if (es.transactionSuccess()){
-                    setRenter(region, p.getName());
-                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Congratulations! You are now renting this home");
-                    return true;
-                } else 
-                    p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have enough time to rent this home!");
-                return false;
+        RegionManager mgr = plugin.worldGuard.getRegionManager(p.getWorld());
+        Vector v = toVector(p.getLocation());
+        ApplicableRegionSet set = mgr.getApplicableRegions(v);
+        for (ProtectedRegion each : set){
+            String home = each.getId();
+            if (isHome(home)){
+                if (isAvailable(home)){
+                    double price = getPrice(home);
+                    EconomyResponse es = plugin.getEconomy().withdrawPlayer(p.getName(), price);
+                    if (es.transactionSuccess()){
+                        setRenter(home, p.getName());
+                        p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Congratulations! You are now renting this home");
+                        return true;
+                    } else 
+                        p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have enough time to rent this home!");
+                    return false;
+                }
             }
         }
         p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You must stand inside a home first");

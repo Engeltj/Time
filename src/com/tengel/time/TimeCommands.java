@@ -98,12 +98,12 @@ public class TimeCommands implements Listener{
         else if (args.length == 0){
             sender.sendMessage(ChatColor.YELLOW + "Time format: YYYY/WW/DD/HH/MM/SS");
             sender.sendMessage(ChatColor.BOLD + "" + ChatColor.GREEN + "Your options are: ");
-            sender.sendMessage(ChatColor.GRAY + "/life age" + ChatColor.GREEN + "  > How long you've played");
-            sender.sendMessage(ChatColor.GRAY + "/life left" + ChatColor.GREEN + "  > How long you have left to live");
-            sender.sendMessage(ChatColor.GRAY + "/life bounty" + ChatColor.GREEN + "  > The bounty on your head to be captured");
-            sender.sendMessage(ChatColor.GRAY + "/life bail" + ChatColor.GREEN + "  > Pays off the price on your head so you may leave jail");
-            sender.sendMessage(ChatColor.GRAY + "/life password" + ChatColor.GREEN + "  > Sets your website account password");
-            sender.sendMessage(ChatColor.GRAY + "/life job" + ChatColor.GREEN + "  > Profession specific commands");
+            sender.sendMessage(ChatColor.GRAY + "/"+command+" age" + ChatColor.GREEN + "  > How long you've played");
+            sender.sendMessage(ChatColor.GRAY + "/"+command+" left" + ChatColor.GREEN + "  > How long you have left to live");
+            sender.sendMessage(ChatColor.GRAY + "/"+command+" bounty" + ChatColor.GREEN + "  > The bounty on your head to be captured");
+            sender.sendMessage(ChatColor.GRAY + "/"+command+" bail" + ChatColor.GREEN + "  > Pays off the price on your head so you may leave jail");
+            sender.sendMessage(ChatColor.GRAY + "/"+command+" password" + ChatColor.GREEN + "  > Sets your website account password");
+            sender.sendMessage(ChatColor.GRAY + "/"+command+" job" + ChatColor.GREEN + "  > Profession specific commands");
         }
         
         else if (args[0].equalsIgnoreCase("age")){
@@ -151,7 +151,7 @@ public class TimeCommands implements Listener{
             
             if (!cp.flag_jobLeave){
                 cp.flag_jobLeave = true;
-                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Type '/life unemploy' again to leave your job at the cost of " + 
+                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Type '/"+command+" unemploy' again to leave your job at the cost of " + 
                                         ChatColor.RED + convertSecondsToTime(cost));
             } else {
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), cost);
@@ -162,31 +162,13 @@ public class TimeCommands implements Listener{
                     sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "It seems you cannot afford to lose your job.");
             }
         } else if (args[0].equalsIgnoreCase("home")){
-            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
-            Player p = plugin.getServer().getPlayer(sender.getName());
-            if (args.length == 1)
-                return true;
-            if (args[1].equalsIgnoreCase("rent")){
+            if (args.length == 1){
+                sender.sendMessage(ChatColor.GRAY + "rent" + ChatColor.GREEN + "  > Rent the home you are currently standing in");
+                sender.sendMessage(ChatColor.GRAY + "buy" + ChatColor.GREEN + "  > Purchase the home to get a cut of the income from renters");
+            } else {
                 Homes h = new Homes(plugin);
-                h.rent(p);
-            } else if (args[1].equalsIgnoreCase("buy")){
-                Homes h = new Homes(plugin);
-                if (cp.getProfession() == TimeProfession.LANDLORD)
-                    h.buy(p);
-                else
-                    sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need to be a landlord to purchase this home");
-                return true;                
-            } //else if (args[1].equalsIgnoreCase("create")){
-                //if (plugin.getPlayerListener().checkPermissions(sender, "home.create", false)){
-                    //if (args.length < 4){
-                    //    sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "/life create <region> <price> [farm]");
-                    //    return true;
-                    //} else {
-                        
-                    //}
-                //} else
-                    //return false;
-            //}
+                h.commands(sender, args);
+            }
         } else if (args[0].equalsIgnoreCase("test")){
             plugin.prof_builder.createBuild(sender, "test.schematic");
         } else if (args[0].equalsIgnoreCase("password")){
@@ -211,7 +193,6 @@ public class TimeCommands implements Listener{
     
     private boolean adminCommand(CommandSender sender, String[] args){
         if (args.length == 1){
-            sender.sendMessage(ChatColor.BOLD + "" + ChatColor.GREEN + "Your options are: ");
             sender.sendMessage(ChatColor.GRAY + "home" + ChatColor.GREEN + "  > Home related commands");
             sender.sendMessage(ChatColor.GRAY + "update" + ChatColor.GREEN + "  > Updates schematic prices");
         } else if (args[1].equalsIgnoreCase("update")){
@@ -219,7 +200,7 @@ public class TimeCommands implements Listener{
             wgu.updateBuildWorth(sender, plugin.prof_builder.getSchematics());
         } else if (args[1].equalsIgnoreCase("home")){
             Homes h = new Homes(plugin);
-            h.commands(sender, args);
+            h.adminCommands(sender, args);
         }
         return true;
     }
