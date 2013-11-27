@@ -407,11 +407,16 @@ public class WorldGuardUtil {
             }
         }
         
-        public Vector getSchematicDimensions(CommandSender sender, String schematic){
+        public Vector getSchematicDimensions(String schematic){
+            return getSchematicDimensions(schematic, "");
+        }
+        
+        
+        public Vector getSchematicDimensions(String schematic, String subdir){
             WorldEditPlugin wep = plugin.worldEdit;
             WorldEdit we = wep.getWorldEdit();
-            LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(),sender, plugin.getServer().getWorld("Build"));
-            File dir = new File(plugin.getDataFolder() + "/schematics/");
+            LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(),Bukkit.getConsoleSender(), plugin.getServer().getWorld("Build"));
+            File dir = new File(plugin.getDataFolder() + "/schematics/"+subdir);
             try {
 		File f = we.getSafeOpenFile(bcs, dir, schematic, "schematic", new String[] {"schematic"});
                 SchematicFormat format = SchematicFormat.getFormat(f);

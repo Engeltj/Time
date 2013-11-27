@@ -10,6 +10,7 @@ import com.tengel.time.ConfigPlayer;
 import com.tengel.time.Time;
 import com.tengel.time.TimeCommands;
 import com.tengel.time.mysql.Homes;
+import java.util.ArrayList;
 import java.util.Set;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
@@ -43,7 +44,7 @@ public class UpdateHomes implements Runnable {
     
     public void run() {
         Homes h = new Homes(plugin);
-        Set<String> temp = h.getHomes();
+        ArrayList<String> temp = h.getHomes();
         String [] homes = temp.toArray(new String[0]);
         long time = System.currentTimeMillis()/1000;
         for (String home : homes){
@@ -55,7 +56,7 @@ public class UpdateHomes implements Runnable {
                 if (renter.length() != 0){
                     double rent = h.getPrice(home);
                     if (!chargePlayer(p, rent)){
-                        ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
+                        //ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
                         h.setRenter(home, "");
                     } else {
                         String landlord = h.getLandlord(home);
@@ -70,8 +71,7 @@ public class UpdateHomes implements Runnable {
                 }
             }
         }
-        
-        Bukkit.getServer().getOfflinePlayer(null);
+        //Bukkit.getServer().getOfflinePlayer(null);
     }
     
 }

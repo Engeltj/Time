@@ -8,7 +8,6 @@ package com.tengel.time;
 
 import org.bukkit.event.EventHandler;
 import com.mewin.WGRegionEvents.events.RegionEnterEvent;
-import com.mewin.WGRegionEvents.events.RegionLeaveEvent;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -49,17 +48,17 @@ public class RegionControl implements Listener {
             } else {
                 String renter = h.getRenter(rgName);
                 if (renter.equalsIgnoreCase(p.getName()))
-                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Welcome home " + p.getName());
+                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Welcome home " + ChatColor.GRAY + p.getName());
                 else if (renter.length() > 0)
-                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Welcome to " + renter + "'s" + " home");
+                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Welcome to " + ChatColor.GRAY + renter + "'s" + ChatColor.GREEN+ " home");
             }
             if (cp.getProfession() == TimeProfession.LANDLORD){
                 String lord = h.getLandlord(rgName);
                 if (lord.length() > 0 && !h.getRenter(rgName).equalsIgnoreCase(p.getName()))
-                    p.sendMessage(plugin.getPluginName() + ChatColor.GRAY + "The landlord of this apartment is " + lord);
+                    p.sendMessage(plugin.getPluginName() + ChatColor.GRAY + "The landlord of this apartment is " + ChatColor.GRAY + lord);
                 else if (lord.length() == 0){
                     double price = h.getPrice(rgName) * 14;
-                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "This home may be owned by you for renting out for " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(price) +
+                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "This may be owned by you for renting out for " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(price) +
                             ChatColor.GREEN + ". Type " + ChatColor.GRAY + "/life home buy" + ChatColor.GREEN + " to purchase.");
                 }
             }
@@ -109,7 +108,6 @@ public class RegionControl implements Listener {
         }
         return false;
     }
-    //public void getPlayerBounty
     
     public boolean checkPermissions(Player p, String permission, boolean sendMessage){
         return (plugin.getPlayerListener().checkPermissions(p, permission, sendMessage));

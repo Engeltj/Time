@@ -60,16 +60,16 @@ public class TimeCommands implements Listener{
             days = Math.floor(hours/24);
             hours -= days*24;
         }
-        if (days > 30){
-            weeks = Math.floor(days/30);
-            days -= weeks*30;
+        if (days > 7){
+            weeks = Math.floor(days/7);
+            days -= weeks*7;
         }
         if (weeks > 52){
             years = Math.floor(weeks/52);
             weeks -= years*52;
         }
 
-        return String.format("%04.0f·%02.0f·%02.0f·%01.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds);
+        return String.format("%04.0f·%02.0f·%01.0f·%02.0f·%02.0f·%02.0f", years,weeks,days,hours,minutes,seconds);
         
     }
     

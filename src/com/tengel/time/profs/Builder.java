@@ -132,7 +132,7 @@ public class Builder {
     public ProtectedRegion createBuild(CommandSender sender, String schematic){
         WorldGuardUtil wgu = new WorldGuardUtil(plugin, world);
         try {
-            Vector vec = wgu.getSchematicDimensions(sender, schematic);
+            Vector vec = wgu.getSchematicDimensions(schematic);
             //plugin.sendConsole(String.valueOf(vec));
             Location start = getNextStart();
             plugin.sendConsole(start.toString() + "createBuild");

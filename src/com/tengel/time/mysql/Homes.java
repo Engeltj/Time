@@ -20,6 +20,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -45,6 +46,7 @@ public class Homes {
     }
     
     public void create(Player p, String name, String type){
+        name = "home_"+name;
         if ((type==null) || (type.length() == 0) || type.equalsIgnoreCase("apt"))
             type = "apartment";
         else if (type.equalsIgnoreCase("home"))
@@ -84,12 +86,10 @@ public class Homes {
         ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
         Player p = plugin.getServer().getPlayer(sender.getName());
         if (args[1].equalsIgnoreCase("rent")){
-            Homes h = new Homes(plugin);
-            h.rent(p);
+            rent(p);
         } else if (args[1].equalsIgnoreCase("buy")){
-            Homes h = new Homes(plugin);
             if (cp.getProfession() == TimeProfession.LANDLORD)
-                h.buy(p);
+                buy(p);
             else
                 sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need to be a landlord to purchase this home");
         } 
@@ -98,7 +98,7 @@ public class Homes {
     public void adminCommands(CommandSender sender, String[] args){
         if (args.length == 2){
             sender.sendMessage(ChatColor.GRAY + "create <name> [type]" + ChatColor.GREEN + "  > Create a new home, defaults to type apartment");
-            sender.sendMessage(ChatColor.GRAY + "update <name>" + ChatColor.GREEN + "  > Update the doorway of a home");
+            sender.sendMessage(ChatColor.GRAY + "update <name>" + ChatColor.GREEN + "  > Update the region of a home");
             sender.sendMessage(ChatColor.GRAY + "reset <name>" + ChatColor.GREEN + "  > Reset home to factory state");
         } else {
             if (args[2].equalsIgnoreCase("create")){
@@ -112,7 +112,10 @@ public class Homes {
                 }
 
             } else if (args[2].equalsIgnoreCase("update")){
-                sender.sendMessage(ChatColor.RED + "Not implemented yet.");
+                if (args.length >= 4)
+                    updateHomePrice(args[3]);
+                else
+                    updateHomePrices();
             } else if (args[2].equalsIgnoreCase("reset")){
                 String home = "";
                 if (args.length >=4)
@@ -139,6 +142,57 @@ public class Homes {
             plugin.sendConsole("Failed to get home doorway for '"+home+"', " + ex);
         }
         return vec;
+    }
+    
+    public double getWorth(String home){
+        WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.getServer().getWorlds().get(0));
+        Vector v = wgu.getSchematicDimensions(home, "homes");
+        double area = v.getX()*v.getY()*v.getZ();
+        return (area + area*5*getZone(home))*120;
+    }
+    
+    public void updateHomePrice(String home){
+        double worth = getWorth(home);
+        setPrice(home, worth);
+    }
+    
+    public void updateHomePrices(){
+        ArrayList<String> s = getHomes();
+        for (String home : s){
+            updateHomePrice(home);
+        }
+    }
+    
+    public int getZone(String home){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT zone FROM `homes` WHERE name='"+home+"';");
+            if (rs.first()){
+                return rs.getInt("zone");
+            }
+        } catch (SQLException ex) {
+            plugin.sendConsole("Failed to get zone for home '"+home+"', " + ex);
+        }
+        return 0;
+    }
+    
+    public String getName(String home){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT display_name FROM `homes` WHERE name='"+home+"';");
+            if (rs.first()){
+                String name = rs.getString("display_name");
+                if (name.length()>0)
+                    return name;
+            }
+        } catch (SQLException ex) {
+            plugin.sendConsole("Failed to get display_name for home '"+home+" in getName()', " + ex);
+        }
+        return home;
     }
     
     public void resetHome(String home){
@@ -194,7 +248,7 @@ public class Homes {
             if (rs.first()){
                 String str = rs.getString("renter");
                 if (str == null) return true;
-                return (str.length()>0);
+                return (str.length()==0);
             }
         } catch (SQLException ex) {
             plugin.sendConsole("Fail to check availability on house: " + region);
@@ -206,24 +260,37 @@ public class Homes {
         return (getLandlord(region).length() > 0);
     }
     
-    public double getPrice(String region){
+    public double getPrice(String home){
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
             st = con.createStatement();
-            ResultSet rs = st.executeQuery("SELECT price FROM `homes` WHERE name='"+region+"';");
+            ResultSet rs = st.executeQuery("SELECT price FROM `homes` WHERE name='"+home+"';");
             if (rs.first()){
                 double price = rs.getDouble("price");
                 if (price > 0) return price;
             }
         } catch (SQLException ex) {
-            plugin.sendConsole("Fail to check price on house: " + region);
+            plugin.sendConsole("Fail to check price on home: " + home);
         }
         return 999999999.0;
     }
     
-    public Set getHomes(){
-        Set<String> homes = new HashSet<String>();
+    public boolean setPrice(String home, double price){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            int updated = st.executeUpdate("UPDATE `homes` SET price="+price+" WHERE name='"+home+"';");
+            return (updated > 0);
+        } catch (SQLException ex) {
+            plugin.sendConsole("Fail to set price on home: " + home);
+        }
+        return false;
+    }
+    
+    public ArrayList<String> getHomes(){
+        ArrayList<String> homes = new ArrayList<String>();
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -297,7 +364,9 @@ public class Homes {
             st = con.createStatement();
             int updated = st.executeUpdate("UPDATE homes SET renter='"+player+"' WHERE name='"+region+"';");
             st.executeUpdate("UPDATE homes SET lastpay="+String.valueOf(System.currentTimeMillis()/1000)+" WHERE name='"+region+"';");
-            resetHome(region);
+            if (player.length()==0){
+                resetHome(region);
+            }
             return (updated > 0);
         } catch (SQLException ex) {
             plugin.sendConsole("Fail to set renter on home: " + region);
