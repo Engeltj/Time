@@ -6,9 +6,14 @@
 
 package com.tengel.time.mysql;
 
+import com.sk89q.worldedit.Vector;
+import static com.sk89q.worldguard.bukkit.BukkitUtil.toVector;
+import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.Config;
 import com.tengel.time.Time;
+import com.tengel.time.WorldGuardUtil;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,7 +25,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
-import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
@@ -36,30 +42,117 @@ public class Homes {
         this.plugin = plugin;
     }
     
-    public boolean create(Player p, String region, double price, boolean farm){
-        if (!plugin.worldGuard.getRegionManager(p.getWorld()).hasRegion(region)){
-            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "Cannot create home, region '" + region + "' does not exist on this world!");
-            return false;
+    public void create(Player p, String name, String type){
+        if ((type==null) || (type.length() == 0) || type.equalsIgnoreCase("apt"))
+            type = "apartment";
+        else if (type.equalsIgnoreCase("home"))
+            type = "house";
+        if (!(type.equalsIgnoreCase("house")||type.equalsIgnoreCase("apartment")||type.equalsIgnoreCase("farm"))){
+            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "Invalid type, choices: house, apartment, farm");
+            return;
+        }
+        if (isHome(name)){
+            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "The home name '"+name+"' is already taken, try again.");
+            return;
+        }
+        WorldGuardUtil wgu = new WorldGuardUtil(plugin, p.getWorld());
+        if (!wgu.saveSchematic(p, name)){
+            p.sendMessage(ChatColor.RED + "Failed to save schematic for home '"+name+"', aborting home create.");
+            return;
+        }
+        if (wgu.createRegionFromSelection(p, name) == null){
+            p.sendMessage(ChatColor.RED + "Failed to create region for home '"+name+"', aborting home create.");
+            return;
         }
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
-            int updated=0;
             st = con.createStatement();
-            ResultSet rs = st.executeQuery("SELECT * FROM `homes` WHERE name='"+region+"';");
-            if (rs.first())
-                updated =st.executeUpdate("UPDATE homes SET (price, type, x, y, z) VALUES ("+price+", "+farm+", "+p.getLocation().getX()+", "+p.getLocation().getY()+", "+p.getLocation().getZ()+") WHERE name='"+region+"';");
-            else
-                updated = st.executeUpdate("INSERT INTO homes (name, price, type, x, y, z) VALUES ('"+region+"', "+price+", "+farm+", "+p.getLocation().getX()+", "+p.getLocation().getY()+", "+p.getLocation().getZ()+");");
+            int updated = st.executeUpdate("INSERT INTO homes (name, type, x, y, z) VALUES ('"+name+"', '"+type+"', "+p.getLocation().getX()+", "+p.getLocation().getY()+", "+p.getLocation().getZ()+");");
             if (updated > 0)
                 p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Successfully create home");
             else
-                p.sendMessage(plugin.getPluginName() + ChatColor.RED + "Failed to create home, no rows updated");
-            return (updated > 0);
+                p.sendMessage(plugin.getPluginName() + ChatColor.RED + "Failed to create home, no rows were updated");
         } catch (SQLException ex) {
-            Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
+            plugin.sendConsole("Failed to insert new home '"+name+"', " + ex);
+        } 
+    }
+    
+    public void commands(CommandSender sender, String[] args){
+        if (args.length == 2){
+            sender.sendMessage(ChatColor.GRAY + "create <name> [type]" + ChatColor.GREEN + "  > Create a new home, defaults to type apartment");
+            sender.sendMessage(ChatColor.GRAY + "update <name>" + ChatColor.GREEN + "  > Update the doorway of a home");
+            sender.sendMessage(ChatColor.GRAY + "reset <name>" + ChatColor.GREEN + "  > Reset home to factory state");
+        } else {
+            if (args[2].equalsIgnoreCase("create")){
+                if (args.length < 4)
+                    sender.sendMessage(ChatColor.RED + "Please specify the name of home");
+                else {
+                    Homes h = new Homes(plugin);
+                    String type = "";
+                    try { type = args[4]; } catch (Exception ex){}
+                    h.create(plugin.getServer().getPlayer(sender.getName()), args[3], type);
+                }
+
+            } else if (args[2].equalsIgnoreCase("update")){
+                sender.sendMessage(ChatColor.RED + "Not implemented yet.");
+            } else if (args[2].equalsIgnoreCase("reset")){
+                String home = "";
+                if (args.length >=4)
+                    home = args[3];
+                if (!resetHome(plugin.getServer().getPlayer(sender.getName()), home)){
+                    sender.sendMessage(ChatColor.RED + "Failed to reset home you are standing in or by name");
+                }
+            }
         }
-        return false;        
+    }
+    
+    public Vector getDoor(String home){
+        Vector vec = null;
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT x,y,z FROM `homes` WHERE name='"+home+"';");
+            if (rs.first()){
+                vec = new Vector();
+                vec.add(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"));
+            }
+        } catch (SQLException ex) {
+            plugin.sendConsole("Failed to get home doorway for '"+home+"', " + ex);
+        }
+        return vec;
+    }
+    
+    public void resetHome(String home){
+        World w = plugin.getServer().getWorld("Time");
+        ProtectedRegion pr = plugin.worldGuard.getRegionManager(w).getRegion(home);
+        WorldGuardUtil wgu = new WorldGuardUtil(plugin, w);
+        wgu.pasteSchematic(pr, home, "homes");
+    }
+    
+    public boolean resetHome(Player p, String home){
+        if (home == null)
+            home = "";
+        RegionManager mgr = plugin.worldGuard.getRegionManager(p.getWorld());
+        ProtectedRegion pr = mgr.getRegion(home);
+        if (pr == null){
+            Vector v = toVector(p.getLocation());
+            ApplicableRegionSet set = mgr.getApplicableRegions(v);
+            for (ProtectedRegion each : set){
+                if (isHome(each.getId())){
+                    pr = each;
+                }
+            }
+        }
+        if (pr == null){
+            plugin.sendConsole("Failed to get home for resetHome with player location or string '"+home+"'");
+            return false;
+        }
+            
+        World w = plugin.getServer().getWorld("Time");
+        WorldGuardUtil wgu = new WorldGuardUtil(plugin, w);
+        return wgu.pasteSchematic(pr, home, "homes");
     }
     
     public boolean isHome(String region){
@@ -113,7 +206,7 @@ public class Homes {
     }
     
     public Set getHomes(){
-        Set<String> homes = new HashSet<String>();//configFile.getKeys(false);
+        Set<String> homes = new HashSet<String>();
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -187,6 +280,7 @@ public class Homes {
             st = con.createStatement();
             int updated = st.executeUpdate("UPDATE homes SET renter='"+player+"' WHERE name='"+region+"';");
             st.executeUpdate("UPDATE homes SET lastpay="+String.valueOf(System.currentTimeMillis()/1000)+" WHERE name='"+region+"';");
+            resetHome(region);
             return (updated > 0);
         } catch (SQLException ex) {
             plugin.sendConsole("Fail to set renter on home: " + region);

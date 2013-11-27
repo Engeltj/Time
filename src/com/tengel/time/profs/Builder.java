@@ -137,8 +137,8 @@ public class Builder {
             Location start = getNextStart();
             plugin.sendConsole(start.toString() + "createBuild");
             Location end = new Location(world, start.getX()+vec.getX(), start.getBlockY()+vec.getY(), start.getZ()+vec.getZ());
-            ProtectedRegion pr = wgu.updateProtectedRegion(sender.getName(), start, end);
-            wgu.pasteFirstLayer(sender, pr, schematic);
+            ProtectedRegion pr = wgu.createBuildRegion(sender.getName(), start, end);
+            wgu.pasteFirstLayer(pr, schematic);
             addPlayerBuild(sender.getName(),schematic, start, end);
             return pr;
         } catch (Exception ex) {

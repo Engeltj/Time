@@ -176,27 +176,17 @@ public class TimeCommands implements Listener{
                 else
                     sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need to be a landlord to purchase this home");
                 return true;                
-            } else if (args[1].equalsIgnoreCase("create")){
-                if (plugin.getPlayerListener().checkPermissions(sender, "home.create", false)){
-                    if (args.length < 4){
-                        sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "/life create <region> <price> [farm]");
-                        return true;
-                    } else {
-                        Homes h = new Homes(plugin);
-                        double price = 0;
-                        try {
-                            price = Double.valueOf(args[3]);
-                        } catch (Exception e){
-                            sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Invalid price specified");
-                            return true;
-                        }
-                        h.create(p, args[2], price, (args.length == 5));
-                        return true;
-                    }
-                } else
-                    return false;
-                
-            }
+            } //else if (args[1].equalsIgnoreCase("create")){
+                //if (plugin.getPlayerListener().checkPermissions(sender, "home.create", false)){
+                    //if (args.length < 4){
+                    //    sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "/life create <region> <price> [farm]");
+                    //    return true;
+                    //} else {
+                        
+                    //}
+                //} else
+                    //return false;
+            //}
         } else if (args[0].equalsIgnoreCase("test")){
             plugin.prof_builder.createBuild(sender, "test.schematic");
         } else if (args[0].equalsIgnoreCase("password")){
@@ -211,14 +201,26 @@ public class TimeCommands implements Listener{
             else
                 sender.sendMessage("Commands for your profession aren't implemented yet.");
         } else if (args[0].equalsIgnoreCase("admin")){
-            if ((args.length > 1) && (args[1].equalsIgnoreCase("update"))){
-                WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.prof_builder.getWorld());
-                wgu.updateBuildWorth(sender, plugin.prof_builder.getSchematics());
-            }
+            adminCommand(sender, args);
         }
         
         else
             sender.sendMessage(plugin.getPluginName() + ChatColor.GRAY + "Invalid command, type " + ChatColor.GREEN + "/life" + ChatColor.GRAY + " for more info");
+        return true;
+    }
+    
+    private boolean adminCommand(CommandSender sender, String[] args){
+        if (args.length == 1){
+            sender.sendMessage(ChatColor.BOLD + "" + ChatColor.GREEN + "Your options are: ");
+            sender.sendMessage(ChatColor.GRAY + "home" + ChatColor.GREEN + "  > Home related commands");
+            sender.sendMessage(ChatColor.GRAY + "update" + ChatColor.GREEN + "  > Updates schematic prices");
+        } else if (args[1].equalsIgnoreCase("update")){
+            WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.prof_builder.getWorld());
+            wgu.updateBuildWorth(sender, plugin.prof_builder.getSchematics());
+        } else if (args[1].equalsIgnoreCase("home")){
+            Homes h = new Homes(plugin);
+            h.commands(sender, args);
+        }
         return true;
     }
     
