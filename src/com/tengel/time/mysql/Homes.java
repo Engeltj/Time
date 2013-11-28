@@ -14,6 +14,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.Config;
 import com.tengel.time.ConfigPlayer;
 import com.tengel.time.Time;
+import com.tengel.time.TimeCommands;
 import com.tengel.time.WorldGuardUtil;
 import com.tengel.time.profs.TimeProfession;
 import java.sql.Connection;
@@ -28,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -46,7 +48,10 @@ public class Homes {
     }
     
     public void create(Player p, String name, String type){
-        name = "home_"+name;
+        if (name == null || name.length()==0)
+            name = "home_" + String.valueOf(getNextId());
+        else
+            name = "home_"+name;
         if ((type==null) || (type.length() == 0) || type.equalsIgnoreCase("apt"))
             type = "apartment";
         else if (type.equalsIgnoreCase("home"))
@@ -82,6 +87,19 @@ public class Homes {
         } 
     }
     
+    public int getNextId(){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SHOW TABLE STATUS LIKE 'homes';");
+            if (rs.first()){
+                return rs.getInt("Auto_increment")+1;
+            }
+        } catch (SQLException ex) {}
+        return 0;
+    }
+    
     public void commands(CommandSender sender, String[] args){
         ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
         Player p = plugin.getServer().getPlayer(sender.getName());
@@ -102,14 +120,12 @@ public class Homes {
             sender.sendMessage(ChatColor.GRAY + "reset <name>" + ChatColor.GREEN + "  > Reset home to factory state");
         } else {
             if (args[2].equalsIgnoreCase("create")){
-                if (args.length < 4)
-                    sender.sendMessage(ChatColor.RED + "Please specify the name of home");
-                else {
-                    Homes h = new Homes(plugin);
-                    String type = "";
-                    try { type = args[4]; } catch (Exception ex){}
-                    h.create(plugin.getServer().getPlayer(sender.getName()), args[3], type);
-                }
+                String name = "";
+                String type = "";
+                if (args.length >= 4)
+                name = args[3];
+                try { type = args[4]; } catch (Exception ex){}
+                create(plugin.getServer().getPlayer(sender.getName()), name, type);
 
             } else if (args[2].equalsIgnoreCase("update")){
                 if (args.length >= 4)
@@ -202,20 +218,26 @@ public class Homes {
         wgu.pasteSchematic(pr, home, "homes");
     }
     
+    public String getHome(Location loc){
+        RegionManager mgr = plugin.worldGuard.getRegionManager(loc.getWorld());
+        Vector v = toVector(loc);
+        ApplicableRegionSet set = mgr.getApplicableRegions(v);
+        String home = "";
+        for (ProtectedRegion each : set){
+            if (isHome(each.getId())){
+                home = each.getId();
+            }
+        }
+        return home;
+    }
+    
     public boolean resetHome(Player p, String home){
         if (home == null)
             home = "";
         RegionManager mgr = plugin.worldGuard.getRegionManager(p.getWorld());
         ProtectedRegion pr = mgr.getRegion(home);
-        if (pr == null){
-            Vector v = toVector(p.getLocation());
-            ApplicableRegionSet set = mgr.getApplicableRegions(v);
-            for (ProtectedRegion each : set){
-                if (isHome(each.getId())){
-                    pr = each;
-                }
-            }
-        }
+        if (pr == null)
+            getHome(p.getLocation());
         if (pr == null){
             plugin.sendConsole("Failed to get home for resetHome with player location or string '"+home+"'");
             return false;
@@ -276,7 +298,7 @@ public class Homes {
         return 999999999.0;
     }
     
-    public boolean setPrice(String home, double price){
+    private boolean setPrice(String home, double price){
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -287,6 +309,43 @@ public class Homes {
             plugin.sendConsole("Fail to set price on home: " + home);
         }
         return false;
+    }
+    
+    public void setPrice(Player p, double price){
+        String home = getHome(p.getLocation());
+        if (home == null || home.length() == 0){
+            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You must stand inside a home first");
+            return;
+        }
+        if (getLandlord(home).equalsIgnoreCase(p.getName()))
+            setPrice(home, price);
+        else
+            p.sendMessage(ChatColor.RED + "You do not own this home");
+    }
+    
+    private boolean setDisplayName(String home, String name){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            int updated = st.executeUpdate("UPDATE `homes` SET display_name='"+name+"' WHERE name='"+home+"';");
+            return (updated > 0);
+        } catch (SQLException ex) {
+            plugin.sendConsole("Fail to set display_name on home: " + home);
+        }
+        return false;
+    }
+    
+    public void setDisplayName(Player p, String name){
+        String home = getHome(p.getLocation());
+        if (home == null || home.length() == 0){
+            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You must stand inside a home first");
+            return;
+        }
+        if (getLandlord(home).equalsIgnoreCase(p.getName()))
+            setDisplayName(home, name);
+        else
+            p.sendMessage(ChatColor.RED + "You do not own this home");
     }
     
     public ArrayList<String> getHomes(){
@@ -374,51 +433,69 @@ public class Homes {
         return false;
     }
     
-    public boolean rent(Player p){
-        RegionManager mgr = plugin.worldGuard.getRegionManager(p.getWorld());
-        Vector v = toVector(p.getLocation());
-        ApplicableRegionSet set = mgr.getApplicableRegions(v);
-        for (ProtectedRegion each : set){
-            String home = each.getId();
-            if (isHome(home)){
-                if (isAvailable(home)){
-                    double price = getPrice(home);
-                    EconomyResponse es = plugin.getEconomy().withdrawPlayer(p.getName(), price);
-                    if (es.transactionSuccess()){
-                        setRenter(home, p.getName());
-                        p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Congratulations! You are now renting this home");
-                        return true;
-                    } else 
-                        p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have enough time to rent this home!");
-                    return false;
-                }
+    public void rent(Player p){
+        String home = getHome(p.getLocation());
+        if (isHome(home)){
+            if (isAvailable(home)){
+                double price = getPrice(home);
+                EconomyResponse es = plugin.getEconomy().withdrawPlayer(p.getName(), price);
+                if (es.transactionSuccess()){
+                    setRenter(home, p.getName());
+                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Congratulations! You are now renting this home");
+                } else 
+                    p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have enough time to rent this home!");
             }
         }
         p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You must stand inside a home first");
+    }
+    
+    public void buy(Player p){
+        String home = getHome(p.getLocation());
+        boolean hasOwner = hasLandlord(home);
+        if (isHome(home) && !hasOwner){
+            double price = getPrice(home) * 14;
+            EconomyResponse es = plugin.getEconomy().withdrawPlayer(p.getName(), price);
+            if (es.transactionSuccess()){
+                setLandlord(home, p.getName());
+                p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Congratulations! You now own this home");
+            } else 
+                p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have enough time to buy this home!");
+        } else if (hasOwner){
+            String landlord = getLandlord(home);
+            if (landlord.equalsIgnoreCase(p.getName()))
+                p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You already own this home");
+            else
+                p.sendMessage(plugin.getPluginName() + ChatColor.RED + "It appears this home already owned by "+ChatColor.GRAY + landlord);
+        } else 
+            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You must stand inside a home first"); 
+    }
+    
+    public boolean sell(Player p, Player newOwner, double price){
+        String home = getHome(p.getLocation());
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            int updated = st.executeUpdate("INSERT INTO `homes_offer` (name, seller, buyer, price, expiry) VALUES ("+
+                    "'"+home+"','"+p.getName()+"','"+newOwner.getName()+"',"+price+","+(System.currentTimeMillis()/1000 + 2*60*60)+");");
+            if (newOwner.isOnline()){
+                newOwner.sendMessage(p.getName() + ChatColor.GREEN + " has offered you the home " + ChatColor.GRAY + getName(home) + ChatColor.GREEN + " for " + 
+                        ChatColor.RED + TimeCommands.convertSecondsToTime(price) + ChatColor.GREEN + ". Type "+ ChatColor.GRAY+"/life job accept"+ ChatColor.GREEN+" to purchase");
+            }
+            return (updated > 0);
+        } catch (SQLException ex) {
+            plugin.sendConsole("Fail to offer home '"+home+"' from '"+p.getName()+"' to '"+newOwner.getName()+"'");
+        }
         return false;
     }
     
-    public boolean buy(Player p){
-        Map<String, ProtectedRegion> regions = plugin.worldGuard.getRegionManager(p.getWorld()).getRegions();
-        for (ProtectedRegion rg : regions.values()){
-            String region = rg.getId();
-            if (isHome(region) && !hasLandlord(region)){
-                double price = getPrice(region) * 14;
-                EconomyResponse es = plugin.getEconomy().withdrawPlayer(p.getName(), price);
-                if (es.transactionSuccess()){
-                    setLandlord(region, p.getName());
-                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Congratulations! You now own this home");
-                    return true;
-                } else 
-                    p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have enough time to buy this home!");
-                return false;
-            } else if (hasLandlord(region)){
-                p.sendMessage(plugin.getPluginName() + ChatColor.RED + "It appears this home already has a landlord");
-                return false;
-            }
-                    
-        }
-        p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You must stand inside a home first");
-        return false;
+    public void disown(Player p){
+        String home = getHome(p.getLocation());
+        String landlord = getLandlord(home);
+        if (landlord.equalsIgnoreCase(p.getName())){
+            if (setLandlord(home, ""))
+                p.sendMessage(ChatColor.GREEN + "You now no longer own this home!");
+        } else
+            p.sendMessage(ChatColor.RED + "You do not own this home");
     }
 }

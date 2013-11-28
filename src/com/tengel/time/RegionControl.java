@@ -37,28 +37,32 @@ public class RegionControl implements Listener {
         String rgName = e.getRegion().getId();
         Player p = e.getPlayer();
         if (isWrongTimeZone(p.getName(), getZoneId(rgName)))
-            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You are in a the wrong time zone! Please leave immediately.");
+            p.sendMessage(ChatColor.RED + "You are in a the wrong time zone! Please leave immediately.");
         Homes h = new Homes(plugin);
         if (h.isHome(rgName)){
             ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
             if (h.isAvailable(rgName)){
                 double price = h.getPrice(rgName);
-                p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "This home is available for " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(price) +
+                p.sendMessage(ChatColor.GREEN + "This home is available for " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(price) +
                     ChatColor.GREEN + " per day. Type " + ChatColor.GRAY + "/life home rent" + ChatColor.GREEN + " to rent.");
             } else {
                 String renter = h.getRenter(rgName);
                 if (renter.equalsIgnoreCase(p.getName()))
-                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Welcome home " + ChatColor.GRAY + p.getName());
+                    p.sendMessage(ChatColor.GREEN + "Welcome home " + ChatColor.GRAY + p.getName());
                 else if (renter.length() > 0)
-                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Welcome to " + ChatColor.GRAY + renter + "'s" + ChatColor.GREEN+ " home");
+                    p.sendMessage(ChatColor.GREEN + "Welcome to " + ChatColor.GRAY + renter + "'s" + ChatColor.GREEN+ " home");
             }
             if (cp.getProfession() == TimeProfession.LANDLORD){
                 String lord = h.getLandlord(rgName);
-                if (lord.length() > 0 && !h.getRenter(rgName).equalsIgnoreCase(p.getName()))
-                    p.sendMessage(plugin.getPluginName() + ChatColor.GRAY + "The landlord of this apartment is " + ChatColor.GRAY + lord);
+                if (lord.length() > 0 && !h.getRenter(rgName).equalsIgnoreCase(p.getName())){
+                    if (lord.equalsIgnoreCase(p.getName()))
+                        p.sendMessage(ChatColor.GRAY + "You own this apartment");
+                    else
+                        p.sendMessage(ChatColor.GRAY + "The landlord of this apartment is " + ChatColor.GRAY + lord);
+                }
                 else if (lord.length() == 0){
                     double price = h.getPrice(rgName) * 14;
-                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "This may be owned by you for renting out for " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(price) +
+                    p.sendMessage(ChatColor.GREEN + "This may be owned by you for renting out for " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(price) +
                             ChatColor.GREEN + ". Type " + ChatColor.GRAY + "/life home buy" + ChatColor.GREEN + " to purchase.");
                 }
             }

@@ -52,9 +52,9 @@ public class ShopSigns extends YamlConfiguration {
         EconomyResponse es = getPlugin().getEconomy().withdrawPlayer(player.getName(), cost*60);
         if (es.transactionSuccess()){
             if (cp.addLicense(m.getId())){
-                player.sendMessage(plugin.getPluginName() + ChatColor.BLUE + m.name().toLowerCase() + ChatColor.YELLOW + " license aquired!");
+                player.sendMessage(ChatColor.BLUE + m.name().toLowerCase() + ChatColor.YELLOW + " license aquired!");
             } else {
-                player.sendMessage(plugin.getPluginName() + "It appears you already own the license to mine " + m.name().toLowerCase());
+                player.sendMessage("It appears you already own the license to mine " + m.name().toLowerCase());
                 getPlugin().getEconomy().depositPlayer(player.getName(), cost*60);
             }
             return true;
@@ -70,7 +70,7 @@ public class ShopSigns extends YamlConfiguration {
             player.updateInventory();
             player.sendMessage(getPlugin().getPluginName() + ChatColor.YELLOW + "You have just purchased 1x " + ChatColor.BLUE + m.name().toLowerCase());
         } else
-            player.sendMessage(plugin.getPluginName() + ChatColor.RED + "Insufficent life, transaction cancelled");
+            player.sendMessage(ChatColor.RED + "Insufficent life, transaction cancelled");
     }
     
     public void buyProfession(String prof){
@@ -80,20 +80,20 @@ public class ShopSigns extends YamlConfiguration {
                 tp = TimeProfession.valueOf(prof.toUpperCase());
                 tp.give(plugin, player);
             } catch (Exception e){
-                player.sendMessage(plugin.getPluginName() + ChatColor.RED + "Invalid profession, report sign to an admin");
+                player.sendMessage(ChatColor.RED + "Invalid profession, report sign to an admin");
                 plugin.sendConsole("Invalid profession sign activated by " + player.getName() + " at: " + (int)player.getLocation().getX() + "," +
                         (int)player.getLocation().getY() + "," + (int)player.getLocation().getZ());
             }
             
         } else
-            player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have permissions to do that!");
+            player.sendMessage(ChatColor.RED + "You do not have permissions to do that!");
     }
     
     public void buy(Block block, int cost){
         Sign s = (Sign) block.getState();
         Material m = plugin.getItemMaterial(s.getLine(1));
         if (m == null){
-            player.sendMessage(plugin.getPluginName() + ChatColor.RED+"It appears this sign is wrong, please report it to an admin.");
+            player.sendMessage(ChatColor.RED+"It appears this sign is wrong, please report it to an admin.");
             //dropSign(block.getLocation());
             return;
         }
@@ -104,12 +104,12 @@ public class ShopSigns extends YamlConfiguration {
                 if (plugin.getPlayerListener().checkPermissions(player, "buy.license", false))
                     buyLicense(m, cost);
                 else
-                    player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have permissions to do that!");
+                    player.sendMessage(ChatColor.RED + "You do not have permissions to do that!");
             } else if (s.getLine(0).contains("Shop")){
                 if (plugin.getPlayerListener().checkPermissions(player, "buy.items", false))
                     buyItem(m, cost);
                 else
-                    player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have permissions to do that!");
+                    player.sendMessage(ChatColor.RED + "You do not have permissions to do that!");
             }
         }
     }
@@ -127,7 +127,7 @@ public class ShopSigns extends YamlConfiguration {
             Material m = plugin.getItemMaterial(event.getLine(1));
             //plugin.sendConsole("line: " + s.getLine(1) +".");
             if (m == null){
-                player.sendMessage(plugin.getPluginName() + ChatColor.RED + "Invalid item name or ID on line 2");
+                player.sendMessage(ChatColor.RED + "Invalid item name or ID on line 2");
                 dropSign(block.getLocation());
                 return false;
             }

@@ -18,9 +18,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.tengel.time.mysql.TimeSQL;
-import com.tengel.time.profs.Builder;
-import com.tengel.time.profs.Gatherer;
-import com.tengel.time.profs.TimeProfession;
+import com.tengel.time.profs.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -55,6 +53,7 @@ public final class Time extends JavaPlugin {
     public Gatherer prof_miner;
     public Gatherer prof_farmer;
     public Builder prof_builder;
+    public Landlord prof_landlord;
     
     public Time() {
         players = new TimePlayers(this);
@@ -72,6 +71,7 @@ public final class Time extends JavaPlugin {
         prof_miner = new Gatherer(this, TimeProfession.MINER);
         prof_farmer = new Gatherer(this, TimeProfession.FARMER);
         prof_builder = new Builder(this, TimeProfession.BUILDER);
+        prof_landlord = new Landlord(this, TimeProfession.LANDLORD);
         
         if (worldGuard == null || !(worldGuard instanceof WorldGuardPlugin)) {
             getLogger().info(String.format("[%s] - Disabled due to no instance of WorldGuard found!", getDescription().getName()));
@@ -134,7 +134,6 @@ public final class Time extends JavaPlugin {
                 }
             }
         };
-        
         getServer().getScheduler().scheduleSyncRepeatingTask(this, usetJobLeave, 5, 20 * 20);
     }
     

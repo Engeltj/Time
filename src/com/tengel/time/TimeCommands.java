@@ -109,21 +109,21 @@ public class TimeCommands implements Listener{
         else if (args[0].equalsIgnoreCase("age")){
             double seconds = plugin.getTimePlayers().getPlayerConfig(sender.getName()).getPlayerAge();
             String time = convertSecondsToTime(seconds);
-            sender.sendMessage(plugin.getPluginName() + ChatColor.AQUA + time);
+            sender.sendMessage(ChatColor.AQUA + time);
         }
         else if (args[0].equalsIgnoreCase("left")){
             double seconds = plugin.getEconomy().getBalance(sender.getName());
             String time = convertSecondsToTime(seconds);
-            sender.sendMessage(plugin.getPluginName() + ChatColor.DARK_GREEN + time); 
+            sender.sendMessage(ChatColor.DARK_GREEN + time); 
         }
         else if (args[0].equalsIgnoreCase("bounty")){
             ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
             double bounty = cp.getBounty();
             String time = convertSecondsToTime(bounty);
             if (bounty > 0)
-                sender.sendMessage(plugin.getPluginName() + ChatColor.RED + time);
+                sender.sendMessage(ChatColor.RED + time);
             else
-                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You are not on the bounty list");
+                sender.sendMessage(ChatColor.GREEN + "You are not on the bounty list");
         }
         else if (args[0].equalsIgnoreCase("bail")){
             ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
@@ -131,12 +131,12 @@ public class TimeCommands implements Listener{
                 int bounty = cp.getBounty();
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), bounty);
                 if (es.transactionSuccess()){
-                    sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You've been freed at the cost of " + ChatColor.RED + cp.getBountyString());
+                    sender.sendMessage(ChatColor.GREEN + "You've been freed at the cost of " + ChatColor.RED + cp.getBountyString());
                     //free user
                 } else
-                    sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "You cannot afford bail, you must wait this one out.");
+                    sender.sendMessage(ChatColor.RED + "You cannot afford bail, you must wait this one out.");
             } else
-                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You are not in jail");
+                sender.sendMessage(ChatColor.GREEN + "You are not in jail");
         } else if (args[0].equalsIgnoreCase("unemploy")){
             final ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
             Runnable usetJobLeave = new BukkitRunnable() {
@@ -151,15 +151,15 @@ public class TimeCommands implements Listener{
             
             if (!cp.flag_jobLeave){
                 cp.flag_jobLeave = true;
-                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Type '/"+command+" unemploy' again to leave your job at the cost of " + 
+                sender.sendMessage(ChatColor.GREEN + "Type '/"+command+" unemploy' again to leave your job at the cost of " + 
                                         ChatColor.RED + convertSecondsToTime(cost));
             } else {
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), cost);
                 if (es.transactionSuccess()){
                     cp.setProfession("UNEMPLOYED");
-                    sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You have left your job! You are now unemployed.");
+                    sender.sendMessage(ChatColor.GREEN + "You have left your job! You are now unemployed.");
                 } else
-                    sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "It seems you cannot afford to lose your job.");
+                    sender.sendMessage(ChatColor.RED + "It seems you cannot afford to lose your job.");
             }
         } else if (args[0].equalsIgnoreCase("home")){
             if (args.length == 1){
@@ -174,20 +174,26 @@ public class TimeCommands implements Listener{
         } else if (args[0].equalsIgnoreCase("password")){
             if (args.length > 1){
                 plugin.getSql().addPlayer(sender.getName(), args[1]);
-                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Password has been set, visit " + ChatColor.GRAY + "http://depthsonline.com/minecraft" + ChatColor.GREEN + " to login");
+                sender.sendMessage(ChatColor.GREEN + "Password has been set, visit " + ChatColor.GRAY + "http://depthsonline.com/minecraft" + ChatColor.GREEN + " to login");
             } else 
-                sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Please specify a password!");
+                sender.sendMessage(ChatColor.RED + "Please specify a password!");
         } else if (args[0].equalsIgnoreCase("job")){
-            if (plugin.getTimePlayers().getPlayerConfig(sender.getName()).getProfession() == TimeProfession.BUILDER)
+            TimeProfession job = plugin.getTimePlayers().getPlayerConfig(sender.getName()).getProfession();
+            if (args.length == 1)
+                sender.sendMessage("Your current job is a " + ChatColor.GREEN + job.toString().toLowerCase());
+            if (job == TimeProfession.BUILDER)
                 plugin.prof_builder.commands(command, sender, args);
-            else
-                sender.sendMessage("Commands for your profession aren't implemented yet.");
+            if (job == TimeProfession.LANDLORD){
+                plugin.prof_landlord.commands(command, sender, args);
+            }
+            /*else
+                sender.sendMessage("Commands for your profession aren't implemented yet.");*/
         } else if (args[0].equalsIgnoreCase("admin")){
             adminCommand(sender, args);
         }
         
         else
-            sender.sendMessage(plugin.getPluginName() + ChatColor.GRAY + "Invalid command, type " + ChatColor.GREEN + "/life" + ChatColor.GRAY + " for more info");
+            sender.sendMessage(ChatColor.GRAY + "Invalid command, type " + ChatColor.GREEN + "/life" + ChatColor.GRAY + " for more info");
         return true;
     }
     

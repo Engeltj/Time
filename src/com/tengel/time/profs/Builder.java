@@ -61,7 +61,6 @@ public class Builder {
             sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Visit "+ChatColor.GRAY+"http://depthsonline.com/minecraft/"+ChatColor.RED+" to sign up for a build");
         if (args.length == 1){
             command = "/"+ command + " " + args[0] + " ";
-            sender.sendMessage("\nYour current job is a " + ChatColor.GREEN + prof.toString().toLowerCase());
             sender.sendMessage(ChatColor.GRAY + command + "teleport" + ChatColor.GREEN + "  > Teleports you to your construct");
             sender.sendMessage(ChatColor.GRAY + command + "check" + ChatColor.GREEN + "  > Checks the % completion/correctness of your construct");
             sender.sendMessage(ChatColor.GRAY + command + "done" + ChatColor.GREEN + "  > If you're finished your construct, run this");
