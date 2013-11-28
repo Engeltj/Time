@@ -81,7 +81,7 @@ public class TimePlayers {
             writer.close();
         }
         catch (Exception e){
-            plugin.sendConsole(plugin.getPluginName() + "Failed to delete " + "Essentials\\userdata\\" + name.toLowerCase() + ".yml");
+            plugin.sendConsole("Failed to delete " + "Essentials\\userdata\\" + name.toLowerCase() + ".yml");
         }
         config.removePlayer();
     }

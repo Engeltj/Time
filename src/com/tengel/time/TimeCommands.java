@@ -179,8 +179,11 @@ public class TimeCommands implements Listener{
                 sender.sendMessage(ChatColor.RED + "Please specify a password!");
         } else if (args[0].equalsIgnoreCase("job")){
             TimeProfession job = plugin.getTimePlayers().getPlayerConfig(sender.getName()).getProfession();
-            if (args.length == 1)
+            if (args.length == 1){
+                sender.sendMessage("- - - - - - - - - - - - - - - - - -");
                 sender.sendMessage("Your current job is a " + ChatColor.GREEN + job.toString().toLowerCase());
+                sender.sendMessage("- - - - - - - - - - - - - - - - - -");
+            }
             if (job == TimeProfession.BUILDER)
                 plugin.prof_builder.commands(command, sender, args);
             if (job == TimeProfession.LANDLORD){

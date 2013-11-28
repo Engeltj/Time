@@ -78,7 +78,7 @@ public class TimePlayerListener implements Listener {
             event.setCancelled(true);
             if (cp.getProfession() == TimeProfession.MINER){
                 if (!cp.hasLicense(block.getType().getId()))//(plugin.prof_miner.getMinerBlacklist().contains(block.getType())){
-                    player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need a " + ChatColor.BLUE + "license" + ChatColor.RED + " to obtain this material");
+                    player.sendMessage(ChatColor.RED + "You need a " + ChatColor.BLUE + "license" + ChatColor.RED + " to obtain this material");
                 else {
                     int earned = plugin.prof_miner.getSkillEarned(block.getType());
                     cp.updateSkill(TimeProfession.MINER, earned);
@@ -93,7 +93,7 @@ public class TimePlayerListener implements Listener {
                     }
                 }
             } else {
-                player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need a to be a miner to obtain this material");
+                player.sendMessage(ChatColor.RED + "You need a to be a miner to obtain this material");
             }
         }
     }
@@ -203,7 +203,7 @@ public class TimePlayerListener implements Listener {
         if (sender.hasPermission("time." + permission))
             return true;
         if (sendMessage)
-            sender.sendMessage(plugin.getPluginName() + "You do not have the permissions to do this.");
+            sender.sendMessage("You do not have the permissions to do this.");
         return false;
     }
 

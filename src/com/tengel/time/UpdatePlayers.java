@@ -37,13 +37,13 @@ public class UpdatePlayers implements Runnable {
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), 1*updateInterval);
                 //ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
                 if (cp.getBounty() <= 0)
-                    player.sendMessage(plugin.getPluginName() + ChatColor.RED + "You've been added to the wanted list!");
+                    player.sendMessage(ChatColor.RED + "You've been added to the wanted list!");
                 if (es.transactionSuccess())
                     cp.addBounty(1*updateInterval);
             } else if (!wrongZone && cp.getBounty() > 0){
                 cp.addBounty(updateInterval*-1);
                 if (cp.getBounty() == 0){
-                    player.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You are free and cleared of all charges");
+                    player.sendMessage(ChatColor.GREEN + "You are free and cleared of all charges");
                 }
             }
               
