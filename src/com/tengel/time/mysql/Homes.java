@@ -22,9 +22,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -94,7 +91,7 @@ public class Homes {
             st = con.createStatement();
             ResultSet rs = st.executeQuery("SHOW TABLE STATUS LIKE 'homes';");
             if (rs.first()){
-                return rs.getInt("Auto_increment")+1;
+                return rs.getInt("Auto_increment");
             }
         } catch (SQLException ex) {}
         return 0;
@@ -110,7 +107,35 @@ public class Homes {
                 buy(p);
             else
                 sender.sendMessage(ChatColor.RED + "You need to be a landlord to purchase this home");
-        } 
+        } else if (args[1].equalsIgnoreCase("teleport")){
+            ArrayList<String> homes = getRentedHomes(sender.getName());
+            if (args.length == 3){
+                if (!homes.contains(args[2])){
+                    sender.sendMessage(ChatColor.RED + "You aren't currently renting '"+args[3]);
+                    sender.sendMessage("Choices:");
+                    for (String home : homes)
+                        sender.sendMessage(ChatColor.GREEN+home);
+                    return;
+                }else{
+                    Vector v = getDoor(args[2]);
+                    Location loc = new Location(plugin.getServer().getWorld("Time"), v.getX(), v.getY(), v.getZ());
+                    plugin.getServer().getPlayer(sender.getName()).teleport(loc);
+                    sender.sendMessage(ChatColor.GREEN+"You've been taken to your front door");
+                }
+            }
+            if (homes.size() == 0)
+                sender.sendMessage(ChatColor.RED + "You are currently not renting any homes");
+            else if (homes.size() == 1){
+                Vector v = getDoor(homes.get(0));
+                Location loc = new Location(plugin.getServer().getWorld("Time"), v.getX(), v.getY(), v.getZ());
+                plugin.getServer().getPlayer(sender.getName()).teleport(loc);
+                sender.sendMessage(ChatColor.GREEN+"You've been taken to your front door");
+            } else {
+                sender.sendMessage("Choices:");
+                for (String home : homes)
+                    sender.sendMessage(ChatColor.GREEN+home);
+            }
+        }
     }
     
     public void adminCommands(CommandSender sender, String[] args){
@@ -128,10 +153,31 @@ public class Homes {
                 create(plugin.getServer().getPlayer(sender.getName()), name, type);
 
             } else if (args[2].equalsIgnoreCase("update")){
-                if (args.length >= 4)
-                    updateHomePrice(args[3]);
-                else
-                    updateHomePrices();
+                if (args.length < 4)
+                    sender.sendMessage(ChatColor.RED+"Please specify home name to update");
+                else{
+                    String home = args[3];
+                    Player p = plugin.getServer().getPlayer(sender.getName());
+                    Location loc = p.getLocation();
+                    if (isHome(home)){
+                        WorldGuardUtil wgu = new WorldGuardUtil(plugin, p.getWorld());
+                        if (!wgu.saveSchematic(p, home)){
+                            sender.sendMessage(ChatColor.RED + "Failed to save schematic for home '"+home+"', aborting home update.");
+                            return;
+                        }
+                        if (wgu.createRegionFromSelection(p, home) == null){
+                            sender.sendMessage(ChatColor.RED + "Failed to create region for home '"+home+"', aborting home update.");
+                            return;
+                        }
+                        if (setDoor(home, loc.getX(), loc.getY(), loc.getZ()))
+                            sender.sendMessage(ChatColor.GREEN + "Home successfully updated.");
+                    }
+                }
+                   
+                //if (args.length >= 4)
+                //    updateHomePrice(args[3]);
+                //else
+                //    updateHomePrices();
             } else if (args[2].equalsIgnoreCase("reset")){
                 String home = "";
                 if (args.length >=4)
@@ -151,13 +197,25 @@ public class Homes {
             st = con.createStatement();
             ResultSet rs = st.executeQuery("SELECT x,y,z FROM `homes` WHERE name='"+home+"';");
             if (rs.first()){
-                vec = new Vector();
-                vec.add(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"));
+                vec = new Vector(rs.getDouble("x"), rs.getDouble("y"), rs.getDouble("z"));
             }
         } catch (SQLException ex) {
             plugin.sendConsole("Failed to get home doorway for '"+home+"', " + ex);
         }
         return vec;
+    }
+    
+    public boolean setDoor(String home, double x, double y, double z){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            int updated = st.executeUpdate("UPDATE `homes` SET x="+x+",y="+y+",z="+z+" WHERE name='"+home+"';");
+            return (updated>0);
+        } catch (SQLException ex) {
+            plugin.sendConsole("Failed to set home doorway for '"+home+"', " + ex);
+        }
+        return false;
     }
     
     public double getBuyWorth(String home){
@@ -356,6 +414,23 @@ public class Homes {
             p.sendMessage(ChatColor.RED + "You do not own this home");
     }
     
+    public ArrayList<String> getRentedHomes(String player){
+        ArrayList<String> homes = new ArrayList<String>();
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT name FROM `homes` WHERE renter='"+player+"';");
+            if (rs.first()){
+                String name = rs.getString("name");
+                homes.add(name);
+            }
+        } catch (SQLException ex) {
+            plugin.sendConsole("Fail to get list of homes for "+player+", " + ex);
+        }
+        return homes;
+    }
+    
     public ArrayList<String> getHomes(){
         ArrayList<String> homes = new ArrayList<String>();
         Connection con = plugin.getSql().getConnection();
@@ -453,8 +528,8 @@ public class Homes {
                 } else 
                     p.sendMessage(ChatColor.RED + "You do not have enough time to rent this home!");
             }
-        }
-        p.sendMessage(ChatColor.RED + "You must stand inside a home first");
+        } else
+            p.sendMessage(ChatColor.RED + "You must stand inside a home first");
     }
     
     public void buy(Player p){
