@@ -160,7 +160,11 @@ public class Homes {
         return vec;
     }
     
-    public double getWorth(String home){
+    public double getBuyWorth(String home){
+        return getRentWorth(home)*30;
+    }
+    
+    public double getRentWorth(String home){
         WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.getServer().getWorlds().get(0));
         Vector v = wgu.getSchematicDimensions(home, "homes");
         double area = v.getX()*v.getY()*v.getZ();
@@ -168,8 +172,10 @@ public class Homes {
     }
     
     public void updateHomePrice(String home){
-        double worth = getWorth(home);
-        setPrice(home, worth);
+        if (getLandlord(home).length()>0 || getRenter(home).length()>0){
+            double worth = getRentWorth(home);
+            setRentPrice(home, worth);
+        }
     }
     
     public void updateHomePrices(){
@@ -282,7 +288,7 @@ public class Homes {
         return (getLandlord(region).length() > 0);
     }
     
-    public double getPrice(String home){
+    public double getRentPrice(String home){
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -298,7 +304,7 @@ public class Homes {
         return 999999999.0;
     }
     
-    private boolean setPrice(String home, double price){
+    private boolean setRentPrice(String home, double price){
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -318,7 +324,7 @@ public class Homes {
             return;
         }
         if (getLandlord(home).equalsIgnoreCase(p.getName()))
-            setPrice(home, price);
+            setRentPrice(home, price);
         else
             p.sendMessage(ChatColor.RED + "You do not own this home");
     }
@@ -342,8 +348,10 @@ public class Homes {
             p.sendMessage(ChatColor.RED + "You must stand inside a home first");
             return;
         }
-        if (getLandlord(home).equalsIgnoreCase(p.getName()))
+        if (getLandlord(home).equalsIgnoreCase(p.getName())){
             setDisplayName(home, name);
+            p.sendMessage(ChatColor.GREEN + "Home's name was changed to "+ ChatColor.GRAY + name);
+        }
         else
             p.sendMessage(ChatColor.RED + "You do not own this home");
     }
@@ -437,7 +445,7 @@ public class Homes {
         String home = getHome(p.getLocation());
         if (isHome(home)){
             if (isAvailable(home)){
-                double price = getPrice(home);
+                double price = getRentPrice(home);
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(p.getName(), price);
                 if (es.transactionSuccess()){
                     setRenter(home, p.getName());
@@ -453,7 +461,7 @@ public class Homes {
         String home = getHome(p.getLocation());
         boolean hasOwner = hasLandlord(home);
         if (isHome(home) && !hasOwner){
-            double price = getPrice(home) * 14;
+            double price = getBuyWorth(home);
             EconomyResponse es = plugin.getEconomy().withdrawPlayer(p.getName(), price);
             if (es.transactionSuccess()){
                 setLandlord(home, p.getName());
@@ -465,7 +473,7 @@ public class Homes {
             if (landlord.equalsIgnoreCase(p.getName()))
                 p.sendMessage(ChatColor.RED + "You already own this home");
             else
-                p.sendMessage(ChatColor.RED + "It appears this home already owned by "+ChatColor.GRAY + landlord);
+                p.sendMessage(ChatColor.RED + "It appears this home already owned by " + ChatColor.GRAY + landlord);
         } else 
             p.sendMessage(ChatColor.RED + "You must stand inside a home first"); 
     }

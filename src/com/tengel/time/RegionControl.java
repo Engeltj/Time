@@ -42,7 +42,7 @@ public class RegionControl implements Listener {
         if (h.isHome(rgName)){
             ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
             if (h.isAvailable(rgName)){
-                double price = h.getPrice(rgName);
+                double price = h.getRentPrice(rgName);
                 p.sendMessage(ChatColor.GREEN + "This home is available for " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(price) +
                     ChatColor.GREEN + " per day. Type " + ChatColor.GRAY + "/life home rent" + ChatColor.GREEN + " to rent.");
             } else {
@@ -61,7 +61,7 @@ public class RegionControl implements Listener {
                         p.sendMessage(ChatColor.GRAY + "The landlord of this apartment is " + ChatColor.GRAY + lord);
                 }
                 else if (lord.length() == 0){
-                    double price = h.getPrice(rgName) * 14;
+                    double price = h.getBuyWorth(rgName);
                     p.sendMessage(ChatColor.GREEN + "This may be owned by you for renting out for " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(price) +
                             ChatColor.GREEN + ". Type " + ChatColor.GRAY + "/life home buy" + ChatColor.GREEN + " to purchase.");
                 }

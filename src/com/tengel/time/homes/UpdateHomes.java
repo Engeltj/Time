@@ -54,7 +54,7 @@ public class UpdateHomes implements Runnable {
                 String renter = h.getRenter(home);
                 Player p = plugin.getServer().getPlayer(renter);
                 if (renter.length() != 0){
-                    double rent = h.getPrice(home);
+                    double rent = h.getRentPrice(home);
                     if (!chargePlayer(p, rent)){
                         //ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
                         h.setRenter(home, "");

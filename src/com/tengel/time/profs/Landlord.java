@@ -69,6 +69,7 @@ public class Landlord {
                 h.disown(p);
             } else if (args[1].equalsIgnoreCase("name")){
                 h.setDisplayName(p, args[2]);
+                
             } else if (args[1].equalsIgnoreCase("price")){
                 double price = getPriceFromArgs(args);
                 h.setPrice(p, price);
