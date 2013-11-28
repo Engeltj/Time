@@ -58,7 +58,7 @@ public class Builder {
             wgu.deleteRegion(pr.getId());
         }
         if (pr == null)
-            sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "Visit "+ChatColor.GRAY+"http://depthsonline.com/minecraft/"+ChatColor.RED+" to sign up for a build");
+            sender.sendMessage(ChatColor.RED + "Visit "+ChatColor.GRAY+"http://depthsonline.com/minecraft/"+ChatColor.RED+" to sign up for a build");
         if (args.length == 1){
             command = "/"+ command + " " + args[0] + " ";
             sender.sendMessage(ChatColor.GRAY + command + "teleport" + ChatColor.GREEN + "  > Teleports you to your construct");
@@ -75,8 +75,8 @@ public class Builder {
         } else if (args[1].equalsIgnoreCase("check")){
             double progress = checkPlayerBuildProgress(sender);
             double pay = getPlayerBuildWorth(sender) * progress/100*progress/100;
-            sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Progress: "+ChatColor.GRAY+df.format(progress)+ChatColor.RED+"%");
-            sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "If you "+ChatColor.GRAY+"/life job done"+ChatColor.GREEN+" now, you will be awarded "+
+            sender.sendMessage(ChatColor.GREEN + "Progress: "+ChatColor.GRAY+df.format(progress)+ChatColor.RED+"%");
+            sender.sendMessage(ChatColor.GREEN + "If you "+ChatColor.GRAY+"/life job done"+ChatColor.GREEN+" now, you will be awarded "+
                     ChatColor.GRAY+TimeCommands.convertSecondsToTime(pay)+ChatColor.GREEN+" ("+df.format(progress*progress/100)+"% of maximum earnings)");
         } else if (args[1].equalsIgnoreCase("done")){
             double progress = checkPlayerBuildProgress(sender);
@@ -84,11 +84,11 @@ public class Builder {
             setPlayerBuildComplete(sender.getName(), pr);
             EconomyResponse er = plugin.getEconomy().depositPlayer(sender.getName(),pay);
             if (er.transactionSuccess()){
-                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Congratulations! You have been given " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(pay) +
+                sender.sendMessage(ChatColor.GREEN + "Congratulations! You have been given " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(pay) +
                         ChatColor.GREEN + " life!");
-                sender.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You managed to complete " + ChatColor.GRAY + df.format(progress) + ChatColor.GREEN + "% of this construct");
+                sender.sendMessage(ChatColor.GREEN + "You managed to complete " + ChatColor.GRAY + df.format(progress) + ChatColor.GREEN + "% of this construct");
             } else {
-                sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "A problem occured while trying to reward you with life. Speak to an admin!");
+                sender.sendMessage(ChatColor.RED + "A problem occured while trying to reward you with life. Speak to an admin!");
                 plugin.sendConsole("Failed rewarding '"+sender.getName()+"' with "+df.format(pay)+" life!");
             }
         }

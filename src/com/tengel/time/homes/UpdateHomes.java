@@ -32,11 +32,11 @@ public class UpdateHomes implements Runnable {
         EconomyResponse es = plugin.getEconomy().withdrawPlayer(p.getName(), amount);
         if (!es.transactionSuccess()){
             if (p.isOnline())
-                p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You just lost your home, failure to pay");
+                p.sendMessage(ChatColor.RED + "You just lost your home, failure to pay");
             return false;
         } else {
             if (p.isOnline()){
-                p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You just paid your daily rent of " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(amount));
+                p.sendMessage(ChatColor.GREEN + "You just paid your daily rent of " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(amount));
             }
         }
         return true;

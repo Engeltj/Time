@@ -42,11 +42,11 @@ public enum TimeProfession {
     
     public void give(Time plugin, Player p){
         if (get(plugin, p) != TimeProfession.UNEMPLOYED){
-            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You already have a profession! Please '/life unemploy' first.");
+            p.sendMessage(ChatColor.RED + "You already have a profession! Please '/life unemploy' first.");
             return;
         }
         else 
-            p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "You have now become a " + this.toString().toLowerCase() + "!");
+            p.sendMessage(ChatColor.GREEN + "You have now become a " + this.toString().toLowerCase() + "!");
         ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
         cp.setProfession(this.toString());
     }

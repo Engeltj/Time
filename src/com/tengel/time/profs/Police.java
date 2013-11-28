@@ -32,10 +32,10 @@ public class Police{
         if (bounty > 0){
             villian.teleport(plugin.getLocation(zone, "jail"));
             cp.setJailed(true);
-            villian.sendMessage(plugin.getPluginName() + ChatColor.RED + "You've been jailed until your bounty expires!");
-            villian.sendMessage(plugin.getPluginName() + ChatColor.RED + "You may pay off your bounty with " + ChatColor.GREEN + "/life bail" +
+            villian.sendMessage(ChatColor.RED + "You've been jailed until your bounty expires!");
+            villian.sendMessage(ChatColor.RED + "You may pay off your bounty with " + ChatColor.GREEN + "/life bail" +
                                     ChatColor.RED + " if you wish to seek freedom faster!");
-            cop.sendMessage(plugin.getPluginName() + "You've arrested " + ChatColor.RED + villian.getName() + ChatColor.WHITE + 
+            cop.sendMessage("You've arrested " + ChatColor.RED + villian.getName() + ChatColor.WHITE + 
                                     " and collected a bounty of " + ChatColor.GREEN + cp.getBountyString());
             plugin.getEconomy().depositPlayer(cop.getName(), bounty);
         }

@@ -57,11 +57,11 @@ public class Homes {
         else if (type.equalsIgnoreCase("home"))
             type = "house";
         if (!(type.equalsIgnoreCase("house")||type.equalsIgnoreCase("apartment")||type.equalsIgnoreCase("farm"))){
-            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "Invalid type, choices: house, apartment, farm");
+            p.sendMessage(ChatColor.RED + "Invalid type, choices: house, apartment, farm");
             return;
         }
         if (isHome(name)){
-            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "The home name '"+name+"' is already taken, try again.");
+            p.sendMessage(ChatColor.RED + "The home name '"+name+"' is already taken, try again.");
             return;
         }
         WorldGuardUtil wgu = new WorldGuardUtil(plugin, p.getWorld());
@@ -79,9 +79,9 @@ public class Homes {
             st = con.createStatement();
             int updated = st.executeUpdate("INSERT INTO homes (name, type, x, y, z) VALUES ('"+name+"', '"+type+"', "+p.getLocation().getX()+", "+p.getLocation().getY()+", "+p.getLocation().getZ()+");");
             if (updated > 0)
-                p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Successfully create home");
+                p.sendMessage(ChatColor.GREEN + "Successfully create home");
             else
-                p.sendMessage(plugin.getPluginName() + ChatColor.RED + "Failed to create home, no rows were updated");
+                p.sendMessage(ChatColor.RED + "Failed to create home, no rows were updated");
         } catch (SQLException ex) {
             plugin.sendConsole("Failed to insert new home '"+name+"', " + ex);
         } 
@@ -109,7 +109,7 @@ public class Homes {
             if (cp.getProfession() == TimeProfession.LANDLORD)
                 buy(p);
             else
-                sender.sendMessage(plugin.getPluginName() + ChatColor.RED + "You need to be a landlord to purchase this home");
+                sender.sendMessage(ChatColor.RED + "You need to be a landlord to purchase this home");
         } 
     }
     
@@ -314,7 +314,7 @@ public class Homes {
     public void setPrice(Player p, double price){
         String home = getHome(p.getLocation());
         if (home == null || home.length() == 0){
-            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You must stand inside a home first");
+            p.sendMessage(ChatColor.RED + "You must stand inside a home first");
             return;
         }
         if (getLandlord(home).equalsIgnoreCase(p.getName()))
@@ -339,7 +339,7 @@ public class Homes {
     public void setDisplayName(Player p, String name){
         String home = getHome(p.getLocation());
         if (home == null || home.length() == 0){
-            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You must stand inside a home first");
+            p.sendMessage(ChatColor.RED + "You must stand inside a home first");
             return;
         }
         if (getLandlord(home).equalsIgnoreCase(p.getName()))
@@ -441,12 +441,12 @@ public class Homes {
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(p.getName(), price);
                 if (es.transactionSuccess()){
                     setRenter(home, p.getName());
-                    p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Congratulations! You are now renting this home");
+                    p.sendMessage(ChatColor.GREEN + "Congratulations! You are now renting this home");
                 } else 
-                    p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have enough time to rent this home!");
+                    p.sendMessage(ChatColor.RED + "You do not have enough time to rent this home!");
             }
         }
-        p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You must stand inside a home first");
+        p.sendMessage(ChatColor.RED + "You must stand inside a home first");
     }
     
     public void buy(Player p){
@@ -457,17 +457,17 @@ public class Homes {
             EconomyResponse es = plugin.getEconomy().withdrawPlayer(p.getName(), price);
             if (es.transactionSuccess()){
                 setLandlord(home, p.getName());
-                p.sendMessage(plugin.getPluginName() + ChatColor.GREEN + "Congratulations! You now own this home");
+                p.sendMessage(ChatColor.GREEN + "Congratulations! You now own this home");
             } else 
-                p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You do not have enough time to buy this home!");
+                p.sendMessage(ChatColor.RED + "You do not have enough time to buy this home!");
         } else if (hasOwner){
             String landlord = getLandlord(home);
             if (landlord.equalsIgnoreCase(p.getName()))
-                p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You already own this home");
+                p.sendMessage(ChatColor.RED + "You already own this home");
             else
-                p.sendMessage(plugin.getPluginName() + ChatColor.RED + "It appears this home already owned by "+ChatColor.GRAY + landlord);
+                p.sendMessage(ChatColor.RED + "It appears this home already owned by "+ChatColor.GRAY + landlord);
         } else 
-            p.sendMessage(plugin.getPluginName() + ChatColor.RED + "You must stand inside a home first"); 
+            p.sendMessage(ChatColor.RED + "You must stand inside a home first"); 
     }
     
     public boolean sell(Player p, Player newOwner, double price){
