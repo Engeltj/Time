@@ -68,8 +68,10 @@ public class Landlord {
             } else if (args[1].equalsIgnoreCase("disown")){
                 h.disown(p);
             } else if (args[1].equalsIgnoreCase("name")){
-                h.setDisplayName(p, args[2]);
-                
+                if (!h.hasDisplayName(args[2]))
+                    h.setDisplayName(p, args[2]);
+                else
+                    sender.sendMessage(ChatColor.RED + "Display name "+args[2]+" already taken, try another");
             } else if (args[1].equalsIgnoreCase("price")){
                 double price = getPriceFromArgs(args);
                 h.setPrice(p, price);

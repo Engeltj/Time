@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -173,11 +174,6 @@ public class Homes {
                             sender.sendMessage(ChatColor.GREEN + "Home successfully updated.");
                     }
                 }
-                   
-                //if (args.length >= 4)
-                //    updateHomePrice(args[3]);
-                //else
-                //    updateHomePrices();
             } else if (args[2].equalsIgnoreCase("reset")){
                 String home = "";
                 if (args.length >=4)
@@ -187,6 +183,40 @@ public class Homes {
                 }
             }
         }
+    }
+    
+    /*
+        Returns new price set for a home
+    */
+    public double getNewRentPrice(String home){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT new_price FROM `homes` WHERE name='"+home+"';");
+            if (rs.first())
+                return rs.getDouble("new_price");
+        } catch (SQLException ex) {
+            plugin.sendConsole("Failed to get new_price for home '"+home+"', " + ex);
+        }
+        return 0D;
+    }
+    
+    /*
+        Returns epoch date when the home price was changed
+    */
+    public double getRentPriceChanged(String home){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT price_changed FROM `homes` WHERE name='"+home+"';");
+            if (rs.first())
+                return rs.getDouble("price_changed");
+        } catch (SQLException ex) {
+            plugin.sendConsole("Failed to get new_price for home '"+home+"', " + ex);
+        }
+        return 0D;
     }
     
     public Vector getDoor(String home){
@@ -229,17 +259,82 @@ public class Homes {
         return (area + area*5*getZone(home))*120;
     }
     
-    public void updateHomePrice(String home){
-        if (getLandlord(home).length()>0 || getRenter(home).length()>0){
+    /* 
+        Updates rent price of home based on landlords new_price or size (if no landlord or renter)
+    */
+    public void updateHomeRentPrice(String home){
+        String lord = getLandlord(home);
+        if (!(lord.length()>0 || getRenter(home).length()>0)){
             double worth = getRentWorth(home);
             setRentPrice(home, worth);
+        } else if (lord.length() > 0){
+            double new_price = getNewRentPrice(home);
+            String renter = this.getRenter(home);
+            if (new_price > 0){
+                String home_name = this.getName(home);
+                double time = System.currentTimeMillis()/1000 - getRentPriceChanged(home);
+                Player p = plugin.getServer().getPlayer(renter);
+                if (time > 14*24*60*60 || p == null){
+                    setRentPrice(home, new_price);
+                    if (p != null && p.isOnline()){
+                        
+                        p.sendMessage(ChatColor.GREEN + "Your home '"+ChatColor.GRAY+home_name+ChatColor.GREEN+"' rent price has changed to "+ChatColor.GRAY+TimeCommands.convertSecondsToTime(new_price)+
+                                ChatColor.GREEN+" per day.");
+                    }
+                } else if (p.isOnline()){
+                    long last_warned = System.currentTimeMillis()/1000 - getLastWarnedNewRentPrice(home);
+                    if (last_warned > 24*60*60){
+                        p.sendMessage(ChatColor.GREEN + "Your home '"+ChatColor.GRAY+home_name+ChatColor.GREEN+"' rent price will change to "+ChatColor.GRAY+TimeCommands.convertSecondsToTime(new_price)+
+                                ChatColor.GREEN+" per day in " + ChatColor.GRAY+TimeCommands.convertSecondsToTime(time));
+                    }
+                }
+            }
         }
     }
     
-    public void updateHomePrices(){
+    private long getLastWarnedNewRentPrice(String home){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT price_warned FROM `homes` WHERE name='"+home+"';");
+            if (rs.first()){
+                return rs.getLong("price_warned");
+            }
+        } catch (SQLException ex) {
+            plugin.sendConsole("Failed to get price_warned for home '"+home+"', " + ex);
+        }
+        return 0;
+    }
+    
+    private boolean updateWarnedUserNewRentPrice(String home){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            int updated = st.executeUpdate("UPDATE `homes` SET price_warned="+System.currentTimeMillis()/1000+" WHERE name='"+home+"';");
+            return (updated >0);
+        } catch (SQLException ex) {
+            plugin.sendConsole("Failed to update 'price_warned' for home '"+home+"', " + ex);
+        }
+        return false;
+    }
+    
+    public void updateHomeRentPricesWithLandlords(){
+        ArrayList<String> s = getHomesWithLords();
+        for (String home : s){
+            updateHomeRentPrice(home);
+        }
+    }
+    
+    /*
+        Updates all home rent prices, pretty intensive tasks when there are alot of homes. 
+        ADMIN USE ONLY!!!! Should not be run unless entirely nessessary
+    */
+    public void updateHomeRentPrices(){
         ArrayList<String> s = getHomes();
         for (String home : s){
-            updateHomePrice(home);
+            updateHomeRentPrice(home);
         }
     }
     
@@ -367,7 +462,7 @@ public class Homes {
         Statement st;
         try {
             st = con.createStatement();
-            int updated = st.executeUpdate("UPDATE `homes` SET price="+price+" WHERE name='"+home+"';");
+            int updated = st.executeUpdate("UPDATE `homes` SET price="+price+", new_price=0, price_changed=0, price_warned=0 WHERE name='"+home+"';");
             return (updated > 0);
         } catch (SQLException ex) {
             plugin.sendConsole("Fail to set price on home: " + home);
@@ -400,6 +495,19 @@ public class Homes {
         return false;
     }
     
+    public boolean hasDisplayName(String name){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT * FROM `homes` WHERE display_name='"+name+"';");
+            return (rs.first());
+        } catch (SQLException ex) {
+            plugin.sendConsole("Fail to get display_name matching: " + name);
+        }
+        return false;
+    }
+    
     public void setDisplayName(Player p, String name){
         String home = getHome(p.getLocation());
         if (home == null || home.length() == 0){
@@ -427,6 +535,23 @@ public class Homes {
             }
         } catch (SQLException ex) {
             plugin.sendConsole("Fail to get list of homes for "+player+", " + ex);
+        }
+        return homes;
+    }
+    
+    public ArrayList<String> getHomesWithLords(){
+        ArrayList<String> homes = new ArrayList<String>();
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT name FROM `homes` WHERE owner<>'';");
+            while (rs.next()){
+                String home = rs.getString("name");
+                homes.add(home);
+            }
+        } catch (SQLException ex) {
+            plugin.sendConsole("Fail to get list of homes: ");
         }
         return homes;
     }

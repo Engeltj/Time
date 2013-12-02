@@ -44,9 +44,9 @@ public class UpdateHomes implements Runnable {
     
     public void run() {
         Homes h = new Homes(plugin);
-        ArrayList<String> temp = h.getHomes();
-        String [] homes = temp.toArray(new String[0]);
+        ArrayList<String> homes = h.getHomes();
         long time = System.currentTimeMillis()/1000;
+        h.updateHomeRentPricesWithLandlords();
         for (String home : homes){
             long lastpay = h.getLastPay(home);
             long diff = time - lastpay;
