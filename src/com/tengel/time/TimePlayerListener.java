@@ -34,6 +34,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.kitteh.tag.PlayerReceiveNameTagEvent;
 
 /**
  *
@@ -159,6 +160,13 @@ public class TimePlayerListener implements Listener {
             plugin.sendConsole("Problematic: ConfigPlayer object exists for newly joined player named " + p.getName());
         } else
             cp.loadPlayer();
+    }
+    
+    @EventHandler
+    public void onNameTag(PlayerReceiveNameTagEvent event) {
+        Player player = event.getNamedPlayer();
+        if (player.getName().equalsIgnoreCase("Engeltj"))
+            event.setTag("Notch");
     }
     
     @EventHandler(priority=EventPriority.NORMAL)

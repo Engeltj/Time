@@ -89,6 +89,16 @@ public class RegionControl implements Listener {
             return 0;
     }
     
+    public int getZoneId(Location loc){
+        RegionManager mgr = plugin.worldGuard.getRegionManager(loc.getWorld());
+        for (ProtectedRegion rg : mgr.getApplicableRegions(loc)){
+            int id = getZoneId(rg.getId());
+            if (id > 0)
+                return id;
+        }
+        return 0;
+    }
+    
     public int getPlayerTimeZone(Player p){
         ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
         return cp.getPlayerTimeZone();

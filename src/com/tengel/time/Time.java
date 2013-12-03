@@ -90,6 +90,7 @@ public final class Time extends JavaPlugin {
         
         pm.registerEvents(this.playerListener, this);
         pm.registerEvents(this.worldGuardListener, this);
+        pm.registerEvents(new MobControl(this), this);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, timeUpdater, 0, timeUpdater.getUpdateInterval() * 20);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 60, 1800 * 20);
         

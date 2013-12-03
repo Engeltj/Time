@@ -7,16 +7,11 @@
 package com.tengel.time.mysql;
 
 import com.tengel.time.Time;
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -46,7 +41,7 @@ public class TimeSQL {
         try {
             con = DriverManager.getConnection("jdbc:mysql://"+host+":3306/"+db, user, pass);
             plugin.sendConsole("MySQL connection initialized to " + host);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to make MySQL connection to " + host);
             con = null;
             return false;
@@ -58,7 +53,7 @@ public class TimeSQL {
         try {
             Statement st = con.createStatement();
             st.executeQuery("SELECT 1");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             initialize();
         }
         return (con != null);
@@ -68,7 +63,7 @@ public class TimeSQL {
         try {
             Statement st = con.createStatement();
             st.executeUpdate("CREATE TABLE IF NOT EXISTS homes (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(100) NOT NULL, price DOUBLE, type BOOLEAN, owner VARCHAR(100), renter VARCHAR(100), PRIMARY KEY (id));");
-        }catch (SQLException ex) {
+        }catch (Exception ex) {
             plugin.sendConsole(ex.getMessage());
         }
     }
@@ -77,7 +72,7 @@ public class TimeSQL {
          try {
             Statement st = con.createStatement();
             st.executeUpdate("CREATE TABLE IF NOT EXISTS players (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(100) NOT NULL, password VARCHAR(255), PRIMARY KEY (id));");
-        }catch (SQLException ex) {
+        }catch (Exception ex) {
             plugin.sendConsole(ex.getMessage());
         }
     }
