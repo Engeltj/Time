@@ -9,17 +9,26 @@ package com.tengel.time;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import java.text.DecimalFormat;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.inventory.EntityEquipment;
 
@@ -29,15 +38,29 @@ import org.bukkit.inventory.EntityEquipment;
  */
 public class MobControl implements Listener {
     private final Time plugin;
+    private World world;
     //private RegionManager rg_control;
     
-    public MobControl(Time plugin){
+    public MobControl(Time plugin, World world){
         this.plugin = plugin;
+        this.world = world;
         //rg_control = new RegionControl();
     }
     
+    public boolean createSpawn(CommandSender sender, int difficulty){
+        Player p = plugin.getServer().getPlayer(sender.getName());
+        int i = 1;
+        WorldGuardUtil wgu = new WorldGuardUtil(plugin, p.getWorld());
+        Map<String, ProtectedRegion> map = plugin.worldGuard.getRegionManager(world).getRegions();
+        String name = "spawn_" + difficulty + "_";
+        
+        while (map.get(name+plugin.intToString(i, 3)) != null)
+            i++;
+        return (wgu.createRegionFromSelection(p, name+plugin.intToString(i, 3)) != null);
+    }
     
-    private void setArmours(LivingEntity creature, int zone){
+    
+    private void setArmours(LivingEntity creature, int zone, int difficulty){
         Random r_gen = new Random();
         ItemStack helmet;
         ItemStack chest;
@@ -45,33 +68,33 @@ public class MobControl implements Listener {
         ItemStack boots;
         switch(zone){
             case 2:
-                if (r_gen.nextInt(10)> 4) helmet = new ItemStack(Material.DIAMOND_HELMET);
+                if (r_gen.nextInt(5) <= difficulty) helmet = new ItemStack(Material.DIAMOND_HELMET);
                 else helmet = new ItemStack(Material.GOLD_HELMET);
-                if (r_gen.nextInt(10)> 4) chest = new ItemStack(Material.DIAMOND_CHESTPLATE);
+                if (r_gen.nextInt(5) <= difficulty) chest = new ItemStack(Material.DIAMOND_CHESTPLATE);
                 else chest = new ItemStack(Material.GOLD_CHESTPLATE);
-                if (r_gen.nextInt(10)> 4) legs = new ItemStack(Material.DIAMOND_LEGGINGS);
+                if (r_gen.nextInt(5) <= difficulty) legs = new ItemStack(Material.DIAMOND_LEGGINGS);
                 else legs = new ItemStack(Material.GOLD_LEGGINGS);
-                if (r_gen.nextInt(10)> 4) boots = new ItemStack(Material.DIAMOND_BOOTS);
+                if (r_gen.nextInt(5) <= difficulty) boots = new ItemStack(Material.DIAMOND_BOOTS);
                 else boots = new ItemStack(Material.GOLD_BOOTS);
                 break;
             case 1:
-                if (r_gen.nextInt(10)> 4) helmet = new ItemStack(Material.IRON_HELMET);
+                if (r_gen.nextInt(5) <= difficulty) helmet = new ItemStack(Material.IRON_HELMET);
                 else helmet = new ItemStack(Material.GOLD_HELMET);
-                if (r_gen.nextInt(10)> 4) chest = new ItemStack(Material.IRON_CHESTPLATE);
+                if (r_gen.nextInt(5) <= difficulty) chest = new ItemStack(Material.IRON_CHESTPLATE);
                 else chest = new ItemStack(Material.GOLD_CHESTPLATE);
-                if (r_gen.nextInt(10)> 4) legs = new ItemStack(Material.IRON_LEGGINGS);
+                if (r_gen.nextInt(5) <= difficulty) legs = new ItemStack(Material.IRON_LEGGINGS);
                 else legs = new ItemStack(Material.GOLD_LEGGINGS);
-                if (r_gen.nextInt(10)> 4) boots = new ItemStack(Material.IRON_BOOTS);
+                if (r_gen.nextInt(5) <= difficulty) boots = new ItemStack(Material.IRON_BOOTS);
                 else boots = new ItemStack(Material.GOLD_BOOTS);
                 break;
             default:
-                if (r_gen.nextInt(10)> 4) helmet = new ItemStack(Material.LEATHER_HELMET);
+                if (r_gen.nextInt(5) <= difficulty) helmet = new ItemStack(Material.LEATHER_HELMET);
                 else helmet = new ItemStack(Material.CHAINMAIL_HELMET);
-                if (r_gen.nextInt(10)> 4) chest = new ItemStack(Material.LEATHER_CHESTPLATE);
+                if (r_gen.nextInt(5) <= difficulty) chest = new ItemStack(Material.LEATHER_CHESTPLATE);
                 else chest = new ItemStack(Material.CHAINMAIL_CHESTPLATE);
-                if (r_gen.nextInt(10)> 4) legs = new ItemStack(Material.LEATHER_LEGGINGS);
+                if (r_gen.nextInt(5) <= difficulty) legs = new ItemStack(Material.LEATHER_LEGGINGS);
                 else legs = new ItemStack(Material.CHAINMAIL_LEGGINGS);
-                if (r_gen.nextInt(10)> 4) boots = new ItemStack(Material.LEATHER_BOOTS);
+                if (r_gen.nextInt(5) <= difficulty) boots = new ItemStack(Material.LEATHER_BOOTS);
                 else boots = new ItemStack(Material.CHAINMAIL_BOOTS);
                 break;
         }
@@ -94,24 +117,43 @@ public class MobControl implements Listener {
         return name_fix;
     }
     
-    public void setHealth(LivingEntity creature, int zone){
+    public void setHealth(LivingEntity creature, int zone, int difficulty){
         String name = getName(creature);
         Random r_gen = new Random();
-        double multiplier = r_gen.nextDouble();
-        double newhp = creature.getHealth()*(multiplier*zone +1);
-        if (multiplier > 0.8)
-            creature.setCustomName(ChatColor.RED + "[Elite] " + ChatColor.YELLOW + name);
+        double multiplier = r_gen.nextDouble()+0.5;
+        int level = (zone * 25 + 1) + ((difficulty-1)*5) + (r_gen.nextInt(5)-5);
+        //plugin.sendConsole(String.valueOf(zone) + " " + String.valueOf(difficulty));
+        double newhp = creature.getHealth() * level * multiplier;
+        if (multiplier > 1.2)
+            creature.setCustomName(ChatColor.RED + "[Lvl "+level+"] " + ChatColor.WHITE + name);
+        else if (multiplier > 0.8)
+            creature.setCustomName(ChatColor.YELLOW + "[Lvl "+level+"] " + ChatColor.WHITE + name);
         else
-            creature.setCustomName(ChatColor.YELLOW + name);
+            creature.setCustomName(ChatColor.GREEN + "[Lvl "+level+"] " + ChatColor.WHITE + name);
         creature.setCustomNameVisible(true);
-        creature.setHealth(newhp);
         creature.setMaxHealth(newhp);
+        creature.setHealth(newhp*0.999);
+        creature.setRemoveWhenFarAway(false);
+    }
+    
+    public int getSpawnDifficulty(String region){
+        Pattern p = Pattern.compile("-?\\d+");
+        Matcher m = p.matcher(region);
+        int level = 1;
+        try {
+            if (m.find())
+                level = Integer.parseInt(m.group());
+        } catch (Exception e){}
+        
+        return level;
     }
     
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         LivingEntity creature = event.getEntity();
         if(!(creature instanceof Player)) {
+            if ((event.getLocation().getWorld().getName().equalsIgnoreCase("Time") && (event.getSpawnReason() == SpawnReason.NATURAL)))
+                event.setCancelled(true);
             RegionManager mgr = plugin.worldGuard.getRegionManager(event.getLocation().getWorld());
             for (ProtectedRegion rg : mgr.getApplicableRegions(event.getLocation())){
                 if (rg.getId().contains("spawn_")){
@@ -123,16 +165,13 @@ public class MobControl implements Listener {
                         }
                     }
                     int zone = plugin.getRegionControl().getZoneId(event.getLocation());
-                    setArmours(creature, zone);
-                    setHealth(creature, zone);
+                    int difficulty = getSpawnDifficulty(rg.getId());
+                    setArmours(creature, zone, difficulty);
+                    setHealth(creature, zone, difficulty);
                     //plugin.sendConsole("Armors set");
                     return;
                 }
-            }
-            if (event.getLocation().getWorld().getName().equalsIgnoreCase("Time"))
-                event.setCancelled(true);
-                //creature.remove();
-                
+            } 
         }
     }
     

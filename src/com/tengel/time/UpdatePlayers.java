@@ -38,7 +38,7 @@ public class UpdatePlayers implements Runnable {
                 //ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
                 if (cp.getBounty() <= 0)
                     player.sendMessage(ChatColor.RED + "You've been added to the wanted list!");
-                if (es.transactionSuccess())
+                //if (es.transactionSuccess())
                     cp.addBounty(1*updateInterval);
             } else if (!wrongZone && cp.getBounty() > 0){
                 cp.addBounty(updateInterval*-1);
@@ -46,9 +46,6 @@ public class UpdatePlayers implements Runnable {
                     player.sendMessage(ChatColor.GREEN + "You are free and cleared of all charges");
                 }
             }
-              
-            
-            
             if ((cp.getPlayerAge() > 7*24*60*60*1000)){ //7000 days
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), 1*updateInterval);
                 if (!es.transactionSuccess()){

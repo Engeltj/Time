@@ -48,7 +48,7 @@ public class ConfigPlayer {
     public void loadPlayer(){
         player_id = getId();
         skill = getSkill(getProfession().name());
-        bounty = updateBounty();
+        bounty = getBountyFromDb();
         licenses = getPlayerLicenses();
         start_time = getStartTime();
         plugin.getServer().getPlayer(playerName).setExp(skill);
@@ -57,6 +57,8 @@ public class ConfigPlayer {
     public void savePlayer(){
         updateLastSeen();
         updateLife();
+        updateBounty();
+        //getBountyFromDb();
     }
     
     public String getName(){
@@ -190,6 +192,19 @@ public class ConfigPlayer {
         return false;
     }
     
+    private boolean updateBounty(){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            int updated = st.executeUpdate("UPDATE `players` SET bounty="+bounty+" WHERE name='"+playerName+"';");
+            return (updated > 0);
+        } catch (SQLException ex) {
+            plugin.sendConsole("Failed to update bounty of player " + playerName + "\n" + ex);
+        }
+        return false;
+    }
+    
     public boolean updateSkill(TimeProfession tp, int amount){
         Connection con = plugin.getSql().getConnection();
         Statement st;
@@ -304,12 +319,12 @@ public class ConfigPlayer {
         return 0;
     }
     
-    private int updateBounty(){
+    private int getBountyFromDb(){
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
             st = con.createStatement();
-            ResultSet rs = st.executeQuery("SELECT bounty FROM `bounty` WHERE player_id='"+player_id+"';");
+            ResultSet rs = st.executeQuery("SELECT bounty FROM `players` WHERE name='"+playerName+"';");
             if (rs.next())
                 return rs.getInt("bounty");
         } catch (SQLException ex) {

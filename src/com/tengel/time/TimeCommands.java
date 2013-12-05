@@ -200,18 +200,31 @@ public class TimeCommands implements Listener{
         return true;
     }
     
-    private boolean adminCommand(CommandSender sender, String[] args){
+    private void adminCommand(CommandSender sender, String[] args){
         if (args.length == 1){
             sender.sendMessage(ChatColor.GRAY + "home" + ChatColor.GREEN + "  > Home related commands");
             sender.sendMessage(ChatColor.GRAY + "update" + ChatColor.GREEN + "  > Updates schematic prices");
+            sender.sendMessage(ChatColor.GRAY + "createspawn [difficulty]" + ChatColor.GREEN + "  > Creates a spawn of select difficulty (1-5, 5=hardest)");
         } else if (args[1].equalsIgnoreCase("update")){
             WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.prof_builder.getWorld());
             wgu.updateBuildWorth(sender, plugin.prof_builder.getSchematics());
         } else if (args[1].equalsIgnoreCase("home")){
             Homes h = new Homes(plugin);
             h.adminCommands(sender, args);
+        } else if (args[1].equalsIgnoreCase("createspawn")){
+            int difficulty = 0;
+            try {
+                difficulty = Integer.parseInt(args[2]);
+            } catch (Exception ex){
+                sender.sendMessage(ChatColor.RED + "Please specify a valid difficulty level from 1 to 5");
+                return;
+            }
+            if (!plugin.mobcontrol.createSpawn(sender, difficulty)){
+                sender.sendMessage("Failed to create the spawn .. I don't know why");
+                plugin.sendConsole("Failed to createSpawn of difficulty " + difficulty);
+            } else
+                sender.sendMessage(ChatColor.GREEN + "Spawn created with difficulty " + difficulty);
         }
-        return true;
     }
     
     

@@ -28,7 +28,9 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -49,6 +51,7 @@ public final class Time extends JavaPlugin {
     public WorldGuardPlugin worldGuard;
     public WorldEditPlugin worldEdit;
     private TimeSQL sql;
+    public MobControl mobcontrol;
     
     public Gatherer prof_miner;
     public Gatherer prof_farmer;
@@ -73,6 +76,8 @@ public final class Time extends JavaPlugin {
         prof_builder = new Builder(this, TimeProfession.BUILDER);
         prof_landlord = new Landlord(this, TimeProfession.LANDLORD);
         
+        mobcontrol = new MobControl(this, getServer().getWorld("Time"));
+        
         if (worldGuard == null || !(worldGuard instanceof WorldGuardPlugin)) {
             getLogger().info(String.format("[%s] - Disabled due to no instance of WorldGuard found!", getDescription().getName()));
             getServer().getPluginManager().disablePlugin(this);
@@ -90,7 +95,7 @@ public final class Time extends JavaPlugin {
         
         pm.registerEvents(this.playerListener, this);
         pm.registerEvents(this.worldGuardListener, this);
-        pm.registerEvents(new MobControl(this), this);
+        pm.registerEvents(mobcontrol, this);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, timeUpdater, 0, timeUpdater.getUpdateInterval() * 20);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 60, 1800 * 20);
         
@@ -264,5 +269,15 @@ public final class Time extends JavaPlugin {
             }
         }
         return null;
+    }
+    
+    public String intToString(int num, int digits) {
+        assert digits > 0 : "Invalid number of digits";
+        // create variable length array of zeros
+        char[] zeros = new char[digits];
+        Arrays.fill(zeros, '0');
+        // format number as String
+        DecimalFormat df = new DecimalFormat(String.valueOf(zeros));
+        return df.format(num);
     }
 }
