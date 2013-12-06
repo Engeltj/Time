@@ -7,13 +7,14 @@
 package com.tengel.time;
 
 import com.tengel.time.profs.TimeProfession;
+import org.bukkit.entity.Player;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import org.bukkit.entity.Player;
 
 /**
  *
@@ -229,9 +230,8 @@ public class ConfigPlayer {
         try {
             st = con.createStatement();                
             ResultSet rs = st.executeQuery("SELECT start FROM `players` WHERE id="+player_id+";");
-            while (rs.next()){
+            if (rs.next())
                 return rs.getInt("start");
-            }
         } catch (SQLException ex) {
             plugin.sendConsole("Failed to get skill of player " + playerName + "\n" + ex);
         }

@@ -8,24 +8,23 @@ package com.tengel.time.profs;
 
 import com.tengel.time.Time;
 import com.tengel.time.mysql.Homes;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
  * @author Tim
  */
 public class Landlord {
-    private Time plugin;
-    private TimeProfession prof;
+    private final Time plugin;
     
-    public Landlord(Time plugin, TimeProfession prof){
+    public Landlord(Time plugin){
         this.plugin = plugin;
-        this.prof = prof;
     }
     
     public void commands(String command, CommandSender sender, String [] args){
@@ -85,20 +84,21 @@ public class Landlord {
         double total = 0;
         for (int i=3;i<args.length;i++){
             Matcher m = p.matcher(args[i]);
-            m.find();
-            int value = Integer.valueOf(m.group());
-            if (args[i].contains("y"))
-                total = total + value * 52 * 7 * 24 * 60 * 60;
-            else if (args[i].contains("w"))
-                total = total + value * 7 * 24 * 60 * 60;
-            else if (args[i].contains("d"))
-                total = total + value * 24 * 60 * 60;
-            else if (args[i].contains("h"))
-                total = total + value * 60 * 60;
-            else if (args[i].contains("m"))
-                total = total + value * 60;
-            else
-                total = total + value;
+            if (m.find()){
+                int value = Integer.valueOf(m.group());
+                if (args[i].contains("y"))
+                    total = total + value * 52 * 7 * 24 * 60 * 60;
+                else if (args[i].contains("w"))
+                    total = total + value * 7 * 24 * 60 * 60;
+                else if (args[i].contains("d"))
+                    total = total + value * 24 * 60 * 60;
+                else if (args[i].contains("h"))
+                    total = total + value * 60 * 60;
+                else if (args[i].contains("m"))
+                    total = total + value * 60;
+                else
+                    total = total + value;
+            }
         }
         return total;
     }

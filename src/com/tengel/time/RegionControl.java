@@ -6,26 +6,27 @@
 
 package com.tengel.time;
 
-import org.bukkit.event.EventHandler;
 import com.mewin.WGRegionEvents.events.RegionEnterEvent;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.tengel.time.mysql.Homes;
+import com.tengel.time.profs.TimeProfession;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import static com.sk89q.worldguard.bukkit.BukkitUtil.*;
-import com.tengel.time.mysql.Homes;
-import com.tengel.time.profs.TimeProfession;
+
+import static com.sk89q.worldguard.bukkit.BukkitUtil.toVector;
 /**
  *
  * @author Tim
  */
 public class RegionControl implements Listener {
-    private Time plugin;
-    private TimePlayers players;
+    private final Time plugin;
+    private final TimePlayers players;
     
     public RegionControl(Time plugin, TimePlayers players) {
             this.plugin = plugin;
@@ -106,11 +107,9 @@ public class RegionControl implements Listener {
     
     public boolean isWrongTimeZone(String player, int zone){
         ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player);
-        if (zone > cp.getPlayerTimeZone())
-            return true;
-        return false;
+        return zone > cp.getPlayerTimeZone();
     }
-    
+
     public boolean isWrongTimeZone(Player p){
         Location loc = p.getLocation();
         Vector v = toVector(loc);

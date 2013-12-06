@@ -26,7 +26,7 @@ public class ConfigShop extends Config {
         } else
             try{
                 load(getConfigFile());
-            }catch (Exception e){}
+            }catch (Exception ignored){}
     }
     
     public void updateItem(int id, double cost){

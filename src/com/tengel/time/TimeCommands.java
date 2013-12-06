@@ -207,12 +207,12 @@ public class TimeCommands implements Listener{
             sender.sendMessage(ChatColor.GRAY + "createspawn [difficulty]" + ChatColor.GREEN + "  > Creates a spawn of select difficulty (1-5, 5=hardest)");
         } else if (args[1].equalsIgnoreCase("update")){
             WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.prof_builder.getWorld());
-            wgu.updateBuildWorth(sender, plugin.prof_builder.getSchematics());
+            wgu.updateBuildWorth(plugin.prof_builder.getSchematics());
         } else if (args[1].equalsIgnoreCase("home")){
             Homes h = new Homes(plugin);
             h.adminCommands(sender, args);
         } else if (args[1].equalsIgnoreCase("createspawn")){
-            int difficulty = 0;
+            int difficulty;
             try {
                 difficulty = Integer.parseInt(args[2]);
             } catch (Exception ex){

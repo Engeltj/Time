@@ -6,20 +6,21 @@
 
 package com.tengel.time;
 
+import org.bukkit.World;
+import org.bukkit.entity.Player;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
 
 /**
  *
  * @author Tim
  */
 public class TimePlayers {
-    private Map<String, ConfigPlayer> players;
-    private Time plugin;
+    private final Map<String, ConfigPlayer> players;
+    private final Time plugin;
     
     public TimePlayers(Time plugin){
         players = new HashMap<String, ConfigPlayer>();
@@ -37,7 +38,7 @@ public class TimePlayers {
     public void removePlayer(String name){
         try {
             players.remove(name);
-        }catch (Exception e){}
+        }catch (Exception ignored){}
     }
     
     public void removePlayer(Player p){
@@ -45,7 +46,7 @@ public class TimePlayers {
     }
     
     public ConfigPlayer getPlayerConfig(String name){
-        ConfigPlayer config = (ConfigPlayer) players.get(name);
+        ConfigPlayer config = players.get(name);
         if (config == null){
             Player p = plugin.getServer().getPlayer(name);
             if (p == null){
@@ -59,9 +60,7 @@ public class TimePlayers {
     }
     
     private boolean isPlayerAdded(String name){
-        if (players.get(name) == null)
-            return false;
-        return true;
+        return players.get(name) != null;
     }
     
     public void resetPlayer(Player p){
@@ -72,7 +71,7 @@ public class TimePlayers {
             try {
                 File f = new File(System.getProperty("user.dir") + "\\" + world.getName() + "\\players\\" + name + ".dat");
                 f.delete();
-            }catch(Exception e){}
+            }catch(Exception ignored){}
         }
 
         try{

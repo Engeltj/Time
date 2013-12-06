@@ -8,10 +8,11 @@ package com.tengel.time.profs;
 
 import com.tengel.time.Config;
 import com.tengel.time.Time;
+import org.bukkit.Material;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import org.bukkit.Material;
 
 /**
  *
@@ -22,7 +23,7 @@ public class Gatherer {
     private ArrayList blacklist;
     private Map<Material, Integer> earnings;
     private Config blocks_worth;
-    private TimeProfession prof;
+    private final TimeProfession prof;
     
     public Gatherer(Time plugin, TimeProfession prof){
         this.plugin = plugin;
@@ -51,24 +52,6 @@ public class Gatherer {
                 earnings.put(m, worth);
             }
         }
-    }
-    
-    @Deprecated
-    public ArrayList getBlacklist(){
-        Material.values();
-        if (blacklist == null){
-            blacklist = new ArrayList();
-            Config c = new Config(this.plugin,"config.yml");
-            String bl = c.getString("blocks.miner_blacklist");
-            if (bl != null){
-                String [] bl_list = bl.split(",");
-                for (String index : bl_list){
-                    Material m = Material.getMaterial(index);
-                    blacklist.add(m);
-                }
-            }
-        }
-        return blacklist;
     }
     
     public int getSkillEarned(Material m){

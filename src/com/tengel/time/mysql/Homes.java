@@ -7,16 +7,18 @@
 package com.tengel.time.mysql;
 
 import com.sk89q.worldedit.Vector;
-import static com.sk89q.worldguard.bukkit.BukkitUtil.toVector;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import com.tengel.time.Config;
-import com.tengel.time.ConfigPlayer;
-import com.tengel.time.Time;
-import com.tengel.time.TimeCommands;
-import com.tengel.time.WorldGuardUtil;
+import com.tengel.time.*;
 import com.tengel.time.profs.TimeProfession;
+import net.milkbowl.vault.economy.EconomyResponse;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,21 +26,15 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.milkbowl.vault.economy.EconomyResponse;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+
+import static com.sk89q.worldguard.bukkit.BukkitUtil.toVector;
 
 /**
  *
  * @author Tim
  */
 public class Homes {
-    private Time plugin;
-    private Config configFile;
+    private final Time plugin;
     
     public Homes(Time plugin){
         //configFile = new Config(plugin, "homes.yml");
@@ -94,7 +90,7 @@ public class Homes {
             if (rs.first()){
                 return rs.getInt("Auto_increment");
             }
-        } catch (SQLException ex) {}
+        } catch (SQLException ignored) {}
         return 0;
     }
     
@@ -150,7 +146,7 @@ public class Homes {
                 String type = "";
                 if (args.length >= 4)
                 name = args[3];
-                try { type = args[4]; } catch (Exception ex){}
+                try { type = args[4]; } catch (Exception ignored){}
                 create(plugin.getServer().getPlayer(sender.getName()), name, type);
 
             } else if (args[2].equalsIgnoreCase("update")){
@@ -428,8 +424,7 @@ public class Homes {
             ResultSet rs = st.executeQuery("SELECT renter FROM `homes` WHERE name='"+region+"';");
             if (rs.first()){
                 String str = rs.getString("renter");
-                if (str == null) return true;
-                return (str.length()==0);
+                return str == null || (str.length() == 0);
             }
         } catch (SQLException ex) {
             plugin.sendConsole("Fail to check availability on house: " + region);
@@ -573,8 +568,18 @@ public class Homes {
         return homes;
     }
     
-    public long getLastPay(String region){
-        return configFile.getLong(region + ".lastpay");
+    public long getLastPay(String home){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT lastpay FROM `homes` WHERE name='"+home+"';");
+            if (rs.first())
+                return rs.getLong("lastpay");
+        } catch (SQLException ex) {
+            plugin.sendConsole("Fail to get lastpay on home: " + home);
+        }
+        return 0L;
     }
     
     public String getRenter(String region){

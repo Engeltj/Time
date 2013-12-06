@@ -15,13 +15,8 @@ import org.bukkit.entity.Player;
  * @author Tim
  */
 public class UpdatePlayers implements Runnable {
-    private Time plugin;
-    private int updateInterval; //in seconds
-    
-    public UpdatePlayers(Time plugin){
-        this.plugin = plugin;
-        this.updateInterval = 10;
-    }
+    private final Time plugin;
+    private final int updateInterval; //in seconds
     
     public UpdatePlayers(Time plugin, int updateInterval){
         this.plugin = plugin;
@@ -34,20 +29,19 @@ public class UpdatePlayers implements Runnable {
             boolean wrongZone = rc.isWrongTimeZone(player);
             ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
             if (wrongZone){
-                EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), 1*updateInterval);
+                plugin.getEconomy().withdrawPlayer(player.getName(), updateInterval);
                 //ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
                 if (cp.getBounty() <= 0)
                     player.sendMessage(ChatColor.RED + "You've been added to the wanted list!");
                 //if (es.transactionSuccess())
-                    cp.addBounty(1*updateInterval);
-            } else if (!wrongZone && cp.getBounty() > 0){
+                    cp.addBounty(updateInterval);
+            } else if (cp.getBounty() > 0){
                 cp.addBounty(updateInterval*-1);
-                if (cp.getBounty() == 0){
+                if (cp.getBounty() == 0)
                     player.sendMessage(ChatColor.GREEN + "You are free and cleared of all charges");
-                }
             }
             if ((cp.getPlayerAge() > 7*24*60*60*1000)){ //7000 days
-                EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), 1*updateInterval);
+                EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), updateInterval);
                 if (!es.transactionSuccess()){
                     if (!cp.isJailed())
                         plugin.getTimePlayers().resetPlayer(player);

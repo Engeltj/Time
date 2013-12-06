@@ -7,9 +7,6 @@
 package com.tengel.time;
 
 import com.tengel.time.profs.TimeProfession;
-import java.io.File;
-import java.io.IOException;
-import java.util.logging.Level;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -21,14 +18,18 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
+
 /**
  *
  * @author Tim
  */
 public class ShopSigns extends YamlConfiguration {
-    private Player player;
-    private Time plugin;
-    private File configFile;
+    private final Player player;
+    private final Time plugin;
+    private final File configFile;
     
     public ShopSigns(Time plugin, Player player){
         super();
@@ -44,7 +45,7 @@ public class ShopSigns extends YamlConfiguration {
         } else
             try{
                 super.load(this.configFile);
-            }catch (Exception e){}
+            }catch (Exception ignored){}
     }
     
     private boolean buyLicense(Material m, int cost){
@@ -99,7 +100,7 @@ public class ShopSigns extends YamlConfiguration {
         }
         
         if (plugin.getEconomy().getBalance(player.getName()) >= cost){
-            ConfigPlayer configFile = plugin.getTimePlayers().getPlayerConfig(player.getName());
+            //ConfigPlayer configFile = plugin.getTimePlayers().getPlayerConfig(player.getName());
             if (s.getLine(0).contains("License")){
                 if (plugin.getPlayerListener().checkPermissions(player, "buy.license", false))
                     buyLicense(m, cost);
@@ -117,7 +118,7 @@ public class ShopSigns extends YamlConfiguration {
     private boolean validateSign(SignChangeEvent event){
         Block block = event.getBlock();
         
-        int cost = 0;
+        int cost;
         if (getPlugin().getPlayerListener().checkPermissions(player, "create.signshop", false)){
             if (event.getLine(0).contains("[Job]")){
                 event.setLine(0, ChatColor.BOLD + "" + ChatColor.AQUA + "  [Job]");

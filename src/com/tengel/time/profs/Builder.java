@@ -12,6 +12,12 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.Time;
 import com.tengel.time.TimeCommands;
 import com.tengel.time.WorldGuardUtil;
+import net.milkbowl.vault.economy.EconomyResponse;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.command.CommandSender;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,11 +26,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.milkbowl.vault.economy.EconomyResponse;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.command.CommandSender;
 
 /**
  *
@@ -32,13 +33,11 @@ import org.bukkit.command.CommandSender;
  */
 public class Builder {
     private final Time plugin;
-    private final TimeProfession prof;
     private static final String world_build = "Build";
-    private World world;
-    
-    public Builder(Time plugin, TimeProfession prof){
+    private final World world;
+
+    public Builder(Time plugin){
         this.plugin = plugin;
-        this.prof = prof;
         this.world = plugin.getServer().getWorld(world_build);
         if (world == null)
             plugin.sendConsole("Problematic: World '"+world_build+"' appears to not exist! Builder object will encounter to problems");
@@ -64,9 +63,8 @@ public class Builder {
             sender.sendMessage(ChatColor.GRAY + command + "teleport" + ChatColor.GREEN + "  > Teleports you to your construct");
             sender.sendMessage(ChatColor.GRAY + command + "check" + ChatColor.GREEN + "  > Checks the % completion/correctness of your construct");
             sender.sendMessage(ChatColor.GRAY + command + "done" + ChatColor.GREEN + "  > If you're finished your construct, run this");
-        } else if (pr == null)
-            return;
-        else if (args[1].equalsIgnoreCase("teleport")){
+        } else if (pr == null){
+        } else if (args[1].equalsIgnoreCase("teleport")){
             BlockVector bv_s = pr.getMinimumPoint();
             BlockVector bv_e = pr.getMaximumPoint();
             Location loc = new Location(world, (bv_s.getX()+bv_e.getX())/2, bv_e.getY()+4, (bv_s.getZ()+bv_e.getZ())/2);
@@ -88,7 +86,7 @@ public class Builder {
                         ChatColor.GREEN + " life!");
                 sender.sendMessage(ChatColor.GREEN + "You managed to complete " + ChatColor.GRAY + df.format(progress) + ChatColor.GREEN + "% of this construct");
             } else {
-                sender.sendMessage(ChatColor.RED + "A problem occured while trying to reward you with life. Speak to an admin!");
+                sender.sendMessage(ChatColor.RED + "A problem occurred while trying to reward you with life. Speak to an admin!");
                 plugin.sendConsole("Failed rewarding '"+sender.getName()+"' with "+df.format(pay)+" life!");
             }
         }
@@ -181,7 +179,7 @@ public class Builder {
         try {
             st = con.createStatement();
             int id = getBuildSchematicId(schematic);
-            int updated = 0;
+            int updated;
             if (getPlayerBuildSchematicName(player) == null){
                 String values = String.format("'%s',%d,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f", player, id, start.getX(), start.getY(), start.getZ(), end.getX(), end.getY(), end.getZ());
                 updated = st.executeUpdate("INSERT `job_builder` (player,schematic_id,x1,y1,z1,x2,y2,z2) VALUES ("+values+");");
@@ -247,12 +245,12 @@ public class Builder {
     public double checkPlayerBuildProgress(CommandSender sender){
         ProtectedRegion pr = getPlayerCurrentBuild(sender.getName());
         WorldGuardUtil wgu = new WorldGuardUtil(plugin, world);
-        String schem = getPlayerBuildSchematicName(sender.getName());
-        if (schem == null){
+        String schematic = getPlayerBuildSchematicName(sender.getName());
+        if (schematic == null){
             plugin.sendConsole("Schematic lookup for player '" + sender.getName() +"' failed.");
             return 0;
         }
-        return wgu.compareRegionToSchematic(sender, pr, schem);
+        return wgu.compareRegionToSchematic(sender, pr, schematic);
     }
     
     public double getPlayerBuildWorth(CommandSender sender){

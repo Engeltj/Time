@@ -7,18 +7,26 @@
 package com.tengel.time;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import java.io.File;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.tengel.time.mysql.TimeSQL;
+import com.tengel.time.profs.Builder;
+import com.tengel.time.profs.Gatherer;
+import com.tengel.time.profs.Landlord;
+import com.tengel.time.profs.TimeProfession;
 import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.tengel.time.mysql.TimeSQL;
-import com.tengel.time.profs.*;
+import org.bukkit.scheduler.BukkitRunnable;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -32,10 +40,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.scheduler.BukkitRunnable;
 /**
  *
  * @author Tim
@@ -73,8 +77,8 @@ public final class Time extends JavaPlugin {
         worldEdit = (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
         prof_miner = new Gatherer(this, TimeProfession.MINER);
         prof_farmer = new Gatherer(this, TimeProfession.FARMER);
-        prof_builder = new Builder(this, TimeProfession.BUILDER);
-        prof_landlord = new Landlord(this, TimeProfession.LANDLORD);
+        prof_builder = new Builder(this);
+        prof_landlord = new Landlord(this);
         
         mobcontrol = new MobControl(this, getServer().getWorld("Time"));
         
@@ -261,7 +265,7 @@ public final class Time extends JavaPlugin {
         int blockId = -1;
         try {
             blockId = Integer.parseInt(id_or_name);
-        } catch (Exception e){}
+        } catch (Exception ignored){}
         for (Material mat : Material.values()){
             final int id = mat.getId();
             if ((blockId == id) || (id_or_name.equalsIgnoreCase(mat.name()))){

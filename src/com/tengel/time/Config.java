@@ -6,17 +6,18 @@
 
 package com.tengel.time;
 
+import org.bukkit.configuration.file.YamlConfiguration;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
-import org.bukkit.configuration.file.YamlConfiguration;
 
 /**
  *
  * @author Tim
  */
 public class Config extends YamlConfiguration {
-    private Time plugin;
+    private final Time plugin;
     private File configFile;
     
     public Config(Time plugin){
@@ -36,7 +37,7 @@ public class Config extends YamlConfiguration {
         } else
             try{
                 load(configFile);
-            }catch (Exception e){}
+            }catch (Exception ignored){}
     }
     
     public boolean setConfigFile(File configFile){
@@ -50,11 +51,7 @@ public class Config extends YamlConfiguration {
     public File getConfigFile(){
         return this.configFile;
     }
-    
-    public Time getPlugin(){
-        return this.plugin;
-    }
-    
+
     public void save()
     {
         try{
@@ -63,17 +60,5 @@ public class Config extends YamlConfiguration {
         catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, e.getMessage(), e);
         }
-    }
-    
-    @Override
-    public synchronized long getLong(String path)
-    {
-            return super.getLong(path);
-    }
-    
-    @Override
-    public synchronized void set(String path, Object value)
-    {
-            super.set(path, value);
     }
 }

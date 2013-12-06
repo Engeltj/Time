@@ -9,17 +9,20 @@ package com.tengel.time;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.bukkit.selections.Selection;
 import com.sk89q.worldedit.regions.RegionSelector;
-import static java.lang.Math.abs;
 import org.bukkit.Location;
 import org.bukkit.World;
+
+import static java.lang.Math.abs;
 
 /**
  *
  * @author Tim
  */
 public class WorldEditSelection implements Selection {
-    private Vector nativeMinPoint,nativeMaxPoint;
-    private Location start,end;
+    private final Vector nativeMinPoint;
+    private final Vector nativeMaxPoint;
+    private final Location start;
+    private final Location end;
     
     public WorldEditSelection(Location start, Location end){
         nativeMinPoint = new Vector(start.getX(),start.getY(),start.getZ());

@@ -6,11 +6,8 @@
 
 package com.tengel.time.profs;
 
-import com.tengel.time.Time;
 import com.tengel.time.ConfigPlayer;
-import com.tengel.time.ShopSigns;
-import com.tengel.time.TimeCommands;
-import com.tengel.time.TimePlayers;
+import com.tengel.time.Time;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
@@ -19,7 +16,7 @@ import org.bukkit.entity.Player;
  * @author Tim
  */
 public class Police{
-    private Time plugin;
+    private final Time plugin;
     
     public Police(Time plugin){
         this.plugin = plugin;

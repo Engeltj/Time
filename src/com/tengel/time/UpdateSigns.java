@@ -1,20 +1,15 @@
 package com.tengel.time;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -27,7 +22,7 @@ import org.bukkit.block.Sign;
  * @author Tim
  */
 public class UpdateSigns implements Runnable {
-    private Time plugin;
+    private final Time plugin;
     public UpdateSigns(Time plugin){
         this.plugin = plugin;
     }
@@ -76,8 +71,8 @@ public class UpdateSigns implements Runnable {
             try {
                 FileWriter fstream = new FileWriter(f, false);
                 BufferedWriter out = new BufferedWriter(fstream);
-                for (int i=0;i<valid.size();i++){
-                    out.write(valid.get(i).toString() + "\n");
+                for (Object aValid : valid) {
+                    out.write(aValid.toString() + "\n");
                 }
                 out.close();
             } catch (Exception ex) {

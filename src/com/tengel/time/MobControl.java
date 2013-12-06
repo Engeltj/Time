@@ -9,20 +9,13 @@ package com.tengel.time;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -31,6 +24,14 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+
+import java.util.Map;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -38,7 +39,7 @@ import org.bukkit.inventory.EntityEquipment;
  */
 public class MobControl implements Listener {
     private final Time plugin;
-    private World world;
+    private final World world;
     //private RegionManager rg_control;
     
     public MobControl(Time plugin, World world){
@@ -113,8 +114,7 @@ public class MobControl implements Listener {
         String name = creature.getType().name();
         name = name.toLowerCase();
         name = WordUtils.capitalize(name);
-        String name_fix = name.replaceAll("_", " ");
-        return name_fix;
+        return name.replaceAll("_", " ");
     }
     
     public void setHealth(LivingEntity creature, int zone, int difficulty){
@@ -143,7 +143,7 @@ public class MobControl implements Listener {
         try {
             if (m.find())
                 level = Integer.parseInt(m.group());
-        } catch (Exception e){}
+        } catch (Exception ignored){}
         
         return level;
     }
@@ -151,6 +151,7 @@ public class MobControl implements Listener {
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         LivingEntity creature = event.getEntity();
+        
         if(!(creature instanceof Player)) {
             if ((event.getLocation().getWorld().getName().equalsIgnoreCase("Time") && (event.getSpawnReason() == SpawnReason.NATURAL)))
                 event.setCancelled(true);
@@ -168,6 +169,9 @@ public class MobControl implements Listener {
                     int difficulty = getSpawnDifficulty(rg.getId());
                     setArmours(creature, zone, difficulty);
                     setHealth(creature, zone, difficulty);
+                    PotionEffect pe = new PotionEffect(PotionEffectType.SPEED,99999,zone);
+                    event.getEntity().addPotionEffect(pe);
+                    //creature
                     //plugin.sendConsole("Armors set");
                     return;
                 }
@@ -180,25 +184,63 @@ public class MobControl implements Listener {
         event.setCancelled(true);
     }
     
+    public double getDamage(int level, double regularHit){
+        return ((0.1598*Math.pow(level,2)+10.0)/8.0*(regularHit/10));
+    }
+    
+    public int getLevel(Entity creature){
+        if (creature instanceof Player){
+            Player p = (Player) creature;
+            return p.getLevel();
+        } else {
+            LivingEntity mob = (LivingEntity) creature;
+            String name = mob.getCustomName();
+            if (name != null && name.length() >0){
+                Pattern p = Pattern.compile("-?\\d+");
+                Matcher m = p.matcher(mob.getCustomName());
+                if (m.find())
+                    return Integer.valueOf(m.group());
+            }
+        }
+        return 0;
+    }
+    
     
     public static void setHelmet(LivingEntity e, ItemStack helmet){
          EntityEquipment ee = e.getEquipment();
          ee.setHelmet(helmet);
          ee.setHelmetDropChance(0);
     }
-    public static void setBoots(LivingEntity e, ItemStack boots){
-         EntityEquipment ee = e.getEquipment();
-         ee.setBoots(boots);
-         ee.setBootsDropChance(0);
-    }
     public static void setChestplate(LivingEntity e, ItemStack chest){
          EntityEquipment ee = e.getEquipment();
          ee.setChestplate(chest);
          ee.setChestplateDropChance(0);
     }
+    public static void setBoots(LivingEntity e, ItemStack boots){
+         EntityEquipment ee = e.getEquipment();
+         ee.setBoots(boots);
+         ee.setBootsDropChance(0);
+    }
     public static void setLeggings(LivingEntity e, ItemStack legs){
          EntityEquipment ee = e.getEquipment();
          ee.setLeggings(legs);
          ee.setLeggingsDropChance(0);
+    }
+    
+    public static ItemStack getHelmet(LivingEntity e){
+        EntityEquipment ee = e.getEquipment();
+        return ee.getHelmet();
+    }
+    public static ItemStack getChestplate(LivingEntity e){
+        EntityEquipment ee = e.getEquipment();
+        return ee.getChestplate();
+    }
+    public static ItemStack getLeggings(LivingEntity e){
+        EntityEquipment ee = e.getEquipment();
+        return ee.getLeggings();
+    }
+    public static ItemStack getBoots(LivingEntity e){
+        EntityEquipment ee = e.getEquipment();
+        return ee.getBoots();
     }
 }

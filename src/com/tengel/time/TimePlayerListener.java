@@ -8,19 +8,11 @@ package com.tengel.time;
 
 import com.tengel.time.profs.Police;
 import com.tengel.time.profs.TimeProfession;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.ExperienceOrb;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -28,13 +20,12 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerPickupItemEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.*;
 import org.kitteh.tag.PlayerReceiveNameTagEvent;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -99,24 +90,51 @@ public class TimePlayerListener implements Listener {
         }
     }
     
-    @EventHandler(priority=EventPriority.NORMAL)
+    /*@EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerPickupItem(PlayerPickupItemEvent event){
         Player player = event.getPlayer();
         if (event.getItem().getType() == EntityType.EXPERIENCE_ORB){
-            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
+            //ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
             //event.setCancelled(true);
             //event.getItem().remove();
         }
+    }*/
+    
+    public void setPlayerAttributes(Player p, int level){
+        double hp = 0.1598*Math.pow(level,2.0)+10;
+        if (hp > 9999D) hp = 9999; //be sure to max HP at 9999
+        p.setMaxHealth(hp);
+        p.setHealthScale(20);
+        float walkspeed = level*0.0015F+0.2F;
+        if (walkspeed > 0.425F) walkspeed = 0.425F; //approx level 150's speed is limit
+        if (walkspeed < 0.21F) walkspeed=0.21F;
+        p.setWalkSpeed(walkspeed);
     }
     
+    public void setPlayerAttributes(Player p){
+        setPlayerAttributes(p, p.getLevel());
+    }
     
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onPlayerLevelUp(PlayerLevelChangeEvent event){
+        Player p = event.getPlayer();
+        int oldLevel = event.getOldLevel();
+        int newLevel = event.getNewLevel();
+        p.sendMessage(ChatColor.WHITE+"You advanced from level "+ChatColor.GRAY+oldLevel + ChatColor.WHITE+" to level "+ChatColor.GRAY+newLevel);
+        setPlayerAttributes(p, newLevel);
+        p.setHealth(p.getMaxHealth());
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerMove(PlayerMoveEvent event){
-        //event.
+        Player p = event.getPlayer();
+        if (p.getWalkSpeed() < 0.21)
+            setPlayerAttributes(p);
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onInteract(PlayerInteractEvent event){
-        Block b = null;
+        Block b;
         
         if (event.getAction()!=Action.RIGHT_CLICK_BLOCK)
             return;
@@ -135,7 +153,7 @@ public class TimePlayerListener implements Listener {
             if (type.contains("[License]") || type.contains("[Shop]")){
                 ShopSigns ss = new ShopSigns(plugin, event.getPlayer());
                 
-                int cost = 0;
+                int cost;
                 Pattern p = Pattern.compile("-?\\d+");
                 Matcher m = p.matcher(s.getLine(2));
                 if (m.find()){
@@ -160,6 +178,7 @@ public class TimePlayerListener implements Listener {
             plugin.sendConsole("Problematic: ConfigPlayer object exists for newly joined player named " + p.getName());
         } else
             cp.loadPlayer();
+        setPlayerAttributes(p);
     }
     
     @EventHandler
@@ -176,24 +195,46 @@ public class TimePlayerListener implements Listener {
         players.removePlayer(player);
     }
     
-    @EventHandler(priority=EventPriority.NORMAL)
-    public void onAttack(EntityDamageByEntityEvent event){
+    public boolean copArrest(EntityDamageByEntityEvent event){
         if (!(event.getDamager() instanceof Player))
-            return;
+            return false;
         if (!(event.getEntity() instanceof Player))
-            return;
+            return false;
         
         Player player = (Player) event.getDamager();
         TimeProfession prof = plugin.getTimePlayers().getPlayerConfig(player.getName()).getProfession();
         
-        //player.sendMessage(prof);
         if ((player.getItemInHand().getType() == Material.STICK) && (prof == TimeProfession.OFFICER)){
             Player defender = (Player) event.getEntity();
             Police police = new Police(plugin);
             police.arrestPlayer(player, defender);
+            return true;
+        } else return false;
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onAttack(EntityDamageByEntityEvent event){
+        if (!copArrest(event)){
+            Entity attacker = event.getDamager();
+            
+            if (attacker instanceof Projectile)
+                attacker = ((Projectile)attacker).getShooter();
+            //Entity defender = event.getEntity();
+            if (attacker == null)
+                event.setCancelled(true);
+            int lvl_attacker = plugin.mobcontrol.getLevel(attacker);
+            //int lvl_defender = plugin.mobcontrol.getLevel(defender);
+            
+            event.setDamage(plugin.mobcontrol.getDamage(lvl_attacker, event.getDamage()));
         }
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onDeath(EntityDeathEvent event){
+        double lvl_dead = plugin.mobcontrol.getLevel(event.getEntity());
+        int exp = (int) Math.ceil(lvl_dead/12.0);
+        event.setDroppedExp(exp);
         
-   
     }
     
     public boolean playerExists(String playername){

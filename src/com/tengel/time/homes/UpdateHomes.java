@@ -6,23 +6,21 @@
 
 package com.tengel.time.homes;
 
-import com.tengel.time.ConfigPlayer;
 import com.tengel.time.Time;
 import com.tengel.time.TimeCommands;
 import com.tengel.time.mysql.Homes;
-import java.util.ArrayList;
-import java.util.Set;
 import net.milkbowl.vault.economy.EconomyResponse;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
 
 /**
  *
  * @author Tim
  */
 public class UpdateHomes implements Runnable {
-    private Time plugin;
+    private final Time plugin;
     
     public UpdateHomes(Time plugin){
         this.plugin = plugin;
