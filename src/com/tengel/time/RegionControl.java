@@ -20,28 +20,27 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import static com.sk89q.worldguard.bukkit.BukkitUtil.toVector;
+import com.tengel.time.structures.TimePlayer;
 /**
  *
  * @author Tim
  */
 public class RegionControl implements Listener {
     private final Time plugin;
-    private final TimePlayers players;
     
-    public RegionControl(Time plugin, TimePlayers players) {
+    public RegionControl(Time plugin) {
             this.plugin = plugin;
-            this.players = players;
     }
 
     @EventHandler
     public void onRegionEnter(RegionEnterEvent e){
         String rgName = e.getRegion().getId();
         Player p = e.getPlayer();
-        if (isWrongTimeZone(p.getName(), getZoneId(rgName)))
+        if (isWrongZone(p.getName(), getZoneId(rgName)))
             p.sendMessage(ChatColor.RED + "You are in a the wrong time zone! Please leave immediately.");
         Homes h = new Homes(plugin);
         if (h.isHome(rgName)){
-            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
+            TimePlayer tp = plugin.getPlayer(p.getName());
             if (h.isAvailable(rgName)){
                 double price = h.getRentPrice(rgName);
                 p.sendMessage(ChatColor.GREEN + "This home is available for " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(price) +
@@ -53,7 +52,7 @@ public class RegionControl implements Listener {
                 else if (renter.length() > 0)
                     p.sendMessage(ChatColor.GREEN + "Welcome to " + ChatColor.GRAY + renter + "'s" + ChatColor.GREEN+ " home");
             }
-            if (cp.getProfession() == TimeProfession.LANDLORD){
+            if (tp.hasJob(TimeProfession.LANDLORD)){
                 String lord = h.getLandlord(rgName);
                 if (lord.length() > 0 && !h.getRenter(rgName).equalsIgnoreCase(p.getName())){
                     if (lord.equalsIgnoreCase(p.getName()))
@@ -101,16 +100,20 @@ public class RegionControl implements Listener {
     }
     
     public int getPlayerTimeZone(Player p){
-        ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
-        return cp.getPlayerTimeZone();
+        TimePlayer tp = plugin.getPlayer(p.getName());
+        return tp.getZone();
     }
     
-    public boolean isWrongTimeZone(String player, int zone){
-        ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player);
-        return zone > cp.getPlayerTimeZone();
+    public boolean isWrongZone(String player, int zone){
+        TimePlayer tp = plugin.getPlayer(player);
+        return zone > tp.getZone();
+    }
+    
+    public boolean isWrongZone(Player player){
+        return (isWrongZone(player.getName(), getZoneId(player.getLocation())));
     }
 
-    public boolean isWrongTimeZone(Player p){
+    /*public boolean isWrongTimeZone(Player p){
         Location loc = p.getLocation();
         Vector v = toVector(loc);
         RegionManager manager = plugin.worldGuard.getRegionManager(p.getWorld());
@@ -120,7 +123,7 @@ public class RegionControl implements Listener {
                 return true;
         }
         return false;
-    }
+    }*/
     
     public boolean checkPermissions(Player p, String permission, boolean sendMessage){
         return (plugin.getPlayerListener().checkPermissions(p, permission, sendMessage));

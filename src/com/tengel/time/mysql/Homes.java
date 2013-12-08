@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.sk89q.worldguard.bukkit.BukkitUtil.toVector;
+import com.tengel.time.structures.TimePlayer;
 
 /**
  *
@@ -95,12 +96,12 @@ public class Homes {
     }
     
     public void commands(CommandSender sender, String[] args){
-        ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
+        TimePlayer tp = plugin.getPlayer(sender.getName());
         Player p = plugin.getServer().getPlayer(sender.getName());
         if (args[1].equalsIgnoreCase("rent")){
             rent(p);
         } else if (args[1].equalsIgnoreCase("buy")){
-            if (cp.getProfession() == TimeProfession.LANDLORD)
+            if (tp.hasJob(TimeProfession.LANDLORD))
                 buy(p);
             else
                 sender.sendMessage(ChatColor.RED + "You need to be a landlord to purchase this home");

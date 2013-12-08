@@ -19,7 +19,7 @@ import java.util.Map;
  * @author Tim
  */
 public class TimePlayers {
-    private final Map<String, ConfigPlayer> players;
+    /*private final Map<String, ConfigPlayer> players;
     private final Time plugin;
     
     public TimePlayers(Time plugin){
@@ -83,5 +83,5 @@ public class TimePlayers {
             plugin.sendConsole("Failed to delete " + "Essentials\\userdata\\" + name.toLowerCase() + ".yml");
         }
         config.removePlayer();
-    }
+    }*/
 }

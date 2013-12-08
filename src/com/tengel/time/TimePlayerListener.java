@@ -8,6 +8,7 @@ package com.tengel.time;
 
 import com.tengel.time.profs.Police;
 import com.tengel.time.profs.TimeProfession;
+import com.tengel.time.structures.TimePlayer;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
@@ -26,6 +27,13 @@ import org.kitteh.tag.PlayerReceiveNameTagEvent;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.ScoreboardManager;
+import org.bukkit.scoreboard.Team;
 
 /**
  *
@@ -33,11 +41,9 @@ import java.util.regex.Pattern;
  */
 public class TimePlayerListener implements Listener {
     private final Time plugin;
-    private final TimePlayers players;
     
-    public TimePlayerListener(Time plugin, TimePlayers players) {
+    public TimePlayerListener(Time plugin) {
             this.plugin = plugin;
-            this.players = players;
     }
     
     @EventHandler
@@ -66,14 +72,14 @@ public class TimePlayerListener implements Listener {
         World world = player.getWorld();
         Block block = event.getBlock();
         if (world.getName().equalsIgnoreCase("Mine")){
-            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
+            TimePlayer tp = plugin.getPlayer(player.getName());
             event.setCancelled(true);
-            if (cp.getProfession() == TimeProfession.MINER){
-                if (!cp.hasLicense(block.getType().getId()))//(plugin.prof_miner.getMinerBlacklist().contains(block.getType())){
+            if (tp.hasJob(TimeProfession.MINER)){
+                if (!tp.hasBlockLicense(block.getType().getId()))//(plugin.prof_miner.getMinerBlacklist().contains(block.getType())){
                     player.sendMessage(ChatColor.RED + "You need a " + ChatColor.BLUE + "license" + ChatColor.RED + " to obtain this material");
                 else {
                     int earned = plugin.prof_miner.getSkillEarned(block.getType());
-                    cp.updateSkill(TimeProfession.MINER, earned);
+                    tp.addSkill(TimeProfession.MINER, earned);
                     //event.setExpToDrop(earned);
                     //player.setExp((float)earned);
                     event.getBlock().setType(Material.AIR);
@@ -115,6 +121,17 @@ public class TimePlayerListener implements Listener {
         setPlayerAttributes(p, p.getLevel());
     }
     
+    private void updatePlayerScoreboardHealth(Player p){
+        Scoreboard board = plugin.getServer().getScoreboardManager().getMainScoreboard();
+        Objective obj = board.getObjective(DisplaySlot.BELOW_NAME);
+        obj.getScore(p).setScore((int) Math.round(p.getHealth()/p.getMaxHealth()*100));        
+    }
+    
+    private void updatePlayerScoreboardLevel(Player p){
+        Scoreboard board = plugin.getServer().getScoreboardManager().getMainScoreboard();
+        board.getObjective(DisplaySlot.PLAYER_LIST).getScore(p).setScore(p.getLevel());
+    }
+    
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerLevelUp(PlayerLevelChangeEvent event){
         Player p = event.getPlayer();
@@ -123,6 +140,27 @@ public class TimePlayerListener implements Listener {
         p.sendMessage(ChatColor.WHITE+"You advanced from level "+ChatColor.GRAY+oldLevel + ChatColor.WHITE+" to level "+ChatColor.GRAY+newLevel);
         setPlayerAttributes(p, newLevel);
         p.setHealth(p.getMaxHealth());
+        updatePlayerScoreboardHealth(p);
+        updatePlayerScoreboardLevel(p);
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onPlayerHealthRegen(EntityRegainHealthEvent event){
+        Entity ent = event.getEntity();
+        if (ent instanceof Player){
+            Player p = (Player) ent;
+            updatePlayerScoreboardHealth(p);
+        }
+            
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onPlayerHealthDamaged(EntityDamageEvent event){
+        Entity ent = event.getEntity();
+        if (ent instanceof Player){
+            Player p = (Player) ent;
+            updatePlayerScoreboardHealth(p);
+        }
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
@@ -173,26 +211,24 @@ public class TimePlayerListener implements Listener {
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerJoin(PlayerJoinEvent event){
         Player p = event.getPlayer();
-        ConfigPlayer cp = players.addPlayer(p);
-        if (cp == null){
-            plugin.sendConsole("Problematic: ConfigPlayer object exists for newly joined player named " + p.getName());
-        } else
-            cp.loadPlayer();
+        plugin.addPlayer(p.getName());
         setPlayerAttributes(p);
+        updatePlayerScoreboardLevel(p);
+        updatePlayerScoreboardHealth(p);
     }
     
-    @EventHandler
+    /*@EventHandler
     public void onNameTag(PlayerReceiveNameTagEvent event) {
         Player player = event.getNamedPlayer();
         if (player.getName().equalsIgnoreCase("Engeltj"))
             event.setTag("Notch");
-    }
+    }*/
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerQuit(PlayerQuitEvent event){
-        Player player = event.getPlayer();
-        players.getPlayerConfig(player.getName()).savePlayer();
-        players.removePlayer(player);
+        Player p = event.getPlayer();
+        plugin.getPlayer(p.getName()).save();
+        plugin.removePlayer(p.getName());
     }
     
     public boolean copArrest(EntityDamageByEntityEvent event){
@@ -201,13 +237,13 @@ public class TimePlayerListener implements Listener {
         if (!(event.getEntity() instanceof Player))
             return false;
         
-        Player player = (Player) event.getDamager();
-        TimeProfession prof = plugin.getTimePlayers().getPlayerConfig(player.getName()).getProfession();
+        Player p = (Player) event.getDamager();
+        TimePlayer tp = plugin.getPlayer(p.getName());
         
-        if ((player.getItemInHand().getType() == Material.STICK) && (prof == TimeProfession.OFFICER)){
+        if ((p.getItemInHand().getType() == Material.STICK) && (tp.hasJob(TimeProfession.OFFICER))){
             Player defender = (Player) event.getEntity();
             Police police = new Police(plugin);
-            police.arrestPlayer(player, defender);
+            police.arrestPlayer(p, defender);
             return true;
         } else return false;
     }
@@ -222,16 +258,16 @@ public class TimePlayerListener implements Listener {
             //Entity defender = event.getEntity();
             if (attacker == null)
                 event.setCancelled(true);
-            int lvl_attacker = plugin.mobcontrol.getLevel(attacker);
+            int lvl_attacker = plugin.getMobControl().getLevel(attacker);
             //int lvl_defender = plugin.mobcontrol.getLevel(defender);
             
-            event.setDamage(plugin.mobcontrol.getDamage(lvl_attacker, event.getDamage()));
+            event.setDamage(plugin.getMobControl().getDamage(lvl_attacker, event.getDamage()));
         }
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onDeath(EntityDeathEvent event){
-        double lvl_dead = plugin.mobcontrol.getLevel(event.getEntity());
+        double lvl_dead = plugin.getMobControl().getLevel(event.getEntity());
         int exp = (int) Math.ceil(lvl_dead/12.0);
         event.setDroppedExp(exp);
         

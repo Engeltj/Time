@@ -8,6 +8,10 @@ package com.tengel.time;
 
 import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
+import com.tengel.time.structures.TimePlayer;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -107,7 +111,7 @@ public class TimeCommands implements Listener{
         }
         
         else if (args[0].equalsIgnoreCase("age")){
-            double seconds = plugin.getTimePlayers().getPlayerConfig(sender.getName()).getPlayerAge();
+            double seconds = plugin.getPlayer(sender.getName()).getAge();
             String time = convertSecondsToTime(seconds);
             sender.sendMessage(ChatColor.AQUA + time);
         }
@@ -117,8 +121,8 @@ public class TimeCommands implements Listener{
             sender.sendMessage(ChatColor.DARK_GREEN + time); 
         }
         else if (args[0].equalsIgnoreCase("bounty")){
-            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
-            double bounty = cp.getBounty();
+            TimePlayer tp = plugin.getPlayer(sender.getName());
+            double bounty = tp.getBounty();
             String time = convertSecondsToTime(bounty);
             if (bounty > 0)
                 sender.sendMessage(ChatColor.RED + time);
@@ -126,37 +130,37 @@ public class TimeCommands implements Listener{
                 sender.sendMessage(ChatColor.GREEN + "You are not on the bounty list");
         }
         else if (args[0].equalsIgnoreCase("bail")){
-            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
-            if (cp.isJailed()){
-                int bounty = cp.getBounty();
+            TimePlayer tp = plugin.getPlayer(sender.getName());
+            if (tp.getJailed()){
+                int bounty = tp.getBounty();
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), bounty);
                 if (es.transactionSuccess()){
-                    sender.sendMessage(ChatColor.GREEN + "You've been freed at the cost of " + ChatColor.RED + cp.getBountyString());
+                    sender.sendMessage(ChatColor.GREEN + "You've been freed at the cost of " + ChatColor.RED + tp.getBounty());
                     //free user
                 } else
                     sender.sendMessage(ChatColor.RED + "You cannot afford bail, you must wait this one out.");
             } else
                 sender.sendMessage(ChatColor.GREEN + "You are not in jail");
         } else if (args[0].equalsIgnoreCase("unemploy")){
-            final ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(sender.getName());
+            final TimePlayer tp = plugin.getPlayer(sender.getName());
             Runnable usetJobLeave = new BukkitRunnable() {
                 public void run() {
-                    cp.flag_jobLeave = false;
+                    tp.flagConfirm = false;
                 }
             };
             
             plugin.getServer().getScheduler().runTaskLater(plugin, usetJobLeave, 20*10);
-            TimeProfession tp = TimeProfession.UNEMPLOYED;
-            int cost = tp.getUnemployCost(cp.getPlayerTimeZone());
+            TimeProfession job = TimeProfession.UNEMPLOYED;
+            int cost = job.getUnemployCost(tp.getZone());
             
-            if (!cp.flag_jobLeave){
-                cp.flag_jobLeave = true;
+            if (!tp.flagConfirm){
+                tp.flagConfirm = true;
                 sender.sendMessage(ChatColor.GREEN + "Type '/"+command+" unemploy' again to leave your job at the cost of " + 
                                         ChatColor.RED + convertSecondsToTime(cost));
             } else {
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), cost);
                 if (es.transactionSuccess()){
-                    cp.setProfession("UNEMPLOYED");
+                    tp.removeJob(TimeProfession.UNEMPLOYED);
                     sender.sendMessage(ChatColor.GREEN + "You have left your job! You are now unemployed.");
                 } else
                     sender.sendMessage(ChatColor.RED + "It seems you cannot afford to lose your job.");
@@ -178,24 +182,25 @@ public class TimeCommands implements Listener{
             } else 
                 sender.sendMessage(ChatColor.RED + "Please specify a password!");
         } else if (args[0].equalsIgnoreCase("job")){
-            TimeProfession job = plugin.getTimePlayers().getPlayerConfig(sender.getName()).getProfession();
-            if (args.length == 1){
-                sender.sendMessage("- - - - - - - - - - - - - - - - - -");
-                sender.sendMessage("Your current job is a " + ChatColor.GREEN + job.toString().toLowerCase());
-                sender.sendMessage("- - - - - - - - - - - - - - - - - -");
+            HashMap<TimeProfession, Integer> jobs = plugin.getPlayer(sender.getName()).getJobs();
+            Iterator it = jobs.entrySet().iterator();
+             while (it.hasNext()) {
+                Map.Entry pairs = (Map.Entry)it.next();
+                TimeProfession job = (TimeProfession) pairs.getKey();
+                if (args.length == 1){
+                    sender.sendMessage("- - - - - - - - - - - - - - - - - -");
+                    sender.sendMessage("Your current job is a " + ChatColor.GREEN + job.toString().toLowerCase());
+                    sender.sendMessage("- - - - - - - - - - - - - - - - - -");
+                }
+                if (job == TimeProfession.BUILDER)
+                    plugin.prof_builder.commands(command, sender, args);
+                if (job == TimeProfession.LANDLORD){
+                    plugin.prof_landlord.commands(command, sender, args);
+                }
             }
-            if (job == TimeProfession.BUILDER)
-                plugin.prof_builder.commands(command, sender, args);
-            if (job == TimeProfession.LANDLORD){
-                plugin.prof_landlord.commands(command, sender, args);
-            }
-            /*else
-                sender.sendMessage("Commands for your profession aren't implemented yet.");*/
         } else if (args[0].equalsIgnoreCase("admin")){
             adminCommand(sender, args);
-        }
-        
-        else
+        } else
             sender.sendMessage(ChatColor.GRAY + "Invalid command, type " + ChatColor.GREEN + "/life" + ChatColor.GRAY + " for more info");
         return true;
     }
@@ -219,7 +224,7 @@ public class TimeCommands implements Listener{
                 sender.sendMessage(ChatColor.RED + "Please specify a valid difficulty level from 1 to 5");
                 return;
             }
-            if (!plugin.mobcontrol.createSpawn(sender, difficulty)){
+            if (!plugin.getMobControl().createSpawn(sender, difficulty)){
                 sender.sendMessage("Failed to create the spawn .. I don't know why");
                 plugin.sendConsole("Failed to createSpawn of difficulty " + difficulty);
             } else

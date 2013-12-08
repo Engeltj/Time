@@ -9,6 +9,7 @@ package com.tengel.time;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import java.util.List;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -40,12 +41,10 @@ import java.util.regex.Pattern;
 public class MobControl implements Listener {
     private final Time plugin;
     private final World world;
-    //private RegionManager rg_control;
     
     public MobControl(Time plugin, World world){
         this.plugin = plugin;
         this.world = world;
-        //rg_control = new RegionControl();
     }
     
     public boolean createSpawn(CommandSender sender, int difficulty){
@@ -117,23 +116,20 @@ public class MobControl implements Listener {
         return name.replaceAll("_", " ");
     }
     
-    public void setHealth(LivingEntity creature, int zone, int difficulty){
+    public void setName(LivingEntity creature, int level, double multiplier){
         String name = getName(creature);
-        Random r_gen = new Random();
-        double multiplier = r_gen.nextDouble()+0.5;
-        int level = (zone * 25 + 1) + ((difficulty-1)*5) + (r_gen.nextInt(5)-5);
-        //plugin.sendConsole(String.valueOf(zone) + " " + String.valueOf(difficulty));
-        double newhp = creature.getHealth() * level * multiplier;
-        if (multiplier > 1.2)
+        if (multiplier > 1.1)
             creature.setCustomName(ChatColor.RED + "[Lvl "+level+"] " + ChatColor.WHITE + name);
-        else if (multiplier > 0.8)
+        else if (multiplier > 0.95)
             creature.setCustomName(ChatColor.YELLOW + "[Lvl "+level+"] " + ChatColor.WHITE + name);
         else
             creature.setCustomName(ChatColor.GREEN + "[Lvl "+level+"] " + ChatColor.WHITE + name);
-        creature.setCustomNameVisible(true);
+    }
+    
+    public void setHealth(LivingEntity creature, int level, double multiplier){
+        double newhp = 0.1598 * creature.getHealth() * Math.pow(level,2.0) * multiplier;
         creature.setMaxHealth(newhp);
-        creature.setHealth(newhp*0.999);
-        creature.setRemoveWhenFarAway(false);
+        creature.setHealth(newhp-1);
     }
     
     public int getSpawnDifficulty(String region){
@@ -153,8 +149,25 @@ public class MobControl implements Listener {
         LivingEntity creature = event.getEntity();
         
         if(!(creature instanceof Player)) {
-            if ((event.getLocation().getWorld().getName().equalsIgnoreCase("Time") && (event.getSpawnReason() == SpawnReason.NATURAL)))
+            String world = event.getLocation().getWorld().getName();
+            if ((world.equalsIgnoreCase("Time") && (event.getSpawnReason() == SpawnReason.NATURAL)))
                 event.setCancelled(true);
+            /*else if (!world.equalsIgnoreCase("Time")){
+                List<Entity> list = event.getEntity().getNearbyEntities(128 , 128 , 128);
+                for (Entity ent : list){
+                    if (ent instanceof Player){
+                        //Player p = (Player) ent;
+                        Random r_gen = new Random();
+                        int level = r_gen.nextInt(getLevel(ent))+1;
+                        double multiplier = 1.2 - r_gen.nextDouble()*0.4;
+                        setArmours(creature, r_gen.nextInt(3), r_gen.nextInt(5)+1);
+                        setHealth(creature, level, multiplier);
+                        setName(creature, level, multiplier);
+                        creature.setCustomNameVisible(true);
+                        return;
+                    }
+                }
+            }*/
             RegionManager mgr = plugin.worldGuard.getRegionManager(event.getLocation().getWorld());
             for (ProtectedRegion rg : mgr.getApplicableRegions(event.getLocation())){
                 if (rg.getId().contains("spawn_")){
@@ -167,12 +180,18 @@ public class MobControl implements Listener {
                     }
                     int zone = plugin.getRegionControl().getZoneId(event.getLocation());
                     int difficulty = getSpawnDifficulty(rg.getId());
+                    Random r_gen = new Random();
+                    double multiplier = 1.2 - r_gen.nextDouble()*0.4;
+                    int level = (int) (zone*66 + ((difficulty-1)*13)+7 - 6 + Math.round(r_gen.nextDouble()*12));
                     setArmours(creature, zone, difficulty);
-                    setHealth(creature, zone, difficulty);
+                    setHealth(creature, level, multiplier);
+                    setName(creature, level, multiplier);
+                    
                     PotionEffect pe = new PotionEffect(PotionEffectType.SPEED,99999,zone);
                     event.getEntity().addPotionEffect(pe);
-                    //creature
-                    //plugin.sendConsole("Armors set");
+                    
+                    creature.setCustomNameVisible(true);
+                    creature.setRemoveWhenFarAway(false);
                     return;
                 }
             } 
@@ -185,7 +204,7 @@ public class MobControl implements Listener {
     }
     
     public double getDamage(int level, double regularHit){
-        return ((0.1598*Math.pow(level,2)+10.0)/8.0*(regularHit/10));
+        return ((0.1598*Math.pow(level,2)+10.0)*(regularHit/5));
     }
     
     public int getLevel(Entity creature){

@@ -13,6 +13,7 @@ import com.tengel.time.profs.Builder;
 import com.tengel.time.profs.Gatherer;
 import com.tengel.time.profs.Landlord;
 import com.tengel.time.profs.TimeProfession;
+import com.tengel.time.structures.TimePlayer;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -39,7 +40,12 @@ import java.sql.Statement;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Random;
+import org.bukkit.ChatColor;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
 /**
  *
  * @author Tim
@@ -48,14 +54,15 @@ public final class Time extends JavaPlugin {
     private final TimePlayerListener playerListener;
     private final RegionControl worldGuardListener;
     private final UpdatePlayers timeUpdater;
+    private HashMap<String, TimePlayer> players;
     private Economy economy = null;
     private String pluginName;
-    private final TimePlayers players;
+    //private final TimePlayers players;
     private File configSigns;
     public WorldGuardPlugin worldGuard;
     public WorldEditPlugin worldEdit;
     private TimeSQL sql;
-    public MobControl mobcontrol;
+    private MobControl mobcontrol;
     
     public Gatherer prof_miner;
     public Gatherer prof_farmer;
@@ -63,9 +70,9 @@ public final class Time extends JavaPlugin {
     public Landlord prof_landlord;
     
     public Time() {
-        players = new TimePlayers(this);
-        playerListener = new TimePlayerListener(this,players);
-        worldGuardListener = new RegionControl(this,players);
+        players = new HashMap<String, TimePlayer>();
+        playerListener = new TimePlayerListener(this);
+        worldGuardListener = new RegionControl(this);
         timeUpdater = new UpdatePlayers(this,1);
     }
     
@@ -93,7 +100,7 @@ public final class Time extends JavaPlugin {
             return;
         }
         populateTimePlayers();
-        
+        setupHealthBar();
         
         pluginName = "[" + pm.getPlugin("Time").getName() + "] ";
         
@@ -106,6 +113,7 @@ public final class Time extends JavaPlugin {
         
         getLogger().info("Time by Engeltj has been enabled");
         processSchematics();
+        
     }
  
     @Override
@@ -146,6 +154,33 @@ public final class Time extends JavaPlugin {
         };
         getServer().getScheduler().scheduleSyncRepeatingTask(this, usetJobLeave, 5, 20 * 20);
     }
+    
+    public void setupHealthBar(){
+        unsetHealthBar();
+        Objective below,list;
+        Scoreboard sb = getServer().getScoreboardManager().getMainScoreboard();
+        for (Objective obj: sb.getObjectives()){
+            sendConsole(obj.getName());
+        }
+        below = sb.registerNewObjective("obj_below", "dummy");
+        //below.setDisplayName("Lvl - "+ ChatColor.RED + "❤❤❤❤❤❤❤❤")
+        below.setDisplayName("/ 100");
+        below.setDisplaySlot(DisplaySlot.BELOW_NAME);
+        
+        list = sb.registerNewObjective("obj_list", "dummy");
+        list.setDisplayName("2");
+        list.setDisplaySlot(DisplaySlot.PLAYER_LIST);
+    }
+    
+    private void unsetHealthBar(){
+        Scoreboard sb = getServer().getScoreboardManager().getMainScoreboard();
+        if (sb.getObjective(DisplaySlot.BELOW_NAME) != null)
+            sb.getObjective(DisplaySlot.BELOW_NAME).unregister();
+        if (sb.getObjective("obj_below") != null)
+            sb.getObjective("obj_below").unregister();
+        if (sb.getObjective("obj_list") != null)
+            sb.getObjective("obj_list").unregister();
+  }
     
     public void setupSql(){
         Config c = new Config(this, "config.yml");
@@ -188,10 +223,8 @@ public final class Time extends JavaPlugin {
     }
     
     public void populateTimePlayers(){
-        for (Player player: getServer().getOnlinePlayers()){
-            ConfigPlayer cp = players.addPlayer(player);
-            cp.loadPlayer();
-        }
+        for (Player player: getServer().getOnlinePlayers())
+            addPlayer(player.getName());
     }
     
     private boolean setupEconomy() {
@@ -210,8 +243,19 @@ public final class Time extends JavaPlugin {
         return this.economy;
     }
     
-    public TimePlayers getTimePlayers(){
-        return this.players;
+    
+    public TimePlayer getPlayer(String name){
+        return players.get(name);
+    }
+    
+    public void addPlayer(String name){
+        TimePlayer tp = new TimePlayer(this, name);
+        tp.load();
+        players.put(name, tp);
+    }
+    
+    public void removePlayer(String name){
+        players.remove(name);
     }
     
     public TimePlayerListener getPlayerListener(){
@@ -224,6 +268,10 @@ public final class Time extends JavaPlugin {
     
     public String getPluginName(){
         return this.pluginName;
+    }
+    
+    public MobControl getMobControl(){
+        return mobcontrol;
     }
     
     public File getConfigSigns(){

@@ -6,6 +6,7 @@
 
 package com.tengel.time;
 
+import com.tengel.time.structures.TimePlayer;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -26,25 +27,25 @@ public class UpdatePlayers implements Runnable {
     public void run() {
         for (Player player : plugin.getServer().getOnlinePlayers()){
             RegionControl rc = plugin.getRegionControl();
-            boolean wrongZone = rc.isWrongTimeZone(player);
-            ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
+            boolean wrongZone = rc.isWrongZone(player);
+            TimePlayer tp = plugin.getPlayer(player.getName());
             if (wrongZone){
                 plugin.getEconomy().withdrawPlayer(player.getName(), updateInterval);
                 //ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
-                if (cp.getBounty() <= 0)
+                if (tp.getBounty() <= 0)
                     player.sendMessage(ChatColor.RED + "You've been added to the wanted list!");
                 //if (es.transactionSuccess())
-                    cp.addBounty(updateInterval);
-            } else if (cp.getBounty() > 0){
-                cp.addBounty(updateInterval*-1);
-                if (cp.getBounty() == 0)
+                    tp.addBounty(updateInterval);
+            } else if (tp.getBounty() > 0){
+                tp.addBounty(updateInterval*-1);
+                if (tp.getBounty() == 0)
                     player.sendMessage(ChatColor.GREEN + "You are free and cleared of all charges");
             }
-            if ((cp.getPlayerAge() > 7*24*60*60*1000)){ //7000 days
+            if ((tp.getAge() > 7*24*60*60*1000)){ //7000 days
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), updateInterval);
                 if (!es.transactionSuccess()){
-                    if (!cp.isJailed())
-                        plugin.getTimePlayers().resetPlayer(player);
+                    if (!tp.getJailed())
+                        tp.remove();
                 }
                 //BukkitTask task = new ExampleTask(this.plugin).runTaskLater(this.plugin, 20);
             }

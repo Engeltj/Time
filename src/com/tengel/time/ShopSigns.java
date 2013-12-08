@@ -7,6 +7,7 @@
 package com.tengel.time;
 
 import com.tengel.time.profs.TimeProfession;
+import com.tengel.time.structures.TimePlayer;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -49,10 +50,10 @@ public class ShopSigns extends YamlConfiguration {
     }
     
     private boolean buyLicense(Material m, int cost){
-        ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
+        TimePlayer tp = plugin.getPlayer(player.getName());
         EconomyResponse es = getPlugin().getEconomy().withdrawPlayer(player.getName(), cost*60);
         if (es.transactionSuccess()){
-            if (cp.addLicense(m.getId())){
+            if (tp.addBlockLicense(m.getId())){
                 player.sendMessage(ChatColor.BLUE + m.name().toLowerCase() + ChatColor.YELLOW + " license aquired!");
             } else {
                 player.sendMessage("It appears you already own the license to mine " + m.name().toLowerCase());

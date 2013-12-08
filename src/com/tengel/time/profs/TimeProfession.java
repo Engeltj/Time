@@ -8,6 +8,7 @@ package com.tengel.time.profs;
 
 import com.tengel.time.ConfigPlayer;
 import com.tengel.time.Time;
+import com.tengel.time.structures.TimePlayer;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
@@ -41,19 +42,20 @@ public enum TimeProfession {
     }
     
     public void give(Time plugin, Player p){
-        if (get(plugin, p) != TimeProfession.UNEMPLOYED){
+        TimePlayer tp = plugin.getPlayer(p.getName());
+        if (!tp.getJobs().isEmpty()){
             p.sendMessage(ChatColor.RED + "You already have a profession! Please '/life unemploy' first.");
             return;
         }
         else 
             p.sendMessage(ChatColor.GREEN + "You have now become a " + this.toString().toLowerCase() + "!");
-        ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
-        cp.setProfession(this.toString());
+        
+        tp.addJob(this);
     }
     
-    public TimeProfession get(Time plugin, Player p){
-        return plugin.getTimePlayers().getPlayerConfig(p.getName()).getProfession();
-    }
+    //public TimeProfession get(Time plugin, Player p){
+    //    return plugin.getTimePlayers().getPlayerConfig(p.getName()).getProfession();
+    //}
     
     public int getUnemployCost(int zone){
         switch(zone){
