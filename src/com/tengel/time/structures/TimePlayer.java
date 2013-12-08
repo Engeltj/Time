@@ -7,6 +7,7 @@
 package com.tengel.time.structures;
 
 import com.tengel.time.Time;
+import com.tengel.time.TimeCommands;
 import com.tengel.time.profs.TimeProfession;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -111,7 +112,7 @@ public class TimePlayer implements IStructure{
             st.executeUpdate("INSERT INTO `players` (name, start) VALUES ('"+name+"', "+System.currentTimeMillis()/1000+");");
         } catch (SQLException ex) {
             plugin.sendConsole("Failed to create entry for player '"+name+"' in TimePlayer class, " + ex);
-        }        
+        }
     }
     
     public void remove(){
@@ -195,6 +196,10 @@ public class TimePlayer implements IStructure{
     
     public int getBounty(){
         return bounty;
+    }
+    
+    public String getBountyString(){
+        return TimeCommands.convertSecondsToTime(bounty);
     }
     
     public long getAge(){

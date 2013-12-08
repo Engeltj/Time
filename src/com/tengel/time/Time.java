@@ -8,11 +8,14 @@ package com.tengel.time;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.mysql.TimeSQL;
 import com.tengel.time.profs.Builder;
 import com.tengel.time.profs.Gatherer;
 import com.tengel.time.profs.Landlord;
 import com.tengel.time.profs.TimeProfession;
+import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Location;
@@ -41,8 +44,10 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
-import org.bukkit.ChatColor;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -55,6 +60,7 @@ public final class Time extends JavaPlugin {
     private final RegionControl worldGuardListener;
     private final UpdatePlayers timeUpdater;
     private HashMap<String, TimePlayer> players;
+    private HashMap<String, Home> homes;
     private Economy economy = null;
     private String pluginName;
     //private final TimePlayers players;
@@ -99,7 +105,8 @@ public final class Time extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        populateTimePlayers();
+        loadTimePlayers();
+        loadHomes();
         setupHealthBar();
         
         pluginName = "[" + pm.getPlugin("Time").getName() + "] ";
@@ -222,7 +229,17 @@ public final class Time extends JavaPlugin {
         getLogger().info(message);
     }
     
-    public void populateTimePlayers(){
+    public void loadHomes(){
+        RegionManager mgr = this.worldGuard.getRegionManager(getServer().getWorld("Time"));
+        Map<String, ProtectedRegion> regions = mgr.getRegions();
+        Iterator it = regions.entrySet().iterator();
+        while (it.hasNext()) {
+            Entry pairs = (Entry)it.next();
+            addHome(pairs.getKey().toString());
+        }
+    }
+    
+    public void loadTimePlayers(){
         for (Player player: getServer().getOnlinePlayers())
             addPlayer(player.getName());
     }
@@ -248,14 +265,30 @@ public final class Time extends JavaPlugin {
         return players.get(name);
     }
     
-    public void addPlayer(String name){
+    public TimePlayer addPlayer(String name){
         TimePlayer tp = new TimePlayer(this, name);
         tp.load();
-        players.put(name, tp);
+        return players.put(name, tp);
     }
     
     public void removePlayer(String name){
         players.remove(name);
+    }
+    
+    public Home getHome(String name){
+        return homes.get(name);
+    }
+    
+    public Home addHome(String name){
+        Home home = homes.get(name);
+        if (home == null)
+            home = new Home(this, name);
+        home.load();
+        return homes.put(name, home);
+    }
+    
+    public void removeHome(String name){
+        homes.remove(name);
     }
     
     public TimePlayerListener getPlayerListener(){
