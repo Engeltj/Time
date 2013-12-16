@@ -279,12 +279,38 @@ public final class Time extends JavaPlugin {
         return homes.get(name);
     }
     
+    public Home getHome(Location loc){
+        RegionManager mgr = worldGuard.getRegionManager(loc.getWorld());
+        for (ProtectedRegion rg : mgr.getApplicableRegions(loc)){
+            Home home = getHome(rg.getId());
+            if (home != null)
+                return home;
+        }
+        return null;
+    }
+    
+    public HashMap<String, Home> getHomes(String player){
+        Iterator it = homes.entrySet().iterator();
+        HashMap<String, Home> p_homes = new HashMap<String, Home>();
+        while (it.hasNext()){
+            Entry ent = (Entry) it.next();
+            Home t_home = (Home) ent.getValue();
+            if (t_home.getRenter().equals(player))
+                p_homes.put((String)ent.getKey(), (Home)ent.getValue());
+        }
+        return p_homes;
+    }
+    
     public Home addHome(String name){
         Home home = homes.get(name);
         if (home == null)
             home = new Home(this, name);
         home.load();
         return homes.put(name, home);
+    }
+    
+    public void addHome(Home home){
+        homes.put(home.getName(), home);
     }
     
     public void removeHome(String name){

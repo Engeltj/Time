@@ -6,15 +6,20 @@
 
 package com.tengel.time;
 
+import com.sk89q.worldedit.Vector;
 import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
+import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -169,10 +174,9 @@ public class TimeCommands implements Listener{
             if (args.length == 1){
                 sender.sendMessage(ChatColor.GRAY + "rent" + ChatColor.GREEN + "  > Rent the home you are currently standing in");
                 sender.sendMessage(ChatColor.GRAY + "buy" + ChatColor.GREEN + "  > Purchase the home to get a cut of the income from renters");
-            } else {
-                Homes h = new Homes(plugin);
-                h.commands(sender, args);
-            }
+                sender.sendMessage(ChatColor.GRAY + "teleport <home>" + ChatColor.GREEN + "  > Teleports you to one of your specified homes");
+            } else 
+                return commandsHome(sender, args);
         } else if (args[0].equalsIgnoreCase("test")){
             plugin.prof_builder.createBuild(sender, "test.schematic");
         } else if (args[0].equalsIgnoreCase("password")){
@@ -215,7 +219,7 @@ public class TimeCommands implements Listener{
             wgu.updateBuildWorth(plugin.prof_builder.getSchematics());
         } else if (args[1].equalsIgnoreCase("home")){
             Homes h = new Homes(plugin);
-            h.adminCommands(sender, args);
+            adminCommandsHome(sender, args);
         } else if (args[1].equalsIgnoreCase("createspawn")){
             int difficulty;
             try {
@@ -232,6 +236,108 @@ public class TimeCommands implements Listener{
         }
     }
     
+    
+    public boolean commandsHome(CommandSender sender, String[] args){
+        TimePlayer tp = plugin.getPlayer(sender.getName());
+        Player p = plugin.getServer().getPlayer(sender.getName());
+        Home home = plugin.getHome(p.getLocation());
+        if (home == null){
+            if (args.length >= 3)
+                home = plugin.getHome(args[2]);
+        }
+        if (home == null){
+            HashMap<String, Home> p_homes = plugin.getHomes(p.getName());
+            if (p_homes.size() == 1)
+                home = (Home)p_homes.entrySet().iterator().next().getValue();
+        }
+        
+        if (args[1].equalsIgnoreCase("rent")){
+            if (home == null)
+                p.sendMessage(ChatColor.RED + "Please specify a home, or stand in a home first");
+            else
+                home.rent(p);
+        } else if (args[1].equalsIgnoreCase("buy")){
+            if (tp.hasJob(TimeProfession.LANDLORD)){
+                if (home == null)
+                    p.sendMessage(ChatColor.RED + "Please specify a home, or stand in a home first");
+                else
+                    home.buy(p);
+            } else
+                sender.sendMessage(ChatColor.RED + "You need to be a landlord to purchase, you may only rent this home");
+            
+        } else if (args[1].equalsIgnoreCase("teleport")){
+            HashMap<String, Home> homes = plugin.getHomes(sender.getName());
+            if (homes.size() == 0)
+                sender.sendMessage(ChatColor.RED + "You are currently not renting any homes");
+            else if (!homes.containsValue(home)){
+                sender.sendMessage("Choices:");
+                Iterator i = homes.entrySet().iterator();
+                while (i.hasNext()){
+                    Entry e = (Entry) i.next();
+                    sender.sendMessage(ChatColor.GREEN+e.getKey().toString());
+                }
+            } else {
+                org.bukkit.util.Vector v = home.getDoor();
+                Location loc = new Location(plugin.getServer().getWorld("Time"), v.getX(), v.getY(), v.getZ());
+                plugin.getServer().getPlayer(sender.getName()).teleport(loc);
+                sender.sendMessage(ChatColor.GREEN+"You've been taken to your front door");
+            }
+            
+        } else
+            return false;
+        return true;       
+    }
+    
+    public void adminCommandsHome(CommandSender sender, String[] args){
+        Player p = plugin.getServer().getPlayer(sender.getName());
+        Home home = plugin.getHome(p.getLocation());
+        if (home == null){
+            if (args.length >= 3)
+                home = plugin.getHome(args[2]);
+        }
+        if (args.length == 2){
+            sender.sendMessage(ChatColor.GRAY + "create <name> [type]" + ChatColor.GREEN + "  > Create a new home, defaults to type apartment");
+            sender.sendMessage(ChatColor.GRAY + "update <name>" + ChatColor.GREEN + "  > Update the region of a home");
+            sender.sendMessage(ChatColor.GRAY + "reset <name>" + ChatColor.GREEN + "  > Reset home to factory state");
+        } else {
+            if (args[2].equalsIgnoreCase("create")){
+                String name = "";
+                String type = "";
+                if (args.length >= 4)
+                    name = args[3];
+                if (args.length >= 5)
+                    type = args[4];
+                Home new_home = new Home(plugin, p, name, type);
+                if (plugin.getHome(new_home.getName()) == null) {
+                    plugin.addHome(new_home);
+                    sender.sendMessage(ChatColor.GREEN+"Home created successfully, door is set where you were standing");
+                } else
+                    sender.sendMessage(ChatColor.RED+"Home failed to create, name already taken");
+            } else if (args[2].equalsIgnoreCase("update")){
+                if (home == null)
+                    sender.sendMessage(ChatColor.RED+"Please stand in or specify a valid home first");
+                else{
+                    Location loc = p.getLocation();
+                    WorldGuardUtil wgu = new WorldGuardUtil(plugin, p.getWorld());
+                    if (!wgu.saveSchematic(p, home.getName())){
+                        sender.sendMessage(ChatColor.RED + "Failed to save schematic for home '"+home+"', aborting home update.");
+                        return;
+                    }
+                    if (wgu.createRegionFromSelection(p, home.getName()) == null){
+                        sender.sendMessage(ChatColor.RED + "Failed to create region for home '"+home+"', aborting home update.");
+                        return;
+                    }
+                    home.setDoor(loc.toVector());
+                    sender.sendMessage(ChatColor.GREEN + "Home successfully updated.");
+                }
+            } else if (args[2].equalsIgnoreCase("reset")){
+                if (home != null)
+                    home.reset();
+                else
+                    sender.sendMessage(ChatColor.RED+"Please stand in or specify a valid home first");
+            }
+        }
+    }
     
     
 }

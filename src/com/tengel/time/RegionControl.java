@@ -20,6 +20,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import static com.sk89q.worldguard.bukkit.BukkitUtil.toVector;
+import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
 /**
  *
@@ -112,18 +113,6 @@ public class RegionControl implements Listener {
     public boolean isWrongZone(Player player){
         return (isWrongZone(player.getName(), getZoneId(player.getLocation())));
     }
-
-    /*public boolean isWrongTimeZone(Player p){
-        Location loc = p.getLocation();
-        Vector v = toVector(loc);
-        RegionManager manager = plugin.worldGuard.getRegionManager(p.getWorld());
-        ApplicableRegionSet set = manager.getApplicableRegions(v);
-        for (ProtectedRegion each : set){
-            if (getZoneId(each.getId()) > getPlayerTimeZone(p))
-                return true;
-        }
-        return false;
-    }*/
     
     public boolean checkPermissions(Player p, String permission, boolean sendMessage){
         return (plugin.getPlayerListener().checkPermissions(p, permission, sendMessage));
