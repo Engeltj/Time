@@ -6,7 +6,7 @@
 
 package com.tengel.time.profs;
 
-import com.tengel.time.ConfigPlayer;
+//import com.tengel.time.TimePlayer;
 import com.tengel.time.Time;
 import com.tengel.time.structures.TimePlayer;
 import org.bukkit.ChatColor;

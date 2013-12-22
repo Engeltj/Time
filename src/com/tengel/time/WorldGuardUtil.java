@@ -71,6 +71,10 @@ public class WorldGuardUtil {
         
         public boolean updateBuildWorth(String schematic){
             CuboidClipboard cc = getClipboard(schematic);
+            if (cc == null){
+                plugin.sendConsole("schematic file '"+schematic+"' seems to be missing.. failed to update home");
+                return false;
+            }
             Vector size = cc.getSize();
             int earnings = 0;
             for (int x=0;x<size.getX();x++)
@@ -86,7 +90,7 @@ public class WorldGuardUtil {
                 st = con.createStatement();
                 int updated = st.executeUpdate("UPDATE `schematics` SET worth="+earnings*5+" WHERE filename='"+schematic+"';");
                 return (updated > 0);
-            } catch (SQLException ex) {
+            } catch (Exception ex) {
                plugin.sendConsole("Failed to update worth for '"+schematic+"' in updateBuildWorth\n" + ex);
             }
             return false;

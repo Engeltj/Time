@@ -16,6 +16,7 @@ import com.tengel.time.profs.Gatherer;
 import com.tengel.time.profs.Landlord;
 import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.structures.Home;
+import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Location;
@@ -48,6 +49,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.UUID;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -61,6 +63,7 @@ public final class Time extends JavaPlugin {
     private final UpdatePlayers timeUpdater;
     private HashMap<String, TimePlayer> players;
     private HashMap<String, Home> homes;
+    private HashMap<UUID, TimeMonster> monsters;
     private Economy economy = null;
     private String pluginName;
     //private final TimePlayers players;
@@ -105,18 +108,25 @@ public final class Time extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        loadTimePlayers();
-        loadHomes();
-        setupHealthBar();
+        //loadTimePlayers();
+        //loadHomes();
+        //setupHealthBar();
         
         pluginName = "[" + pm.getPlugin("Time").getName() + "] ";
-        
+        final Time plugin = this;
         pm.registerEvents(this.playerListener, this);
         pm.registerEvents(this.worldGuardListener, this);
         pm.registerEvents(mobcontrol, this);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, timeUpdater, 0, timeUpdater.getUpdateInterval() * 20);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 60, 1800 * 20);
-        
+        getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+            public void run() {
+                plugin.loadHomes();
+                plugin.loadTimePlayers();
+                plugin.setupHealthBar();
+                plugin.loadMonsters();
+            }
+        });
         
         getLogger().info("Time by Engeltj has been enabled");
         processSchematics();
@@ -154,7 +164,7 @@ public final class Time extends JavaPlugin {
                         plugin.sendConsole("Processed " + i + " schematic(s).");
                 } catch (IOException ex) {
                     plugin.sendConsole("Failed to processSchematics, IOException\n" + ex);
-                } catch (SQLException ex) {
+                } catch (Exception ex) {
                     plugin.sendConsole("Failed to processSchematics, SQLException\n" + ex);
                 }
             }
@@ -229,14 +239,35 @@ public final class Time extends JavaPlugin {
         getLogger().info(message);
     }
     
+    public void loadMonsters(){
+        monsters = new HashMap<UUID, TimeMonster>();
+        Connection con = getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT id FROM `spawns`;");
+            while (rs.next()){
+                //Location loc = new Location(getServer().getWorld("Time"),rs.getDouble("x"),rs.getDouble("y"),rs.getDouble("z"));
+                TimeMonster monster = new TimeMonster(this,rs.getInt("id"));
+                monsters.put(monster.getUniqueId(), monster);
+            }
+        } catch (Exception ex) {
+            sendConsole("Failed to loadMonsters, " + ex);
+        }
+    }
+    
     public void loadHomes(){
-        RegionManager mgr = this.worldGuard.getRegionManager(getServer().getWorld("Time"));
+        homes = new HashMap<String, Home>();
+        RegionManager mgr = worldGuard.getRegionManager(getServer().getWorld("Time"));
         Map<String, ProtectedRegion> regions = mgr.getRegions();
         Iterator it = regions.entrySet().iterator();
         while (it.hasNext()) {
             Entry pairs = (Entry)it.next();
-            addHome(pairs.getKey().toString());
+            String home = pairs.getKey().toString();
+            if (home.contains("home_")) 
+                addHome(pairs.getKey().toString());
         }
+        sendConsole("Homes loaded.");
     }
     
     public void loadTimePlayers(){
@@ -277,6 +308,18 @@ public final class Time extends JavaPlugin {
     
     public Home getHome(String name){
         return homes.get(name);
+    }
+    
+    public TimeMonster getMonster(UUID uuid){
+        return monsters.get(uuid);
+    }
+    
+    public void removeMonster(UUID uuid){
+        monsters.remove(uuid);
+    }
+    
+    public void addMonster(TimeMonster monster){
+        monsters.put(monster.getUniqueId(), monster);
     }
     
     public Home getHome(Location loc){

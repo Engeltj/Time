@@ -9,7 +9,8 @@ package com.tengel.time;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import java.util.List;
+import com.tengel.time.runnables.RunnableSpawn;
+import com.tengel.time.structures.TimeMonster;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -175,6 +176,10 @@ public class MobControl implements Listener {
                         Location loc = p.getLocation();
                         Vector v = new Vector(loc.getX(),loc.getY(),loc.getZ());
                         if (rg.contains(v)){
+                            LivingEntity ent = event.getEntity();
+                            TimeMonster monster = plugin.getMonster(ent.getUniqueId());
+                            if (monster != null)
+                                plugin.getServer().getScheduler().runTaskLater(plugin, new RunnableSpawn(monster), 20*300);
                             event.setCancelled(true);
                         }
                     }

@@ -6,12 +6,11 @@
 
 package com.tengel.time;
 
-import com.sk89q.worldedit.Vector;
 import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.structures.Home;
+import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -22,6 +21,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -214,9 +214,11 @@ public class TimeCommands implements Listener{
             sender.sendMessage(ChatColor.GRAY + "home" + ChatColor.GREEN + "  > Home related commands");
             sender.sendMessage(ChatColor.GRAY + "update" + ChatColor.GREEN + "  > Updates schematic prices");
             sender.sendMessage(ChatColor.GRAY + "createspawn [difficulty]" + ChatColor.GREEN + "  > Creates a spawn of select difficulty (1-5, 5=hardest)");
+            sender.sendMessage(ChatColor.GRAY + "spawn [monster name]" + ChatColor.GREEN + "  > Sets your location to spawn the specified monster");
         } else if (args[1].equalsIgnoreCase("update")){
             WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.prof_builder.getWorld());
             wgu.updateBuildWorth(plugin.prof_builder.getSchematics());
+            sender.sendMessage(ChatColor.GREEN+"Home prices updated");
         } else if (args[1].equalsIgnoreCase("home")){
             Homes h = new Homes(plugin);
             adminCommandsHome(sender, args);
@@ -233,6 +235,17 @@ public class TimeCommands implements Listener{
                 plugin.sendConsole("Failed to createSpawn of difficulty " + difficulty);
             } else
                 sender.sendMessage(ChatColor.GREEN + "Spawn created with difficulty " + difficulty);
+        } else if (args[1].equalsIgnoreCase("spawn")){
+            try {
+                EntityType type = EntityType.valueOf(args[2].toUpperCase());
+                Location loc = sender.getServer().getPlayer(sender.getName()).getLocation();
+                TimeMonster monster = new TimeMonster(plugin, loc, args[2]);
+                plugin.addMonster(monster);
+                sender.sendMessage(ChatColor.GREEN+"Spawn added");
+            } catch (Exception ex){
+                sender.sendMessage(ChatColor.RED+"Invalid monster, your choices are: ");
+                sender.sendMessage(ChatColor.RED+"BLAZE CAVE_SPIDER CREEPER ENDERMAN GHAST GIANT IRON_GOLEM MAGMA_CUBE PIG_ZOMBIE SILVERFISH SKELETON SLIME SPIDER WOLF ZOMBIE ");
+            }   
         }
     }
     

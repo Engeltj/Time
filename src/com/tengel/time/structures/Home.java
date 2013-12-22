@@ -85,7 +85,7 @@ public class Home implements IStructure{
             renter = rs.getString("renter");
             lastpay = rs.getLong("lastpay");
             door = new Vector(rs.getDouble("x"),rs.getDouble("y"),rs.getDouble("z"));
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to create entry for home '"+name+"' in Home class, " + ex);
         }
     }
@@ -103,7 +103,7 @@ public class Home implements IStructure{
                 st.executeUpdate("UPDATE `homes` SET "+query+" WHERE name='"+name+"';");
             else
                 st.executeUpdate("INSERT INTO `homes` SET "+query+";");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to create/update entry for home '"+name+"' in Home class, " + ex);
         }
     }
@@ -115,7 +115,7 @@ public class Home implements IStructure{
             st = con.createStatement();
             st.executeQuery("DELETE FROM `homes` WHERE name='"+name+"';");
             WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.getServer().getWorld("Time"));
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to delete entry for home '"+name+"' in Home class, " + ex);
         }
     }
@@ -178,7 +178,7 @@ public class Home implements IStructure{
                         ChatColor.RED + TimeCommands.convertSecondsToTime(price) + ChatColor.GREEN + ". Type "+ ChatColor.GRAY+"/life job accept"+ ChatColor.GREEN+" to purchase");
             }
             return (updated > 0);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to offer home '"+getName()+"' from '"+p.getName()+"' to '"+newOwner.getName()+"'");
         }
         return false;

@@ -101,7 +101,7 @@ public class Builder {
             st = con.createStatement();
             int updated = st.executeUpdate("UPDATE `job_builder` SET completed=1 WHERE player='"+player+"';");
             return (updated > 0);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
            plugin.sendConsole("Failed to get schematics in getSchematics()\n" + ex);
         }
         return false;
@@ -116,7 +116,7 @@ public class Builder {
             ResultSet rs = st.executeQuery("SELECT filename FROM `schematics`  WHERE approved=1 AND processed=1;");
             while (rs.next())
                 arr.add(rs.getString("filename"));
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
            plugin.sendConsole("Failed to get schematics in getSchematics()\n" + ex);
         }
         return arr;
@@ -152,7 +152,7 @@ public class Builder {
             ResultSet rs = st.executeQuery("SELECT schematic_id FROM `job_builder` WHERE player='"+player+"' AND completed=0;");
             if (rs.first())
                 return rs.getInt("schematic_id");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
            plugin.sendConsole("Failed to obtain player current build for '"+player+"' in getPlayerBuildSchematicId\n" + ex);
         }
         return 0;
@@ -167,7 +167,7 @@ public class Builder {
             ResultSet rs = st.executeQuery("SELECT id FROM `schematics` WHERE filename='"+schematic+"';");
             if (rs.first())
                 id = rs.getInt("id");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
            plugin.sendConsole("Failed to obtain schematic id for '"+schematic+"' in getBuildSchematicId\n" + ex);
         }
         return id;
@@ -188,7 +188,7 @@ public class Builder {
                 updated = st.executeUpdate("UPDATE `job_builder` SET "+values+" WHERE player='"+player+"' AND completed=0;");
             }
             return (updated > 0);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
            plugin.sendConsole("Failed to insert/update new build project for '"+player+"' in `job_builder`\n" + ex);
         }
         return false;
@@ -203,7 +203,7 @@ public class Builder {
             ResultSet rs = st.executeQuery("SELECT x2 FROM `job_builder` ORDER BY x2 DESC");
             if (rs.first())
                 x = rs.getInt("x2");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
            plugin.sendConsole("Failed to get largest x2 coordinate from `job_builder`\n" + ex);
         }
         return new Location(world, x+1, 65, 0);
@@ -218,7 +218,7 @@ public class Builder {
             if (rs.first()){
                 return rs.getString("filename");
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
            plugin.sendConsole("Failed to get build schematic name of id '"+id+"'\n" + ex);
         }
         return null;
@@ -236,7 +236,7 @@ public class Builder {
                 if (rs.first())
                     return rs.getString("filename");
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
            plugin.sendConsole("Failed to get current player build schematic name for '"+player+"'\n" + ex);
         }
         return null;
@@ -267,7 +267,7 @@ public class Builder {
             if (rs.first()){
                 return rs.getInt("worth");
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
            plugin.sendConsole("Failed to get worth for schematic '"+schematic+"'\n" + ex);
         }
         return 0;

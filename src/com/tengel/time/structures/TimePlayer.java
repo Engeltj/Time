@@ -74,7 +74,7 @@ public class TimePlayer implements IStructure{
                     blockLicenses.add(licenses.getShort("license"));
             } else
                 create();
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to create TimePlayer for '"+name+"', " + ex);
         }
     }
@@ -99,7 +99,7 @@ public class TimePlayer implements IStructure{
                 st.executeUpdate("REPLACE INTO `licenses` SET license="+license+" WHERE player='"+name+"' AND license="+license+";");
             st.executeUpdate("UPDATE `players` SET life="+plugin.getEconomy().getBalance(name)+",bounty="+bounty+",zone="+zone+
                     ",lastseen="+System.currentTimeMillis()/1000+",jobs='"+jobsString+"',jailed="+jailed+" WHERE name='"+name+"';");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to update db for '"+name+"' in TimePlayer class, " + ex);
         }
     }
@@ -110,7 +110,7 @@ public class TimePlayer implements IStructure{
         try {
             st = con.createStatement();
             st.executeUpdate("INSERT INTO `players` (name, start) VALUES ('"+name+"', "+System.currentTimeMillis()/1000+");");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to create entry for player '"+name+"' in TimePlayer class, " + ex);
         }
     }
@@ -126,7 +126,7 @@ public class TimePlayer implements IStructure{
             st.executeUpdate("DELETE FROM `job_builder` WHERE player='"+name+"';");
             st.executeUpdate("UPDATE `homes` SET renter='' WHERE renter='"+name+"';");
             st.executeUpdate("UPDATE `homes` SET owner='' WHERE owner='"+name+"';");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed remove profile of player " + name +", "+ ex);
         }
     }

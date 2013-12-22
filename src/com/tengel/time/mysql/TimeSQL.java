@@ -99,7 +99,7 @@ public class TimeSQL {
                 st.executeUpdate("INSERT INTO `players` (name, password) VALUES ('"+name+"','"+md5(password)+"');");
             else
                 st.executeUpdate("UPDATE `players` SET password='"+md5(password)+"' WHERE name='"+name+"';");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole(ex.getMessage());
         }
     }

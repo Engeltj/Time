@@ -11,12 +11,10 @@ import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.*;
-import com.tengel.time.profs.TimeProfession;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.sql.Connection;
@@ -28,7 +26,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.sk89q.worldguard.bukkit.BukkitUtil.toVector;
-import com.tengel.time.structures.TimePlayer;
 
 /**
  *
@@ -77,7 +74,7 @@ public class Homes {
                 p.sendMessage(ChatColor.GREEN + "Successfully create home");
             else
                 p.sendMessage(ChatColor.RED + "Failed to create home, no rows were updated");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to insert new home '"+name+"', " + ex);
         } 
     }
@@ -108,7 +105,7 @@ public class Homes {
             ResultSet rs = st.executeQuery("SELECT new_price FROM `homes` WHERE name='"+home+"';");
             if (rs.first())
                 return rs.getDouble("new_price");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to get new_price for home '"+home+"', " + ex);
         }
         return 0D;
@@ -125,7 +122,7 @@ public class Homes {
             ResultSet rs = st.executeQuery("SELECT price_changed FROM `homes` WHERE name='"+home+"';");
             if (rs.first())
                 return rs.getDouble("price_changed");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to get new_price for home '"+home+"', " + ex);
         }
         return 0D;
@@ -141,7 +138,7 @@ public class Homes {
             if (rs.first()){
                 vec = new Vector(rs.getDouble("x"), rs.getDouble("y"), rs.getDouble("z"));
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to get home doorway for '"+home+"', " + ex);
         }
         return vec;
@@ -154,7 +151,7 @@ public class Homes {
             st = con.createStatement();
             int updated = st.executeUpdate("UPDATE `homes` SET x="+x+",y="+y+",z="+z+" WHERE name='"+home+"';");
             return (updated>0);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to set home doorway for '"+home+"', " + ex);
         }
         return false;
@@ -213,7 +210,7 @@ public class Homes {
             if (rs.first()){
                 return rs.getLong("price_warned");
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to get price_warned for home '"+home+"', " + ex);
         }
         return 0;
@@ -226,7 +223,7 @@ public class Homes {
             st = con.createStatement();
             int updated = st.executeUpdate("UPDATE `homes` SET price_warned="+System.currentTimeMillis()/1000+" WHERE name='"+home+"';");
             return (updated >0);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to update 'price_warned' for home '"+home+"', " + ex);
         }
         return false;
@@ -259,7 +256,7 @@ public class Homes {
             if (rs.first()){
                 return rs.getInt("zone");
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to get zone for home '"+home+"', " + ex);
         }
         return 0;
@@ -276,7 +273,7 @@ public class Homes {
                 if (name.length()>0)
                     return name;
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Failed to get display_name for home '"+home+" in getName()', " + ex);
         }
         return home;
@@ -326,7 +323,7 @@ public class Homes {
             st = con.createStatement();
             ResultSet rs = st.executeQuery("SELECT * FROM `homes` WHERE name='"+region+"';");
             return rs.first();
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(Homes.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
@@ -342,7 +339,7 @@ public class Homes {
                 String str = rs.getString("renter");
                 return str == null || (str.length() == 0);
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to check availability on house: " + region);
         }
         return false;
@@ -362,7 +359,7 @@ public class Homes {
                 double price = rs.getDouble("price");
                 if (price > 0) return price;
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to check price on home: " + home);
         }
         return 999999999.0;
@@ -375,7 +372,7 @@ public class Homes {
             st = con.createStatement();
             int updated = st.executeUpdate("UPDATE `homes` SET price="+price+", new_price=0, price_changed=0, price_warned=0 WHERE name='"+home+"';");
             return (updated > 0);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to set price on home: " + home);
         }
         return false;
@@ -400,7 +397,7 @@ public class Homes {
             st = con.createStatement();
             int updated = st.executeUpdate("UPDATE `homes` SET display_name='"+name+"' WHERE name='"+home+"';");
             return (updated > 0);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to set display_name on home: " + home);
         }
         return false;
@@ -413,7 +410,7 @@ public class Homes {
             st = con.createStatement();
             ResultSet rs = st.executeQuery("SELECT * FROM `homes` WHERE display_name='"+name+"';");
             return (rs.first());
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to get display_name matching: " + name);
         }
         return false;
@@ -444,7 +441,7 @@ public class Homes {
                 String name = rs.getString("name");
                 homes.add(name);
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to get list of homes for "+player+", " + ex);
         }
         return homes;
@@ -461,7 +458,7 @@ public class Homes {
                 String home = rs.getString("name");
                 homes.add(home);
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to get list of homes: ");
         }
         return homes;
@@ -478,7 +475,7 @@ public class Homes {
                 String home = rs.getString("name");
                 homes.add(home);
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to get list of homes: ");
         }
         return homes;
@@ -492,7 +489,7 @@ public class Homes {
             ResultSet rs = st.executeQuery("SELECT lastpay FROM `homes` WHERE name='"+home+"';");
             if (rs.first())
                 return rs.getLong("lastpay");
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to get lastpay on home: " + home);
         }
         return 0L;
@@ -509,7 +506,7 @@ public class Homes {
                 if (renter == null)renter="";
                 return renter;
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to get renter on home: " + region);
         }
         return "";
@@ -526,7 +523,7 @@ public class Homes {
                 if (owner == null)owner="";
                 return owner;
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to get landlord on home: " + region);
         }
         return "";
@@ -539,7 +536,7 @@ public class Homes {
             st = con.createStatement();
             int updated = st.executeUpdate("UPDATE homes SET owner='"+player+"' WHERE name='"+region+"';");
             return (updated > 0);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to set landlord on home: " + region);
         }
         return false;
@@ -556,7 +553,7 @@ public class Homes {
                 resetHome(region);
             }
             return (updated > 0);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to set renter on home: " + region);
         }
         return false;
@@ -612,7 +609,7 @@ public class Homes {
                         ChatColor.RED + TimeCommands.convertSecondsToTime(price) + ChatColor.GREEN + ". Type "+ ChatColor.GRAY+"/life job accept"+ ChatColor.GREEN+" to purchase");
             }
             return (updated > 0);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             plugin.sendConsole("Fail to offer home '"+home+"' from '"+p.getName()+"' to '"+newOwner.getName()+"'");
         }
         return false;

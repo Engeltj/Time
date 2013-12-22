@@ -8,6 +8,8 @@ package com.tengel.time;
 
 import com.tengel.time.profs.Police;
 import com.tengel.time.profs.TimeProfession;
+import com.tengel.time.runnables.RunnableSpawn;
+import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -23,7 +25,6 @@ import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.*;
-import org.kitteh.tag.PlayerReceiveNameTagEvent;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,8 +33,6 @@ import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.ScoreboardManager;
-import org.bukkit.scoreboard.Team;
 
 /**
  *
@@ -172,6 +171,7 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onInteract(PlayerInteractEvent event){
+        event.getPlayer().sendMessage("ho");
         Block b;
         
         if (event.getAction()!=Action.RIGHT_CLICK_BLOCK)
@@ -217,13 +217,6 @@ public class TimePlayerListener implements Listener {
         updatePlayerScoreboardHealth(p);
     }
     
-    /*@EventHandler
-    public void onNameTag(PlayerReceiveNameTagEvent event) {
-        Player player = event.getNamedPlayer();
-        if (player.getName().equalsIgnoreCase("Engeltj"))
-            event.setTag("Notch");
-    }*/
-    
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerQuit(PlayerQuitEvent event){
         Player p = event.getPlayer();
@@ -267,10 +260,15 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onDeath(EntityDeathEvent event){
-        double lvl_dead = plugin.getMobControl().getLevel(event.getEntity());
+        LivingEntity ent = event.getEntity();
+        double lvl_dead = plugin.getMobControl().getLevel(ent);
+        if (lvl_dead > 0){
+            final TimeMonster monster = plugin.getMonster(ent.getUniqueId());
+            if (monster != null)
+                plugin.getServer().getScheduler().runTaskLater(plugin, new RunnableSpawn(monster), 20*300);
+        }
         int exp = (int) Math.ceil(lvl_dead/12.0);
         event.setDroppedExp(exp);
-        
     }
     
     public boolean playerExists(String playername){
