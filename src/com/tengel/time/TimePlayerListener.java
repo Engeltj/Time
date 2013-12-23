@@ -171,7 +171,6 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onInteract(PlayerInteractEvent event){
-        event.getPlayer().sendMessage("ho");
         Block b;
         
         if (event.getAction()!=Action.RIGHT_CLICK_BLOCK)
@@ -256,19 +255,6 @@ public class TimePlayerListener implements Listener {
             
             event.setDamage(plugin.getMobControl().getDamage(lvl_attacker, event.getDamage()));
         }
-    }
-    
-    @EventHandler(priority=EventPriority.NORMAL)
-    public void onDeath(EntityDeathEvent event){
-        LivingEntity ent = event.getEntity();
-        double lvl_dead = plugin.getMobControl().getLevel(ent);
-        if (lvl_dead > 0){
-            final TimeMonster monster = plugin.getMonster(ent.getUniqueId());
-            if (monster != null)
-                plugin.getServer().getScheduler().runTaskLater(plugin, new RunnableSpawn(monster), 20*300);
-        }
-        int exp = (int) Math.ceil(lvl_dead/12.0);
-        event.setDroppedExp(exp);
     }
     
     public boolean playerExists(String playername){

@@ -15,20 +15,32 @@ import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
 
 /**
  *
  * @author Tim
  */
 public class TimeMonster {
-    final private Time plugin;
-    private Location location;
-    private EntityType type;
-    private LivingEntity ent;
-    private UUID uuid;
-    private int id;
+    private final Location location;
+    private Monster monster;
     
-    public TimeMonster(Time plugin, Location loc, String type){
+    public TimeMonster(Monster m){
+        this.monster = m;
+        this.location = m.getLocation();
+    }
+    
+    public Location getSpawnLocation(){
+        return this.location;
+    }
+    
+    public Monster getMonster(){
+        return this.monster;
+    }
+    
+    
+    
+    /*public TimeMonster(Time plugin, Location loc, String type){
         this.location = loc;
         this.type = EntityType.valueOf(type);        
         this.plugin = plugin;
@@ -80,13 +92,15 @@ public class TimeMonster {
         } catch (Exception ex) {
             plugin.sendConsole("Failed to save monster with ID '"+id+"' in TimeMonster class, " + ex);
         }
-    }
+    }*/
     
-    public void spawn(){
+    /*public void spawn(){
+        plugin.sendConsole("Spawning " + ent.toString());
         ent = (LivingEntity) location.getWorld().spawnEntity(location, type);
-        plugin.removeMonster(uuid);
+        ent.setRemoveWhenFarAway(false);
+        //plugin.removeMonster(uuid);
         uuid = ent.getUniqueId();
-        plugin.addMonster(this);
+        //plugin.addMonster(this);
     }
     
     public void spawnWithCheck(){
@@ -102,6 +116,8 @@ public class TimeMonster {
     
     public UUID getUniqueId(){
         return uuid;
-    }
+    }*/
+    
+   
     
 }

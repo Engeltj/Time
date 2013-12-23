@@ -237,10 +237,11 @@ public class TimeCommands implements Listener{
                 sender.sendMessage(ChatColor.GREEN + "Spawn created with difficulty " + difficulty);
         } else if (args[1].equalsIgnoreCase("spawn")){
             try {
-                EntityType type = EntityType.valueOf(args[2].toUpperCase());
+                String type = args[2].toUpperCase();
+                EntityType.valueOf(type);
                 Location loc = sender.getServer().getPlayer(sender.getName()).getLocation();
-                TimeMonster monster = new TimeMonster(plugin, loc, args[2]);
-                plugin.addMonster(monster);
+                //TimeMonster monster = new TimeMonster(plugin, loc, args[2]);
+                plugin.getMobControl().addMonsterSpawn(loc, type);
                 sender.sendMessage(ChatColor.GREEN+"Spawn added");
             } catch (Exception ex){
                 sender.sendMessage(ChatColor.RED+"Invalid monster, your choices are: ");

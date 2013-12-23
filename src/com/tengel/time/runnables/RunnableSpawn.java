@@ -6,7 +6,13 @@
 
 package com.tengel.time.runnables;
 
+import com.avaje.ebeaninternal.server.deploy.BeanDescriptor;
+import com.tengel.time.Time;
 import com.tengel.time.structures.TimeMonster;
+import org.bukkit.Location;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
 import org.bukkit.scheduler.BukkitRunnable;
 
 /**
@@ -14,14 +20,28 @@ import org.bukkit.scheduler.BukkitRunnable;
  * @author Tim
  */
 public class RunnableSpawn extends BukkitRunnable {
-    private final TimeMonster monster;
+    private final Time plugin;
+    private final Location location;
+    private final EntityType type;
     
-    public RunnableSpawn(TimeMonster monster){
-        this.monster = monster;
+    public RunnableSpawn(Time plugin, Location location, String type){
+        this.plugin = plugin;
+        this.location = location;
+        this.type = EntityType.valueOf(type);
     }
     
     public void run() {
-        monster.spawn();
+        spawn();
+    }
+    
+    private void spawn(){
+        Monster monster = (Monster) location.getWorld().spawnEntity(location, type);
+        monster.setRemoveWhenFarAway(false);
+        TimeMonster m = new TimeMonster(monster);
+        //plugin.sendConsole("Spawning " + ent.toString());
+        //plugin.getMobControl().removeMonster(uuid);
+        //uuid = ent.getUniqueId();
+        plugin.getMobControl().addTimeMonster(m);
     }
     
 }

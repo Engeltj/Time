@@ -15,6 +15,7 @@ import com.tengel.time.profs.Builder;
 import com.tengel.time.profs.Gatherer;
 import com.tengel.time.profs.Landlord;
 import com.tengel.time.profs.TimeProfession;
+import com.tengel.time.runnables.RunnableSpawn;
 import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
@@ -46,10 +47,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.UUID;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Monster;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -63,7 +68,7 @@ public final class Time extends JavaPlugin {
     private final UpdatePlayers timeUpdater;
     private HashMap<String, TimePlayer> players;
     private HashMap<String, Home> homes;
-    private HashMap<UUID, TimeMonster> monsters;
+    //private HashMap<UUID, TimeMonster> monsters;
     private Economy economy = null;
     private String pluginName;
     //private final TimePlayers players;
@@ -240,16 +245,24 @@ public final class Time extends JavaPlugin {
     }
     
     public void loadMonsters(){
-        monsters = new HashMap<UUID, TimeMonster>();
+        World w = getServer().getWorld("Time");
+        List<Entity> entities = w.getEntities();
+        for ( Entity entity : entities){
+            if(entity instanceof Monster){
+                entity.remove();
+            }
+        }
         Connection con = getSql().getConnection();
         Statement st;
         try {
             st = con.createStatement();
-            ResultSet rs = st.executeQuery("SELECT id FROM `spawns`;");
+            ResultSet rs = st.executeQuery("SELECT * FROM `spawns`;");
             while (rs.next()){
-                //Location loc = new Location(getServer().getWorld("Time"),rs.getDouble("x"),rs.getDouble("y"),rs.getDouble("z"));
-                TimeMonster monster = new TimeMonster(this,rs.getInt("id"));
-                monsters.put(monster.getUniqueId(), monster);
+                Location loc = new Location(w,rs.getInt("x"),rs.getInt("y"),rs.getInt("z"));
+                //TimeMonster monster = new TimeMonster(this,rs.getInt("id"));
+                getServer().getScheduler().runTask(this, new RunnableSpawn(this, loc, rs.getString("type")));
+                //monster.spawnWithCheck();
+                //monsters.put(monster.getUniqueId(), monster);
             }
         } catch (Exception ex) {
             sendConsole("Failed to loadMonsters, " + ex);
@@ -310,17 +323,7 @@ public final class Time extends JavaPlugin {
         return homes.get(name);
     }
     
-    public TimeMonster getMonster(UUID uuid){
-        return monsters.get(uuid);
-    }
     
-    public void removeMonster(UUID uuid){
-        monsters.remove(uuid);
-    }
-    
-    public void addMonster(TimeMonster monster){
-        monsters.put(monster.getUniqueId(), monster);
-    }
     
     public Home getHome(Location loc){
         RegionManager mgr = worldGuard.getRegionManager(loc.getWorld());

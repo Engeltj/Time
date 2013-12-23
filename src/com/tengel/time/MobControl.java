@@ -11,6 +11,10 @@ import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.runnables.RunnableSpawn;
 import com.tengel.time.structures.TimeMonster;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.HashMap;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -32,8 +36,12 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.bukkit.entity.Monster;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.entity.EntityDeathEvent;
 
 /**
  *
@@ -42,10 +50,12 @@ import java.util.regex.Pattern;
 public class MobControl implements Listener {
     private final Time plugin;
     private final World world;
+    private HashMap<UUID, TimeMonster> monsters;
     
     public MobControl(Time plugin, World world){
         this.plugin = plugin;
         this.world = world;
+        this.monsters = new HashMap<UUID, TimeMonster>();
     }
     
     public boolean createSpawn(CommandSender sender, int difficulty){
@@ -60,6 +70,32 @@ public class MobControl implements Listener {
         return (wgu.createRegionFromSelection(p, name+plugin.intToString(i, 3)) != null);
     }
     
+    
+    public void addMonsterSpawn(Location loc, String type){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            st.executeUpdate("INSERT INTO `spawns` (type,x,y,z) VALUES ('"+type+"',"+loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ()+");");
+            RunnableSpawn rs = new RunnableSpawn(plugin, loc, type);
+            rs.run();
+        } catch (Exception ex) {
+            plugin.sendConsole("Failed to add new spawn for '"+type+"' in MobControl class, " + ex);
+        }
+        
+    }
+    
+    public TimeMonster getTimeMonster(UUID uuid){
+        return monsters.get(uuid);
+    }
+    
+    public void removeTimeMonster(UUID uuid){
+        monsters.remove(uuid);
+    }
+    
+    public void addTimeMonster(TimeMonster tm){
+        monsters.put(tm.getMonster().getUniqueId(), tm);
+    }
     
     private void setArmours(LivingEntity creature, int zone, int difficulty){
         Random r_gen = new Random();
@@ -145,30 +181,29 @@ public class MobControl implements Listener {
         return level;
     }
     
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onDeath(EntityDeathEvent event){
+        LivingEntity ent = event.getEntity();
+        if(ent instanceof Monster) {
+            double lvl_dead = plugin.getMobControl().getLevel(ent);
+            if (lvl_dead > 0){
+                plugin.getServer().getScheduler().runTaskLater(plugin, new RunnableSpawn(plugin,getTimeMonster(ent.getUniqueId()).getSpawnLocation(), ent.getType().name()), 20*10);
+                removeTimeMonster(ent.getUniqueId());
+            }
+            int exp = (int) Math.ceil(lvl_dead/12.0);
+            event.setDroppedExp(exp);
+        }
+    }
+    
+    
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         LivingEntity creature = event.getEntity();
         
-        if(!(creature instanceof Player)) {
+        if(creature instanceof Monster) {
             String world = event.getLocation().getWorld().getName();
             if ((world.equalsIgnoreCase("Time") && (event.getSpawnReason() == SpawnReason.NATURAL)))
                 event.setCancelled(true);
-            /*else if (!world.equalsIgnoreCase("Time")){
-                List<Entity> list = event.getEntity().getNearbyEntities(128 , 128 , 128);
-                for (Entity ent : list){
-                    if (ent instanceof Player){
-                        //Player p = (Player) ent;
-                        Random r_gen = new Random();
-                        int level = r_gen.nextInt(getLevel(ent))+1;
-                        double multiplier = 1.2 - r_gen.nextDouble()*0.4;
-                        setArmours(creature, r_gen.nextInt(3), r_gen.nextInt(5)+1);
-                        setHealth(creature, level, multiplier);
-                        setName(creature, level, multiplier);
-                        creature.setCustomNameVisible(true);
-                        return;
-                    }
-                }
-            }*/
             RegionManager mgr = plugin.worldGuard.getRegionManager(event.getLocation().getWorld());
             for (ProtectedRegion rg : mgr.getApplicableRegions(event.getLocation())){
                 if (rg.getId().contains("spawn_")){
@@ -177,10 +212,11 @@ public class MobControl implements Listener {
                         Vector v = new Vector(loc.getX(),loc.getY(),loc.getZ());
                         if (rg.contains(v)){
                             LivingEntity ent = event.getEntity();
-                            TimeMonster monster = plugin.getMonster(ent.getUniqueId());
-                            if (monster != null)
-                                plugin.getServer().getScheduler().runTaskLater(plugin, new RunnableSpawn(monster), 20*300);
+                            //TimeMonster monster = new TimeMonster(plugin,event.getLocation(),ent.toString());
+                            //plugin.addMonster(monster);
+                            plugin.getServer().getScheduler().runTaskLater(plugin, new RunnableSpawn(plugin, event.getLocation(), ent.getType().name()), 20*10);
                             event.setCancelled(true);
+                            return;
                         }
                     }
                     int zone = plugin.getRegionControl().getZoneId(event.getLocation());
@@ -192,7 +228,7 @@ public class MobControl implements Listener {
                     setHealth(creature, level, multiplier);
                     setName(creature, level, multiplier);
                     
-                    PotionEffect pe = new PotionEffect(PotionEffectType.SPEED,99999,zone);
+                    PotionEffect pe = new PotionEffect(PotionEffectType.SPEED,3,zone);
                     event.getEntity().addPotionEffect(pe);
                     
                     creature.setCustomNameVisible(true);
