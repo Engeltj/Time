@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
 import org.bukkit.entity.Monster;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 
 /**
  *
@@ -82,7 +83,22 @@ public class MobControl implements Listener {
         } catch (Exception ex) {
             plugin.sendConsole("Failed to add new spawn for '"+type+"' in MobControl class, " + ex);
         }
-        
+    }
+    
+    public boolean removeMonsterSpawn(Location loc, String type){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT id FROM `spawns` WHERE type='"+type+"' AND x="+loc.getBlockX()+" AND y="+loc.getBlockY()+" AND z="+loc.getBlockZ()+";");
+            if (rs.first()){
+                st.executeUpdate("DELETE FROM `spawns` WHERE id="+rs.getInt("id")+";");
+                return true;
+            }
+        } catch (Exception ex) {
+            plugin.sendConsole("Failed to remove spawn for '"+type+"' in MobControl class, " + ex);
+        }
+        return false;
     }
     
     public TimeMonster getTimeMonster(UUID uuid){
@@ -185,63 +201,93 @@ public class MobControl implements Listener {
     public void onDeath(EntityDeathEvent event){
         LivingEntity ent = event.getEntity();
         if(ent instanceof Monster) {
-            double lvl_dead = plugin.getMobControl().getLevel(ent);
-            if (lvl_dead > 0){
+            TimeMonster monster = plugin.getMobControl().getTimeMonster(ent.getUniqueId());
+            if (monster != null){
+                double lvl_dead = plugin.getMobControl().getLevel(ent);
                 plugin.getServer().getScheduler().runTaskLater(plugin, new RunnableSpawn(plugin,getTimeMonster(ent.getUniqueId()).getSpawnLocation(), ent.getType().name()), 20*10);
                 removeTimeMonster(ent.getUniqueId());
+                int exp = (int) Math.ceil(lvl_dead/12.0);
+                event.setDroppedExp(exp);
             }
-            int exp = (int) Math.ceil(lvl_dead/12.0);
-            event.setDroppedExp(exp);
         }
+    }
+   
+    
+    @EventHandler
+    public void onTargetPlayer(EntityTargetLivingEntityEvent event){
+        Entity ent = event.getTarget();
+        if (ent instanceof Player){
+            
+        } else
+            event.setCancelled(true);
+    }
+    
+    private boolean playerInChunkRadius(Location start, int chunk_rad){
+        Location loc = null;
+        for (int x=-chunk_rad;x<chunk_rad;x++){
+            for (int z=-chunk_rad;z<chunk_rad;z++){
+                loc = new Location(start.getWorld(), start.getBlockX()+16*x, start.getBlockY(), start.getBlockZ()+16*z);
+                for(Entity ent : loc.getChunk().getEntities()){
+                    if (ent instanceof Player)
+                        return true;
+                }
+            }
+        }
+        return false;
     }
     
     
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         LivingEntity creature = event.getEntity();
-        
         if(creature instanceof Monster) {
-            String world = event.getLocation().getWorld().getName();
-            if ((world.equalsIgnoreCase("Time") && (event.getSpawnReason() == SpawnReason.NATURAL)))
-                event.setCancelled(true);
-            RegionManager mgr = plugin.worldGuard.getRegionManager(event.getLocation().getWorld());
-            for (ProtectedRegion rg : mgr.getApplicableRegions(event.getLocation())){
-                if (rg.getId().contains("spawn_")){
-                    for (Player p : plugin.getServer().getOnlinePlayers()){
-                        Location loc = p.getLocation();
-                        Vector v = new Vector(loc.getX(),loc.getY(),loc.getZ());
-                        if (rg.contains(v)){
-                            LivingEntity ent = event.getEntity();
-                            //TimeMonster monster = new TimeMonster(plugin,event.getLocation(),ent.toString());
-                            //plugin.addMonster(monster);
-                            plugin.getServer().getScheduler().runTaskLater(plugin, new RunnableSpawn(plugin, event.getLocation(), ent.getType().name()), 20*10);
-                            event.setCancelled(true);
-                            return;
-                        }
-                    }
-                    int zone = plugin.getRegionControl().getZoneId(event.getLocation());
-                    int difficulty = getSpawnDifficulty(rg.getId());
-                    Random r_gen = new Random();
-                    double multiplier = 1.2 - r_gen.nextDouble()*0.4;
-                    int level = (int) (zone*66 + ((difficulty-1)*13)+7 - 6 + Math.round(r_gen.nextDouble()*12));
-                    setArmours(creature, zone, difficulty);
-                    setHealth(creature, level, multiplier);
-                    setName(creature, level, multiplier);
-                    
-                    PotionEffect pe = new PotionEffect(PotionEffectType.SPEED,3,zone);
-                    event.getEntity().addPotionEffect(pe);
-                    
-                    creature.setCustomNameVisible(true);
-                    creature.setRemoveWhenFarAway(false);
+            Location loc = event.getLocation();
+            World w = loc.getWorld();
+            SpawnReason sr = event.getSpawnReason();
+            if (w.getName().equalsIgnoreCase("Time")) {
+                if ((sr == SpawnReason.NATURAL) || (sr == SpawnReason.DEFAULT)){
+                    event.setCancelled(true);
                     return;
                 }
-            } 
+                if (sr == SpawnReason.CUSTOM){
+                    if (!playerInChunkRadius(loc, 5)){
+                        String region = "";
+                        RegionManager mgr = plugin.worldGuard.getRegionManager(w);
+                        for (ProtectedRegion rg : mgr.getApplicableRegions(loc)){
+                            if (rg.getId().contains("spawn_"))
+                                region = rg.getId();
+                        }
+                        int zone = plugin.getRegionControl().getZoneId(loc);
+                        int difficulty = getSpawnDifficulty(region);
+                        Random r_gen = new Random();
+                        double multiplier = 1.2 - r_gen.nextDouble()*0.4;
+                        int level = (int) (zone*66 + ((difficulty-1)*13)+7 - 6 + Math.round(r_gen.nextDouble()*12));
+                        setArmours(creature, zone, difficulty);
+                        setHealth(creature, level, multiplier);
+                        setName(creature, level, multiplier);
+
+                        PotionEffect pe = new PotionEffect(PotionEffectType.SPEED,3000,zone);
+                        creature.addPotionEffect(pe);
+
+                        creature.setCustomNameVisible(true);
+                        creature.setRemoveWhenFarAway(false);
+                        creature.setCanPickupItems(false);
+                        return;
+                    } else {
+                        plugin.getMobControl().removeTimeMonster(creature.getUniqueId());
+                        plugin.getServer().getScheduler().runTaskLater(plugin, new RunnableSpawn(plugin, event.getLocation(), creature.getType().name()), 20*10);
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+            }
         }
     }
     
     @EventHandler
     public void onCombust(EntityCombustEvent event){
-        event.setCancelled(true);
+        if (event.getEntity().getWorld().getName().equalsIgnoreCase("Time"))
+            event.setCancelled(true);
     }
     
     public double getDamage(int level, double regularHit){

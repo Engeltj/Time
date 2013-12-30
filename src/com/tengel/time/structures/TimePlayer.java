@@ -35,6 +35,7 @@ public class TimePlayer implements IStructure{
     private boolean jailed;
     private List<Short> blockLicenses;
     private Time plugin;
+    private boolean adminMode = false;
     
     public boolean flagConfirm;
     
@@ -157,6 +158,10 @@ public class TimePlayer implements IStructure{
         this.zone = zone;
     }
     
+    public void setAdminMode(boolean mode){
+        this.adminMode = mode;
+    }
+    
     public void setJailed(boolean jailed){
         this.jailed = jailed;
     }
@@ -188,6 +193,10 @@ public class TimePlayer implements IStructure{
     
     public short getZone(){
         return zone;
+    }
+    
+    public boolean getAdminMode(){
+        return adminMode;
     }
     
     public boolean getJailed(){

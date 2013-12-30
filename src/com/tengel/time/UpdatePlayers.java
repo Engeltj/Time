@@ -25,8 +25,8 @@ public class UpdatePlayers implements Runnable {
     }
     
     public void run() {
+        RegionControl rc = plugin.getRegionControl();
         for (Player player : plugin.getServer().getOnlinePlayers()){
-            RegionControl rc = plugin.getRegionControl();
             boolean wrongZone = rc.isWrongZone(player);
             TimePlayer tp = plugin.getPlayer(player.getName());
             if (wrongZone){
@@ -42,12 +42,12 @@ public class UpdatePlayers implements Runnable {
                     player.sendMessage(ChatColor.GREEN + "You are free and cleared of all charges");
             }
             if ((tp.getAge() > 7*24*60*60*1000)){ //7000 days
+                plugin.sendConsole(String.valueOf(tp.getAge()));
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), updateInterval);
                 if (!es.transactionSuccess()){
-                    if (!tp.getJailed())
-                        tp.remove();
+                    //if (!tp.getJailed())
+                        //tp.remove();
                 }
-                //BukkitTask task = new ExampleTask(this.plugin).runTaskLater(this.plugin, 20);
             }
         }
     }

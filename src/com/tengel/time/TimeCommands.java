@@ -211,10 +211,17 @@ public class TimeCommands implements Listener{
     
     private void adminCommand(CommandSender sender, String[] args){
         if (args.length == 1){
+            sender.sendMessage(ChatColor.GRAY + "on|off" + ChatColor.GREEN + "  > Set admin mode on/off");
             sender.sendMessage(ChatColor.GRAY + "home" + ChatColor.GREEN + "  > Home related commands");
             sender.sendMessage(ChatColor.GRAY + "update" + ChatColor.GREEN + "  > Updates schematic prices");
             sender.sendMessage(ChatColor.GRAY + "createspawn [difficulty]" + ChatColor.GREEN + "  > Creates a spawn of select difficulty (1-5, 5=hardest)");
             sender.sendMessage(ChatColor.GRAY + "spawn [monster name]" + ChatColor.GREEN + "  > Sets your location to spawn the specified monster");
+        } else if (args[1].equalsIgnoreCase("on")){
+            plugin.getPlayer(sender.getName()).setAdminMode(true);
+            sender.sendMessage(ChatColor.GREEN+"Admin mode has been activated");
+        } else if (args[1].equalsIgnoreCase("off")){
+            plugin.getPlayer(sender.getName()).setAdminMode(false);
+            sender.sendMessage(ChatColor.GREEN+"Admin mode has been de-activated");
         } else if (args[1].equalsIgnoreCase("update")){
             WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.prof_builder.getWorld());
             wgu.updateBuildWorth(plugin.prof_builder.getSchematics());

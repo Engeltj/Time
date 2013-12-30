@@ -8,9 +8,9 @@ package com.tengel.time;
 
 import com.tengel.time.profs.Police;
 import com.tengel.time.profs.TimeProfession;
-import com.tengel.time.runnables.RunnableSpawn;
 import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
+import java.util.UUID;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
@@ -23,7 +23,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.*;
 
 import java.util.regex.Matcher;
@@ -63,6 +62,35 @@ public class TimePlayerListener implements Listener {
           ShopSigns ss = new ShopSigns(plugin, event.getPlayer());
           ss.create(event);
         }
+    }
+    
+    
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onPlayerThrowMonsterEgg(PlayerInteractEvent event){
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK){
+            if(event.getItem().getType() == Material.MONSTER_EGG){
+                Player p = event.getPlayer();
+                if (plugin.getPlayer(p.getName()).getAdminMode()){
+                    Block b = event.getClickedBlock();
+                    if (b == null){
+                        event.setCancelled(true);
+                        return;
+                    }
+                    String monster = event.getItem().getData().toString();
+                    Pattern pattern = Pattern.compile(".*\\{(.*)\\}");
+                    Matcher matcher = pattern.matcher(monster);
+                    if (matcher.find()) {
+                        monster = matcher.group(1);
+                        EntityType.valueOf(monster);
+                        Location loc = b.getLocation();
+                        plugin.getMobControl().addMonsterSpawn(loc, monster);
+                        p.sendMessage(ChatColor.GREEN + monster + " spawn added");
+                        event.setCancelled(true);
+                    }
+                }
+            }
+        }
+        
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
@@ -163,10 +191,15 @@ public class TimePlayerListener implements Listener {
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
+    public void onPlayerReSpawn(PlayerRespawnEvent event){
+        updatePlayerScoreboardHealth(event.getPlayer());
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerMove(PlayerMoveEvent event){
-        Player p = event.getPlayer();
-        if (p.getWalkSpeed() < 0.21)
-            setPlayerAttributes(p);
+        //Player p = event.getPlayer();
+        //if (p.getWalkSpeed() < 0.21)
+        //    setPlayerAttributes(p);
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
@@ -209,11 +242,18 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerJoin(PlayerJoinEvent event){
-        Player p = event.getPlayer();
+        final Player p = event.getPlayer();
         plugin.addPlayer(p.getName());
         setPlayerAttributes(p);
         updatePlayerScoreboardLevel(p);
         updatePlayerScoreboardHealth(p);
+        final TimePlayerListener obj = this;
+        plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+            public void run() {
+                setPlayerAttributes(p);
+                updatePlayerScoreboardHealth(p);
+            }
+        }, 20*1);
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
@@ -244,10 +284,28 @@ public class TimePlayerListener implements Listener {
     public void onAttack(EntityDamageByEntityEvent event){
         if (!copArrest(event)){
             Entity attacker = event.getDamager();
+            if (attacker instanceof Player){
+                Player p = (Player) attacker;
+                if (plugin.getPlayer(p.getName()).getAdminMode()){
+                    UUID uuid = event.getEntity().getUniqueId();
+                    TimeMonster monster = plugin.getMobControl().getTimeMonster(uuid);
+                    if (monster != null){
+                        String type = monster.getMonster().getType().name();
+                        if(plugin.getMobControl().removeMonsterSpawn(monster.getSpawnLocation(), type)){
+                            event.getEntity().remove();
+                            plugin.getMobControl().removeTimeMonster(uuid);
+                            p.sendMessage(ChatColor.RED+ type + " spawn removed!!");
+                        } else {
+                            p.sendMessage(ChatColor.RED+ "Failed to remove spawn "+type+"!");
+                        }
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+            }
             
             if (attacker instanceof Projectile)
                 attacker = ((Projectile)attacker).getShooter();
-            //Entity defender = event.getEntity();
             if (attacker == null)
                 event.setCancelled(true);
             int lvl_attacker = plugin.getMobControl().getLevel(attacker);
@@ -260,7 +318,7 @@ public class TimePlayerListener implements Listener {
     public boolean playerExists(String playername){
         for (OfflinePlayer player : plugin.getServer().getOfflinePlayers()) {
             if (player.getName().equalsIgnoreCase(playername)) {
-              return true;
+                return true;
             }
         }
         return false;

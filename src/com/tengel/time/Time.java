@@ -17,7 +17,6 @@ import com.tengel.time.profs.Landlord;
 import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.runnables.RunnableSpawn;
 import com.tengel.time.structures.Home;
-import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Location;
@@ -40,7 +39,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -51,9 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.UUID;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Monster;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
@@ -304,7 +300,6 @@ public final class Time extends JavaPlugin {
         return this.economy;
     }
     
-    
     public TimePlayer getPlayer(String name){
         return players.get(name);
     }
@@ -322,8 +317,6 @@ public final class Time extends JavaPlugin {
     public Home getHome(String name){
         return homes.get(name);
     }
-    
-    
     
     public Home getHome(Location loc){
         RegionManager mgr = worldGuard.getRegionManager(loc.getWorld());
@@ -409,6 +402,7 @@ public final class Time extends JavaPlugin {
         return loc;
     }
     
+    @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         TimeCommands tc = new TimeCommands(this, sender, cmd, label, args);
         return tc.executeCommand();
