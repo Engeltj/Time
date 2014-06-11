@@ -304,13 +304,11 @@ public class TimePlayerListener implements Listener {
                 }
             }
             
-            if (attacker instanceof Projectile)
-                attacker = ((Projectile)attacker).getShooter();
+            else if (attacker instanceof Projectile)
+                attacker = (Player) ((Projectile)attacker).getShooter();
             if (attacker == null)
                 event.setCancelled(true);
-            int lvl_attacker = plugin.getMobControl().getLevel(attacker);
-            //int lvl_defender = plugin.mobcontrol.getLevel(defender);
-            
+            int lvl_attacker = plugin.getMobControl().getLevel(attacker);            
             event.setDamage(plugin.getMobControl().getDamage(lvl_attacker, event.getDamage()));
         }
     }
