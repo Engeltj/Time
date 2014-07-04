@@ -22,6 +22,9 @@ import org.bukkit.event.Listener;
 import static com.sk89q.worldguard.bukkit.BukkitUtil.toVector;
 import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 /**
  *
  * @author Tim
@@ -116,5 +119,13 @@ public class RegionControl implements Listener {
     
     public boolean checkPermissions(Player p, String permission, boolean sendMessage){
         return (plugin.getPlayerListener().checkPermissions(p, permission, sendMessage));
+    }
+    
+    public Map<String, ProtectedRegion> getRegions(Location loc){
+        RegionManager mgr = plugin.worldGuard.getRegionManager(loc.getWorld());
+        HashMap<String, ProtectedRegion> map = new HashMap<String, ProtectedRegion>();
+        for (ProtectedRegion rg : mgr.getApplicableRegions(loc))
+            map.put(rg.getId(), rg);
+        return map;
     }
 }

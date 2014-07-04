@@ -90,6 +90,7 @@ public final class Time extends JavaPlugin {
     public void onEnable(){
         setupSql();
         PluginManager pm = getServer().getPluginManager();
+        CreativePlots creative_plots = new CreativePlots();
         worldGuard = (WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard");
         worldEdit = (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
         prof_miner = new Gatherer(this, TimeProfession.MINER);
@@ -116,6 +117,7 @@ public final class Time extends JavaPlugin {
         pluginName = "[" + pm.getPlugin("Time").getName() + "] ";
         final Time plugin = this;
         pm.registerEvents(this.playerListener, this);
+        pm.registerEvents(creative_plots, this);
         pm.registerEvents(this.worldGuardListener, this);
         pm.registerEvents(mobcontrol, this);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, timeUpdater, 0, timeUpdater.getUpdateInterval() * 20);
@@ -137,6 +139,13 @@ public final class Time extends JavaPlugin {
     @Override
     public void onDisable() {
         this.getServer().getScheduler().cancelTasks(this);
+        Iterator it = this.players.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pairs = (Map.Entry)it.next();
+            TimePlayer p = (TimePlayer) pairs.getValue();
+            p.save();
+            it.remove();
+        }
         getLogger().info("Time by Engeltj has been disabled");
         
     }
@@ -374,7 +383,7 @@ public final class Time extends JavaPlugin {
     
     public File getConfigSigns(){
         if (configSigns == null)
-            configSigns = new File(this.getDataFolder() + "\\signs.yml");
+            configSigns = new File(this.getDataFolder() + "/signs.yml");
         if (!this.configSigns.exists()){
             try {
                 this.configSigns.createNewFile();

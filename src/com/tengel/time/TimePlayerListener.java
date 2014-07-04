@@ -55,7 +55,7 @@ public class TimePlayerListener implements Listener {
             p.sendMessage(Double.toString(plugin.getEconomy().getBalance(p.getName())));
     }
     
-    @EventHandler(priority=EventPriority.NORMAL)
+    //@EventHandler(priority=EventPriority.NORMAL)
     public void onSignChange(SignChangeEvent event){
         String type = event.getLine(0);
         if (type.contains("[License]") || type.contains("[Shop]") || type.contains("[Job]")){
@@ -65,7 +65,7 @@ public class TimePlayerListener implements Listener {
     }
     
     
-    @EventHandler(priority=EventPriority.NORMAL)
+    //@EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerThrowMonsterEgg(PlayerInteractEvent event){
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK){
             if(event.getItem().getType() == Material.MONSTER_EGG){
@@ -90,10 +90,21 @@ public class TimePlayerListener implements Listener {
                 }
             }
         }
-        
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
+    public void onGameModeChange(PlayerGameModeChangeEvent event){
+        TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
+        if (tp != null){
+            try{
+                tp.getPlayerInventory().switchInventory(event.getNewGameMode());
+            }catch(Exception e){
+                plugin.sendConsole("onGameModeChange: " + e.toString());
+            }
+        }
+    }
+    
+    //@EventHandler(priority=EventPriority.NORMAL)
     public void onBlockBreak(BlockBreakEvent event){
         Player player = event.getPlayer();
         World world = player.getWorld();
@@ -159,19 +170,19 @@ public class TimePlayerListener implements Listener {
         board.getObjective(DisplaySlot.PLAYER_LIST).getScore(p).setScore(p.getLevel());
     }
     
-    @EventHandler(priority=EventPriority.NORMAL)
-    public void onPlayerLevelUp(PlayerLevelChangeEvent event){
-        Player p = event.getPlayer();
-        int oldLevel = event.getOldLevel();
-        int newLevel = event.getNewLevel();
-        p.sendMessage(ChatColor.WHITE+"You advanced from level "+ChatColor.GRAY+oldLevel + ChatColor.WHITE+" to level "+ChatColor.GRAY+newLevel);
-        setPlayerAttributes(p, newLevel);
-        p.setHealth(p.getMaxHealth());
-        updatePlayerScoreboardHealth(p);
-        updatePlayerScoreboardLevel(p);
-    }
+//    @EventHandler(priority=EventPriority.NORMAL)
+//    public void onPlayerLevelUp(PlayerLevelChangeEvent event){
+//        Player p = event.getPlayer();
+//        int oldLevel = event.getOldLevel();
+//        int newLevel = event.getNewLevel();
+//        p.sendMessage(ChatColor.WHITE+"You advanced from level "+ChatColor.GRAY+oldLevel + ChatColor.WHITE+" to level "+ChatColor.GRAY+newLevel);
+//        setPlayerAttributes(p, newLevel);
+//        p.setHealth(p.getMaxHealth());
+//        updatePlayerScoreboardHealth(p);
+//        updatePlayerScoreboardLevel(p);
+//    }
     
-    @EventHandler(priority=EventPriority.NORMAL)
+    //@EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerHealthRegen(EntityRegainHealthEvent event){
         Entity ent = event.getEntity();
         if (ent instanceof Player){
@@ -181,7 +192,7 @@ public class TimePlayerListener implements Listener {
             
     }
     
-    @EventHandler(priority=EventPriority.NORMAL)
+    //@EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerHealthDamaged(EntityDamageEvent event){
         Entity ent = event.getEntity();
         if (ent instanceof Player){
@@ -190,19 +201,19 @@ public class TimePlayerListener implements Listener {
         }
     }
     
-    @EventHandler(priority=EventPriority.NORMAL)
+    //@EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerReSpawn(PlayerRespawnEvent event){
         updatePlayerScoreboardHealth(event.getPlayer());
     }
     
-    @EventHandler(priority=EventPriority.NORMAL)
+    //@EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerMove(PlayerMoveEvent event){
         //Player p = event.getPlayer();
         //if (p.getWalkSpeed() < 0.21)
         //    setPlayerAttributes(p);
     }
     
-    @EventHandler(priority=EventPriority.NORMAL)
+    //@EventHandler(priority=EventPriority.NORMAL)
     public void onInteract(PlayerInteractEvent event){
         Block b;
         
@@ -244,22 +255,28 @@ public class TimePlayerListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event){
         final Player p = event.getPlayer();
         plugin.addPlayer(p.getName());
-        setPlayerAttributes(p);
-        updatePlayerScoreboardLevel(p);
-        updatePlayerScoreboardHealth(p);
-        final TimePlayerListener obj = this;
-        plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
-            public void run() {
-                setPlayerAttributes(p);
-                updatePlayerScoreboardHealth(p);
-            }
-        }, 20*1);
+        //setPlayerAttributes(p);
+        if (p.getMaxHealth() != 20)
+            p.setMaxHealth(20L);
+        if (p.getHealth() > 20)
+            p.setHealth(20L);
+        
+        //updatePlayerScoreboardLevel(p);
+        //updatePlayerScoreboardHealth(p);
+        //final TimePlayerListener obj = this;
+//        plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+//            public void run() {
+//                setPlayerAttributes(p);
+//                updatePlayerScoreboardHealth(p);
+//            }
+//        }, 20*1);
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerQuit(PlayerQuitEvent event){
         Player p = event.getPlayer();
-        plugin.getPlayer(p.getName()).save();
+        TimePlayer tp = plugin.getPlayer(p.getName());
+        tp.save();
         plugin.removePlayer(p.getName());
     }
     
@@ -280,7 +297,7 @@ public class TimePlayerListener implements Listener {
         } else return false;
     }
     
-    @EventHandler(priority=EventPriority.NORMAL)
+    //@EventHandler(priority=EventPriority.NORMAL)
     public void onAttack(EntityDamageByEntityEvent event){
         if (!copArrest(event)){
             Entity attacker = event.getDamager();

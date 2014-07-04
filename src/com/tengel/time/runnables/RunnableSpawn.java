@@ -36,7 +36,7 @@ public class RunnableSpawn extends BukkitRunnable {
     }
     
     public void run() {
-        spawn();
+        //spawn();
     }
     
     private void spawn(){

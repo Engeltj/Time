@@ -26,7 +26,7 @@ public class Config extends YamlConfiguration {
     
     public Config(Time plugin, String filename){
         this.plugin = plugin;
-        configFile = new File(plugin.getDataFolder() + "\\"+filename).getAbsoluteFile();
+        configFile = new File(plugin.getDataFolder() + "/"+filename).getAbsoluteFile();
         
         if (!configFile.exists()){
             try {

@@ -9,7 +9,14 @@ package com.tengel.time.structures;
 import com.tengel.time.Time;
 import com.tengel.time.TimeCommands;
 import com.tengel.time.profs.TimeProfession;
+import com.tengel.time.serialization.SPlayerInventory;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -20,7 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
 /**
  *
@@ -35,6 +44,7 @@ public class TimePlayer implements IStructure{
     private boolean jailed;
     private List<Short> blockLicenses;
     private Time plugin;
+    private SPlayerInventory spi;
     private boolean adminMode = false;
     
     public boolean flagConfirm;
@@ -68,6 +78,24 @@ public class TimePlayer implements IStructure{
                         this.jobs.put(TimeProfession.valueOf(job), skill);
                     }
                 }
+                ResultSet inventory = st.executeQuery("SELECT data FROM `inventories` WHERE player='"+name+"';");
+                if (inventory.next()){                    
+                    byte[] buf = inventory.getBytes(1);
+                    ObjectInputStream objectIn = null;
+                    if (buf != null){
+                      objectIn = new ObjectInputStream(new ByteArrayInputStream(buf));
+                      this.spi = (SPlayerInventory) objectIn.readObject();
+                      this.spi.performDeserialization(plugin.getServer().getPlayer(name));
+                    } else {
+                        Bukkit.getServer().getConsoleSender().sendMessage("New");
+                        this.spi = new SPlayerInventory(Bukkit.getServer().getPlayer(name));
+                    }
+                        
+                    
+                } else {
+                    Bukkit.getServer().getConsoleSender().sendMessage("New");
+                    this.spi = new SPlayerInventory(Bukkit.getServer().getPlayer(name));
+                }
                 
                 blockLicenses = new ArrayList<Short>();
                 ResultSet licenses = st.executeQuery("SELECT * FROM `licenses` WHERE player='"+name+"';");
@@ -96,12 +124,25 @@ public class TimePlayer implements IStructure{
                     st.executeUpdate("INSERT INTO `skills` SET skill="+pairs.getValue()+",job='"+pairs.getKey()+"',player='"+name+"';");
                 jobsString += pairs.getKey() + ",";
             }
+            
+            spi.updateInventoryData();
+            spi.performSerialization();
+            ResultSet rs = st.executeQuery("SELECT * FROM `inventories` WHERE player='"+name+"';");
+            String statement = "";
+            if (rs.first())
+                statement = "UPDATE `inventories` SET data=? WHERE player='"+name+"';";
+            else
+                statement = "INSERT INTO `inventories` (player, data) VALUE ('"+name+"',?);";
+            PreparedStatement pstmt = con.prepareStatement(statement);
+            pstmt.setObject(1, spi);
+            pstmt.executeUpdate();
+            
             for (short license : blockLicenses)
                 st.executeUpdate("REPLACE INTO `licenses` SET license="+license+" WHERE player='"+name+"' AND license="+license+";");
             st.executeUpdate("UPDATE `players` SET life="+plugin.getEconomy().getBalance(name)+",bounty="+bounty+",zone="+zone+
                     ",lastseen="+System.currentTimeMillis()/1000+",jobs='"+jobsString+"',jailed="+jailed+" WHERE name='"+name+"';");
         } catch (Exception ex) {
-            plugin.sendConsole("Failed to update db for '"+name+"' in TimePlayer class, " + ex);
+            plugin.sendConsole("Failed to update db ford '"+name+"' in TimePlayer class, " + ex);
         }
     }
     
@@ -125,6 +166,7 @@ public class TimePlayer implements IStructure{
             st.executeUpdate("DELETE FROM `licenses` WHERE player='"+name+"';");
             st.executeUpdate("DELETE FROM `skills` WHERE player='"+name+"';");
             st.executeUpdate("DELETE FROM `job_builder` WHERE player='"+name+"';");
+            st.executeUpdate("DELETE FROM `inventories` WHERE player='"+name+"';");
             st.executeUpdate("UPDATE `homes` SET renter='' WHERE renter='"+name+"';");
             st.executeUpdate("UPDATE `homes` SET owner='' WHERE owner='"+name+"';");
         } catch (Exception ex) {
@@ -213,5 +255,9 @@ public class TimePlayer implements IStructure{
     
     public long getAge(){
         return System.currentTimeMillis()/1000 - start;
+    }
+    
+    public SPlayerInventory getPlayerInventory(){
+        return spi;
     }
 }

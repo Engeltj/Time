@@ -40,6 +40,7 @@ public class TimeSQL {
             plugin.sendConsole("MySQL connection initialized to " + host);
         } catch (Exception ex) {
             plugin.sendConsole("Failed to make MySQL connection to " + host);
+            plugin.sendConsole(ex.toString());
             con = null;
             return false;
         }

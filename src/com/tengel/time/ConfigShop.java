@@ -15,7 +15,7 @@ import java.io.File;
 public class ConfigShop extends Config {    
     public ConfigShop(Time plugin){
         super(plugin);
-        setConfigFile(new File(plugin.getDataFolder() + "\\item_prices.yml").getAbsoluteFile());
+        setConfigFile(new File(plugin.getDataFolder() + "/item_prices.yml").getAbsoluteFile());
         
         if (!getConfigFile().exists()){
             try {

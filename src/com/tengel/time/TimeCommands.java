@@ -9,7 +9,6 @@ package com.tengel.time;
 import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.structures.Home;
-import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
 import java.util.HashMap;
 import java.util.Iterator;

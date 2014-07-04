@@ -11,9 +11,14 @@
     <url>http://maven.apache.org</url>
     
     <repositories>
-        <repository>
+<!--        <repository>
             <id>bukkit-repo</id>
             <url>http://repo.bukkit.org/content/groups/public</url>
+        </repository>-->
+        
+        <repository>
+            <id>spigot-repo</id>
+            <url>http://dev.escapecraft.com/maven/</url>
         </repository>
         <repository>
             <id>vault-repo</id>
@@ -49,9 +54,9 @@
 	  <scope>test</scope>
 	</dependency>
         <dependency>
-            <groupId>org.bukkit</groupId>
-            <artifactId>bukkit</artifactId>
-            <version>LATEST</version>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot</artifactId>
+            <version>1.7.9-R0.3-hydrox-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.sk89q</groupId>
@@ -61,7 +66,7 @@
         <dependency>
             <groupId>com.sk89q</groupId>
             <artifactId>worldedit</artifactId>
-            <version>LATEST</version>
+            <version>5.6.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>WGRegionEvents</groupId>
@@ -69,6 +74,13 @@
             <version>1.2</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/WGRegionEvents-1.2.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>CoreProtect</groupId>
+            <artifactId>CoreProtect</artifactId>
+            <version>2.0.9</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/CoreProtect_2.0.9.jar</systemPath>
         </dependency>
         <!--<dependency>
                 <groupId>Essentials</groupId>

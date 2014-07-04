@@ -42,7 +42,7 @@ public class UpdatePlayers implements Runnable {
                     player.sendMessage(ChatColor.GREEN + "You are free and cleared of all charges");
             }
             if ((tp.getAge() > 7*24*60*60*1000)){ //7000 days
-                plugin.sendConsole(String.valueOf(tp.getAge()));
+                //plugin.sendConsole(String.valueOf(tp.getAge()));
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), updateInterval);
                 if (!es.transactionSuccess()){
                     //if (!tp.getJailed())

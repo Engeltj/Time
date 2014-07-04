@@ -197,7 +197,7 @@ public class MobControl implements Listener {
         return level;
     }
     
-    @EventHandler(priority=EventPriority.NORMAL)
+    //@EventHandler(priority=EventPriority.NORMAL)
     public void onDeath(EntityDeathEvent event){
         LivingEntity ent = event.getEntity();
         if(ent instanceof Monster) {
@@ -213,7 +213,7 @@ public class MobControl implements Listener {
     }
    
     
-    @EventHandler
+    //@EventHandler
     public void onTargetPlayer(EntityTargetLivingEntityEvent event){
         Entity ent = event.getTarget();
         if (ent instanceof Player){
@@ -237,7 +237,7 @@ public class MobControl implements Listener {
     }
     
     
-    @EventHandler
+    //@EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         LivingEntity creature = event.getEntity();
         if(creature instanceof Monster) {
@@ -284,7 +284,7 @@ public class MobControl implements Listener {
         }
     }
     
-    @EventHandler
+    //@EventHandler
     public void onCombust(EntityCombustEvent event){
         if (event.getEntity().getWorld().getName().equalsIgnoreCase("Time"))
             event.setCancelled(true);
