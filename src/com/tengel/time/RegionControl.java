@@ -20,11 +20,14 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import static com.sk89q.worldguard.bukkit.BukkitUtil.toVector;
+import com.sk89q.worldguard.protection.GlobalRegionManager;
 import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import org.bukkit.World;
 /**
  *
  * @author Tim
@@ -126,6 +129,22 @@ public class RegionControl implements Listener {
         HashMap<String, ProtectedRegion> map = new HashMap<String, ProtectedRegion>();
         for (ProtectedRegion rg : mgr.getApplicableRegions(loc))
             map.put(rg.getId(), rg);
+        return map;
+    }
+    
+    public Map<String, ProtectedRegion> getRegionsByOwner(String owner){
+        GlobalRegionManager gmgr = plugin.worldGuard.getGlobalRegionManager();
+        HashMap<String, ProtectedRegion> map = new HashMap<String, ProtectedRegion>();
+        for (World w : plugin.getServer().getWorlds()){
+            RegionManager mgr = gmgr.get(w);
+            Iterator it = mgr.getRegions().entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry pairs = (Map.Entry)it.next();
+                ProtectedRegion rg = (ProtectedRegion) pairs.getValue();
+                if (rg.getOwners().getPlayers().contains(owner))
+                    map.put(rg.getId(), rg);
+            }
+        }
         return map;
     }
 }

@@ -109,6 +109,7 @@ public class TimeCommands implements Listener{
             sender.sendMessage(ChatColor.GRAY + "/"+command+" age" + ChatColor.GREEN + "  > How long you've played");
             sender.sendMessage(ChatColor.GRAY + "/"+command+" left" + ChatColor.GREEN + "  > How long you have left to live");
             sender.sendMessage(ChatColor.GRAY + "/"+command+" bounty" + ChatColor.GREEN + "  > The bounty on your head to be captured");
+            sender.sendMessage(ChatColor.GRAY + "/"+command+" plot" + ChatColor.GREEN + "  > Creative plots related commands");
             sender.sendMessage(ChatColor.GRAY + "/"+command+" bail" + ChatColor.GREEN + "  > Pays off the price on your head so you may leave jail");
             sender.sendMessage(ChatColor.GRAY + "/"+command+" password" + ChatColor.GREEN + "  > Sets your website account password");
             sender.sendMessage(ChatColor.GRAY + "/"+command+" job" + ChatColor.GREEN + "  > Profession specific commands");
@@ -123,6 +124,13 @@ public class TimeCommands implements Listener{
             double seconds = plugin.getEconomy().getBalance(sender.getName());
             String time = convertSecondsToTime(seconds);
             sender.sendMessage(ChatColor.DARK_GREEN + time); 
+        }
+        else if (args[0].equalsIgnoreCase("plot")){
+            if (args.length == 1){
+                sender.sendMessage(ChatColor.GRAY + "create" + ChatColor.GREEN + "  > Claims a new plot where you stand");
+                sender.sendMessage(ChatColor.GRAY + "destroy" + ChatColor.GREEN + "  > Unclaims plot where you stand, your blocks will be destroyed");
+            } else 
+                return commandsPlot(sender, args);
         }
         else if (args[0].equalsIgnoreCase("bounty")){
             TimePlayer tp = plugin.getPlayer(sender.getName());
@@ -254,6 +262,16 @@ public class TimeCommands implements Listener{
                 sender.sendMessage(ChatColor.RED+"BLAZE CAVE_SPIDER CREEPER ENDERMAN GHAST GIANT IRON_GOLEM MAGMA_CUBE PIG_ZOMBIE SILVERFISH SKELETON SLIME SPIDER WOLF ZOMBIE ");
             }   
         }
+    }
+    
+    public boolean commandsPlot(CommandSender sender, String[] args){
+        if (args[1].equalsIgnoreCase("create")){
+            plugin.getCreativePlots().create(plugin.getServer().getPlayer(sender.getName()));
+        } else if (args[1].equalsIgnoreCase("destroy")){
+            return false;
+        } else
+            return false;
+        return true;
     }
     
     

@@ -73,6 +73,7 @@ public final class Time extends JavaPlugin {
     public WorldEditPlugin worldEdit;
     private TimeSQL sql;
     private MobControl mobcontrol;
+    private CreativePlots creative_plots;
     
     public Gatherer prof_miner;
     public Gatherer prof_farmer;
@@ -90,7 +91,7 @@ public final class Time extends JavaPlugin {
     public void onEnable(){
         setupSql();
         PluginManager pm = getServer().getPluginManager();
-        CreativePlots creative_plots = new CreativePlots();
+        creative_plots = new CreativePlots(this);
         worldGuard = (WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard");
         worldEdit = (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
         prof_miner = new Gatherer(this, TimeProfession.MINER);
@@ -379,6 +380,10 @@ public final class Time extends JavaPlugin {
     
     public MobControl getMobControl(){
         return mobcontrol;
+    }
+    
+    public CreativePlots getCreativePlots(){
+        return creative_plots;
     }
     
     public File getConfigSigns(){

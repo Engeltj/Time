@@ -9,6 +9,7 @@ import com.mewin.WGRegionEvents.events.RegionLeaveEvent;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.serialization.SPlayerInventory;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,13 +19,18 @@ import org.bukkit.entity.Player;
 
 import net.coreprotect.CoreProtect;
 import net.coreprotect.CoreProtectAPI;
-import net.minecraft.server.v1_7_R3.Material;
+import net.coreprotect.CoreProtectAPI.ParseResult;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -33,8 +39,9 @@ import org.bukkit.plugin.Plugin;
  */
 public class CreativePlots  implements Listener{
     HashMap<String,SPlayerInventory> data;
-    public CreativePlots(){
-        
+    private final Time plugin;
+    public CreativePlots(Time plugin){
+        this.plugin = plugin;
     }
     
     @EventHandler
@@ -58,10 +65,15 @@ public class CreativePlots  implements Listener{
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event){
         Player p = event.getPlayer();
-        if (p.getGameMode() == GameMode.CREATIVE){
-            Time t = (Time) Bukkit.getServer().getPluginManager().getPlugin("Time");
+        if ((p.getGameMode() == GameMode.CREATIVE) && !p.isOp()){
+            Block b = event.getBlock();
+            if (b.getType().equals(Material.TNT)){
+                p.sendMessage(ChatColor.RED + "TNT is not allowed in creative");
+                event.setCancelled(true);
+            }
+                
             if (!p.getWorld().getName().equals("Time")){
-                Set<String> keys = t.getRegionControl().getRegions(event.getBlock().getLocation()).keySet();
+                Set<String> keys = plugin.getRegionControl().getRegions(b.getLocation()).keySet();
                 for (String key : keys){
                     if (key.contains("cplot_"))
                         return;
@@ -69,12 +81,90 @@ public class CreativePlots  implements Listener{
                 p.sendMessage(ChatColor.RED + "You cannot build outside of plot!");
                 event.setCancelled(true);
             }
+        } else if ((p.getGameMode() == GameMode.SURVIVAL) && !p.isOp()){
+            if (!p.getWorld().getName().equals("Time")){
+                Set<String> keys = plugin.getRegionControl().getRegions(event.getBlock().getLocation()).keySet();
+                for (String key : keys){
+                    if (key.contains("cplot_")){
+                        p.sendMessage(ChatColor.RED + "Please enter plot area first");
+                        event.setCancelled(true);
+                    }
+                        
+                }
+            }
+        }
+    }
+    
+    @EventHandler
+    public void onBlockRemove(BlockBreakEvent event){
+        Player p = event.getPlayer();
+        if (p.getGameMode() == GameMode.CREATIVE){
+            Block b = event.getBlock();
+            if (b.getLocation().getBlockY() < 5 && b.getType().equals(Material.BEDROCK)){
+                p.sendMessage(ChatColor.RED + "You may not break bedrock at this depth");
+                event.setCancelled(true);
+            }
+        }
+    }
+    
+    @EventHandler
+    public void onPlayerDrop(PlayerDropItemEvent event){
+        Player p = event.getPlayer();
+        if (p.getGameMode() == GameMode.CREATIVE){
+            event.setCancelled(true);
+        }
+    }
+    
+    @EventHandler
+    public void onBlockDamage(BlockDamageEvent event){
+        Player p = event.getPlayer();
+        Set<String> keys = plugin.getRegionControl().getRegions(event.getBlock().getLocation()).keySet();
+        for (String key : keys){
+            if (key.contains("cplot_")){
+                p.sendMessage(ChatColor.RED + "You may not mine a creative plot");
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+    
+    @EventHandler
+    public void onEntityExplode(EntityExplodeEvent event){
+        List<Block> blocks = event.blockList();
+        Iterator<Block> i = blocks.iterator();
+        while (i.hasNext()) {
+            Block b = i.next();
+            Set<String> keys = plugin.getRegionControl().getRegions(b.getLocation()).keySet();
+            for (String key : keys){
+                if (key.contains("cplot_")){
+                    i.remove();
+                    break;
+                }
+            }
         }
     }
     
     public boolean create(Player p){
-        Location loc = p.getLocation();
+        int count = getAmountOwned(p.getName());
+        if (count == 0){
+            Location loc = p.getLocation();
+            if (isQualified(p.getName(), loc)){
+                p.sendMessage("You seem to qualify!");
+            } else
+                 p.sendMessage(ChatColor.RED + "You don't qualify!");
+        }
+        
         return true;
+    }
+    
+    private int getAmountOwned(String player){
+        int count = 0;
+        Set<String> keys = plugin.getRegionControl().getRegionsByOwner(player).keySet();
+        for (String key : keys){
+            if (key.contains("cplot_"))
+                count++;
+        }
+       return count;
     }
     
     private CoreProtectAPI getCoreProtect() {
@@ -96,26 +186,21 @@ public class CreativePlots  implements Listener{
         return CoreProtect;
     }
     
-    private boolean isNatural(Location loc){
+    private boolean isQualified(String player, Location loc){
         CoreProtectAPI cp_plugin = getCoreProtect();
-//        Location start = new Location(loc.getWorld(),loc.getBlockX()-5, 0D, loc.getBlockZ()-5);
-//        Location end = new Location(loc.getWorld(),loc.getBlockX()+5, 255D, loc.getBlockZ()+5);
         if (cp_plugin == null)
             return false;
+        List<String[]> data = cp_plugin.performLookup(null, 60*60*60*24*60, 5, loc, null, null);
         
-        return (cp_plugin.performLookup(null, 60*60*60*24*90, 5, loc, null, null).isEmpty());
-//        for (int x=start.getBlockX(); x < end.getBlockX(); x++){
-//            for (int y=start.getBlockY(); y < end.getBlockY(); y++){
-//                for (int z=start.getBlockZ(); z < end.getBlockZ(); z++){
-//                    Location loc_temp = new Location(loc.getWorld(), x, y, z);
-//                    Block b = p.getWorld().getBlockAt(loc_temp);
-//                    if (b.getType().equals(Material.AIR))
-//                        continue;
-//                    List<String[]> result = cp_plugin.blockLookup(b, 60*60*60*24*90);
-//                    if (result.isEmpty())
-//                        return false;
-//                }
-//            }
-//        }
+        for (String[] value: data){
+            ParseResult result = cp_plugin.parseResult(value);
+            String temp_player = result.getPlayer();
+            System.out.println(temp_player);
+            if (!temp_player.equalsIgnoreCase(player)){
+                if (plugin.getServer().getPlayer(temp_player) != null)
+                    return false;
+            }
+        }
+        return true;
     }
 }
