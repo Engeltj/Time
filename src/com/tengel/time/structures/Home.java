@@ -57,7 +57,7 @@ public class Home implements IStructure{
         else if (type.equalsIgnoreCase("home"))
             type = "house";
         WorldGuardUtil wgu = new WorldGuardUtil(plugin, p.getWorld());
-        if (!wgu.saveSchematic(p, name))
+        if (!wgu.saveSchematic(p, "homes", name))
             p.sendMessage(ChatColor.RED + "Failed to save schematic for home '"+name+"', aborting home create.");
         if (wgu.createRegionFromSelection(p, name) == null)
             p.sendMessage(ChatColor.RED + "Failed to create region for home '"+name+"', aborting home create.");

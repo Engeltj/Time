@@ -19,6 +19,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import com.sk89q.worldguard.protection.GlobalRegionManager;
+import com.sk89q.worldguard.protection.databases.ProtectionDatabaseException;
 import com.tengel.time.structures.TimePlayer;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -183,6 +184,19 @@ public class RegionControl implements Listener {
         end = new Location(w,loc.getX()+length/2.0, 255L, loc.getZ()+width/2.0);
         
         return createRegion(name,start, end);
+    }
+    
+    public void removeRegion(String region, World w){
+        WorldGuardUtil wgu = new WorldGuardUtil(plugin, w);
+        wgu.deleteRegion(region);
+    }
+    
+    public void saveRegions(World w){
+        try {
+            plugin.worldGuard.getRegionManager(w).save();
+        } catch (ProtectionDatabaseException ex) {
+            Logger.getLogger(RegionControl.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     public void addRegionOwner(String owner, ProtectedRegion pr){

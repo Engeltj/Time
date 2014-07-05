@@ -127,7 +127,7 @@ public class WorldGuardUtil {
         BlockVector bv_start = new BlockVector(start.getX(), start.getY(), start.getZ());
         BlockVector bv_end = new BlockVector(end.getX(), end.getY(), end.getZ());
         region = new ProtectedCuboidRegion(id, bv_start, bv_end);
-        region.setPriority(11); /// some relatively high priority
+        //region.setPriority(11); /// some relatively high priority
         //region.setFlag(DefaultFlag.PVP,State.ALLOW);
         mgr.addRegion(region);
 
@@ -355,44 +355,67 @@ public class WorldGuardUtil {
                     }
                 }                
         return (same/total*100D);
-    }        
-
-    public boolean saveSchematic(Player p, String schematicName){
-        CommandContext cc;
+    }   
+    
+    public boolean saveSchematic(Player p, ProtectedRegion region, String subdir, String schematicName){
         WorldEditPlugin wep = plugin.worldEdit;
         final LocalSession session = wep.getSession(p);
         final BukkitPlayer lPlayer = wep.wrapPlayer(p);
         EditSession editSession = session.createEditSession(lPlayer);
-
         try {
-                Region region = session.getSelection(lPlayer.getWorld());
-                Vector min = region.getMinimumPoint();
-                Vector max = region.getMaximumPoint();
-                CuboidClipboard clipboard = new CuboidClipboard(
-                                max.subtract(min).add(new Vector(1, 1, 1)),
-                                min, new Vector(0,0,0));
-                clipboard.copy(editSession);
-                session.setClipboard(clipboard);
+            Vector min = region.getMinimumPoint();
+            Vector max = region.getMaximumPoint();
+            CuboidClipboard clipboard = new CuboidClipboard(
+                            max.subtract(min).add(new Vector(1, 1, 1)),
+                            min, new Vector(0,0,0));
+            clipboard.copy(editSession);
+            session.setClipboard(clipboard);
 
-                String args2[] = {"save", "mcedit", schematicName};
-                cc = new CommandContext(args2);
-                save(cc, session, lPlayer);
-                return true;
+            String args2[] = {"save", "mcedit", schematicName};
+            CommandContext cc = new CommandContext(args2);
+            save(cc, session, lPlayer, subdir);
+            return true;
         } catch (Exception ex) {
-                plugin.sendConsole("Failed to saveSchematic of name '" + schematicName +"', reason: " + ex);
-                return false;
+            plugin.sendConsole("Failed to saveSchematic of name '" + schematicName +"', reason: " + ex);
+            return false;
         }
     }
 
-    private void save(CommandContext args, LocalSession session, LocalPlayer player) throws WorldEditException, CommandException {
+    public boolean saveSchematic(Player p, String subdir, String schematicName){
+        WorldEditPlugin wep = plugin.worldEdit;
+        final LocalSession session = wep.getSession(p);
+        final BukkitPlayer lPlayer = wep.wrapPlayer(p);
+        EditSession editSession = session.createEditSession(lPlayer);
+        try {
+            Region region = session.getSelection(lPlayer.getWorld());
+            Vector min = region.getMinimumPoint();
+            Vector max = region.getMaximumPoint();
+            CuboidClipboard clipboard = new CuboidClipboard(
+                            max.subtract(min).add(new Vector(1, 1, 1)),
+                            min, new Vector(0,0,0));
+            clipboard.copy(editSession);
+            session.setClipboard(clipboard);
+
+            String args2[] = {"save", "mcedit", schematicName};
+            CommandContext cc = new CommandContext(args2);
+            save(cc, session, lPlayer, subdir);
+            return true;
+        } catch (Exception ex) {
+            plugin.sendConsole("Failed to saveSchematic of name '" + schematicName +"', reason: " + ex);
+            return false;
+        }
+    }
+
+    private void save(CommandContext args, LocalSession session, LocalPlayer player, String subdir) throws WorldEditException, CommandException {
         WorldEditPlugin wep = plugin.worldEdit;
         WorldEdit we = wep.getWorldEdit();
         SchematicFormat format = SchematicFormat.getFormat(args.getString(0));
         String filename = args.getString(args.argsLength() - 1);
-        File dir = new File(plugin.getDataFolder() + "/schematics/homes");
+        File dir = new File(plugin.getDataFolder() + File.separator + "schematics" + File.separator + subdir);
         File f = we.getSafeSaveFile(player, dir, filename, "schematic", "schematic");
         if (!dir.exists()) {
-            if (!dir.mkdir()) {
+            if (!dir.mkdirs()) {
+                player.printError(plugin.getDataFolder() + File.separator + "schematics" + File.separator + subdir);
                 player.printError("The storage folder could not be created.");
                 return;
             }
@@ -424,7 +447,7 @@ public class WorldGuardUtil {
         WorldEditPlugin wep = plugin.worldEdit;
         WorldEdit we = wep.getWorldEdit();
         LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(),Bukkit.getConsoleSender(), plugin.getServer().getWorld("Build"));
-        File dir = new File(plugin.getDataFolder() + "/schematics/"+subdir);
+        File dir = new File(plugin.getDataFolder() + File.separator + "schematics"+File.separator+subdir);
         try {
         File f = we.getSafeOpenFile(bcs, dir, schematic, "schematic", "schematic");
             SchematicFormat format = SchematicFormat.getFormat(f);
@@ -444,9 +467,9 @@ public class WorldGuardUtil {
         final WorldEditPlugin wep = plugin.worldEdit;
         LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(), Bukkit.getConsoleSender(), world);
         final WorldEdit we = wep.getWorldEdit();
-        File dir = new File(plugin.getDataFolder() + "/schematics/"+subdir);
+        File dir = new File(plugin.getDataFolder() + File.separator + "schematics"+File.separator+subdir);
         try {
-        File f = we.getSafeOpenFile(bcs, dir, schematic, "schematic", "schematic");
+            File f = we.getSafeOpenFile(bcs, dir, schematic, "schematic", "schematic");
             SchematicFormat format = SchematicFormat.getFormat(f);
             return format.load(f);
         } catch (Exception e){

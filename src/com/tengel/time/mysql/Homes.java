@@ -57,7 +57,7 @@ public class Homes {
             return;
         }
         WorldGuardUtil wgu = new WorldGuardUtil(plugin, p.getWorld());
-        if (!wgu.saveSchematic(p, name)){
+        if (!wgu.saveSchematic(p, "homes", name)){
             p.sendMessage(ChatColor.RED + "Failed to save schematic for home '"+name+"', aborting home create.");
             return;
         }

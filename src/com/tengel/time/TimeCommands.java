@@ -268,7 +268,7 @@ public class TimeCommands implements Listener{
         if (args[1].equalsIgnoreCase("create")){
             plugin.getCreativePlots().create(plugin.getServer().getPlayer(sender.getName()));
         } else if (args[1].equalsIgnoreCase("destroy")){
-            return false;
+            plugin.getCreativePlots().destroy(plugin.getServer().getPlayer(sender.getName()));
         } else
             return false;
         return true;
@@ -357,7 +357,7 @@ public class TimeCommands implements Listener{
                 else{
                     Location loc = p.getLocation();
                     WorldGuardUtil wgu = new WorldGuardUtil(plugin, p.getWorld());
-                    if (!wgu.saveSchematic(p, home.getName())){
+                    if (!wgu.saveSchematic(p, "homes", home.getName())){
                         sender.sendMessage(ChatColor.RED + "Failed to save schematic for home '"+home+"', aborting home update.");
                         return;
                     }

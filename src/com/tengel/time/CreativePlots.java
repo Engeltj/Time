@@ -6,8 +6,10 @@ package com.tengel.time;
 
 import com.mewin.WGRegionEvents.events.RegionEnterEvent;
 import com.mewin.WGRegionEvents.events.RegionLeaveEvent;
+import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.serialization.SPlayerInventory;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -164,15 +166,59 @@ public class CreativePlots  implements Listener{
         return "cplot_".concat(plugin.intToString(i+1, 7));
     }
     
+    private ProtectedRegion createPlot(Location loc){
+        return plugin.getRegionControl().createRegionVert(getUnusedPlotName(loc.getWorld()), loc, 10, 10);
+    }
+    
+    private boolean checkLocation(Location loc){
+        Location temp = new Location(loc.getWorld(),loc.getX(), loc.getY(), loc.getZ());
+        for (int y=0;y<255;y++){
+            temp.setY(y);
+            if (!plugin.getRegionControl().getRegions(temp).isEmpty())
+                return false;
+        }
+        temp.setY(64.0);
+        temp.setX(temp.getX()-5);
+        if (!plugin.getRegionControl().getRegions(temp).isEmpty())
+            return false;
+        temp.setZ(temp.getZ()-5);
+        if (!plugin.getRegionControl().getRegions(temp).isEmpty())
+            return false;
+        temp.setX(temp.getX()+10);
+        if (!plugin.getRegionControl().getRegions(temp).isEmpty())
+            return false;
+        temp.setZ(temp.getZ()+10);
+        if (!plugin.getRegionControl().getRegions(temp).isEmpty())
+            return false;
+        return true;
+    }
+    
+    private void savePlotSchematic(Player p, ProtectedRegion pr){
+        WorldGuardUtil wgu = new WorldGuardUtil(plugin, null);
+        wgu.saveSchematic(p, pr, "cplots"+File.separator+p.getWorld().getName(), pr.getId());
+    }
+    
+    private void restorePlotSchematic(Player p, ProtectedRegion pr){
+        World w = p.getWorld();
+        WorldGuardUtil wgu = new WorldGuardUtil(plugin, w);
+        wgu.pasteSchematic(pr, pr.getId(), "cplots" + File.separator + w.getName());
+    }
+    
     public boolean create(Player p){
         int count = getAmountOwned(p.getName());
         System.out.println(count);
         if (count == 0){
             Location loc = p.getLocation();
+            if (!checkLocation(loc)){
+                p.sendMessage(ChatColor.RED + "It seems this overlaps another region, try again elsewhere");
+                return false;
+            }
             if (isQualified(p.getName(), loc)){
-                ProtectedRegion pr = plugin.getRegionControl().createRegionVert(getUnusedPlotName(p.getWorld()), p.getLocation(), 10, 10);
+                ProtectedRegion pr = createPlot(loc);                
                 if (pr != null){
                     plugin.getRegionControl().addRegionOwner(p.getName(),pr);
+                    plugin.getRegionControl().saveRegions(p.getWorld());
+                    savePlotSchematic(p, pr);
                     p.sendMessage(ChatColor.GREEN + "Plot created!");
                 } else
                     p.sendMessage(ChatColor.RED + "Plot creation failed, please speak with an admin");
@@ -185,6 +231,24 @@ public class CreativePlots  implements Listener{
         }
         
         return true;
+    }
+    
+    public void destroy(Player p){
+        Map<String, ProtectedRegion> map = plugin.getRegionControl().getRegions(p.getLocation());
+        for (String key : map.keySet()){
+            if (key.contains("cplot_")){
+                for (String player: map.get(key).getOwners().getPlayers()){
+                    if (player.equalsIgnoreCase(p.getName())){
+                        ProtectedRegion pr = map.get(key);
+                        restorePlotSchematic(p, pr);
+                        plugin.getRegionControl().removeRegion(pr.getId(), p.getWorld());
+                        p.sendMessage(ChatColor.GREEN + "Plot destroyed!");
+                        return;
+                    }
+                }
+            }
+        }
+        p.sendMessage(ChatColor.RED + "You do not own a plot at this location");
     }
     
     private int getAmountOwned(String player){
@@ -238,8 +302,8 @@ public class CreativePlots  implements Listener{
         for (String[] value: data){
             ParseResult result = cp_plugin.parseResult(value);
             String temp_player = result.getPlayer();
-            System.out.println(temp_player);
             if (!temp_player.equalsIgnoreCase(player)){
+                System.out.println(temp_player);
                 if (plugin.getServer().getPlayer(temp_player) != null)
                     return false;
             }

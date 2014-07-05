@@ -36,7 +36,7 @@ public class ShopSigns extends YamlConfiguration {
         super();
         this.plugin = plugin;
         this.player = player;
-        this.configFile = new File(plugin.getDataFolder() + "/signs.yml").getAbsoluteFile();        
+        this.configFile = new File(plugin.getDataFolder() + File.separator + "signs.yml").getAbsoluteFile();        
         if (!this.configFile.exists()){
             try {
                 this.configFile.createNewFile();
