@@ -10,6 +10,7 @@ import com.tengel.time.profs.Police;
 import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -29,6 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -90,6 +92,13 @@ public class TimePlayerListener implements Listener {
                 }
             }
         }
+    }
+    
+    @EventHandler
+    public void onWorldSave(WorldSaveEvent event){
+        Map<String, TimePlayer> map = plugin.getPlayers();
+        for (String key : map.keySet())
+            map.get(key).save();
     }
     
     @EventHandler(priority=EventPriority.NORMAL)

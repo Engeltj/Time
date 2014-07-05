@@ -69,7 +69,6 @@ public class UpdateHomes implements Runnable {
                 }
             }
         }
-        //Bukkit.getServer().getOfflinePlayer(null);
     }
     
 }

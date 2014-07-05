@@ -30,7 +30,6 @@ public class SPlayerInventory implements java.io.Serializable {
     private ArrayList spa_survival;
     
     public SPlayerInventory(Player p){
-        System.out.println("We made it here 1..");
         this.p = p;
         if (p.getGameMode() == GameMode.SURVIVAL){
             pi_survival = p.getInventory().getContents().clone();

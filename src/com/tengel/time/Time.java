@@ -314,6 +314,10 @@ public final class Time extends JavaPlugin {
         return players.get(name);
     }
     
+    public Map<String, TimePlayer> getPlayers(){
+        return players;
+    }
+    
     public TimePlayer addPlayer(String name){
         TimePlayer tp = new TimePlayer(this, name);
         tp.load();

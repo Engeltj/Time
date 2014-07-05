@@ -13,7 +13,6 @@ import com.tengel.time.TimeCommands;
 import com.tengel.time.WorldGuardUtil;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
@@ -26,7 +25,7 @@ import org.bukkit.util.Vector;
  * @author Tim
  */
 public class Home implements IStructure{
-    private Time plugin;
+    private final Time plugin;
     private String name="";
     private String display_name="";
     private short zone=0;

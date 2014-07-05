@@ -7,8 +7,7 @@
 package com.tengel.time;
 
 import com.mewin.WGRegionEvents.events.RegionEnterEvent;
-import com.sk89q.worldedit.Vector;
-import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import com.sk89q.worldguard.domains.DefaultDomain;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.mysql.Homes;
@@ -19,14 +18,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-import static com.sk89q.worldguard.bukkit.BukkitUtil.toVector;
 import com.sk89q.worldguard.protection.GlobalRegionManager;
-import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.World;
 /**
  *
@@ -133,18 +131,63 @@ public class RegionControl implements Listener {
     }
     
     public Map<String, ProtectedRegion> getRegionsByOwner(String owner){
-        GlobalRegionManager gmgr = plugin.worldGuard.getGlobalRegionManager();
         HashMap<String, ProtectedRegion> map = new HashMap<String, ProtectedRegion>();
         for (World w : plugin.getServer().getWorlds()){
-            RegionManager mgr = gmgr.get(w);
+            RegionManager mgr = plugin.worldGuard.getRegionManager(w);
             Iterator it = mgr.getRegions().entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry pairs = (Map.Entry)it.next();
                 ProtectedRegion rg = (ProtectedRegion) pairs.getValue();
-                if (rg.getOwners().getPlayers().contains(owner))
-                    map.put(rg.getId(), rg);
+                for (String key : rg.getOwners().getPlayers()){
+                    if (key.equalsIgnoreCase(owner))
+                        map.put(rg.getId(), rg);  
+                }
+                    
             }
         }
         return map;
+    }
+    
+    public ProtectedRegion createRegion(String name, Location start, Location end){
+        World w = start.getWorld();
+        WorldGuardUtil wgu = new WorldGuardUtil(plugin, w);
+        try {
+           return wgu.createRegion(name, start, end);
+        } catch (Exception ex) {
+           Logger.getLogger(RegionControl.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
+    public ProtectedRegion createRegion(String name, Location loc, int length, int width, int height){
+        World w = loc.getWorld();
+        Location start,end;
+        start = new Location(w,loc.getX()-length/2.0, loc.getY()-height/2.0, loc.getZ()-width/2.0);
+        end = new Location(w,loc.getX()+length/2.0, loc.getY()+height/2.0, loc.getZ()+width/2.0);
+        
+        return createRegion(name,start, end);
+    }
+    
+    public ProtectedRegion createRegion(String name, Location loc, int radius){
+        return createRegion(name, loc, radius*2, radius*2, radius*2);
+    }
+    
+    public ProtectedRegion createRegion(String name, Location loc, int h_radius, int v_radius){
+        return createRegion(name, loc, h_radius*2, h_radius*2, v_radius*2);
+    }
+    
+    public ProtectedRegion createRegionVert(String name, Location loc, int length, int width){
+        World w = loc.getWorld();
+        Location start,end;
+        start = new Location(w,loc.getX()-length/2.0, 0L, loc.getZ()-width/2.0);
+        end = new Location(w,loc.getX()+length/2.0, 255L, loc.getZ()+width/2.0);
+        
+        return createRegion(name,start, end);
+    }
+    
+    public void addRegionOwner(String owner, ProtectedRegion pr){
+        DefaultDomain dd = pr.getOwners();
+        dd.addPlayer(owner);
+        pr.setOwners(dd);
     }
 }

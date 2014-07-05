@@ -8,6 +8,7 @@ import com.mewin.WGRegionEvents.events.RegionEnterEvent;
 import com.mewin.WGRegionEvents.events.RegionLeaveEvent;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.serialization.SPlayerInventory;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -144,14 +146,42 @@ public class CreativePlots  implements Listener{
         }
     }
     
+    private String getUnusedPlotName(World w){
+        Map<String, ProtectedRegion> map = plugin.worldGuard.getRegionManager(w).getRegions();
+        int i = 0;
+        for (String key : map.keySet()){
+            if (key.contains("cplot_")){
+                String [] t = key.split("_");
+                try {
+                    System.out.println(t[1]);
+                    int plot_num = Integer.parseInt(t[1]);
+                    if (plot_num > i)
+                        i = plot_num;
+                    
+                }catch(Exception ignored){}
+            }
+        }
+        return "cplot_".concat(plugin.intToString(i+1, 7));
+    }
+    
     public boolean create(Player p){
         int count = getAmountOwned(p.getName());
+        System.out.println(count);
         if (count == 0){
             Location loc = p.getLocation();
             if (isQualified(p.getName(), loc)){
-                p.sendMessage("You seem to qualify!");
+                ProtectedRegion pr = plugin.getRegionControl().createRegionVert(getUnusedPlotName(p.getWorld()), p.getLocation(), 10, 10);
+                if (pr != null){
+                    plugin.getRegionControl().addRegionOwner(p.getName(),pr);
+                    p.sendMessage(ChatColor.GREEN + "Plot created!");
+                } else
+                    p.sendMessage(ChatColor.RED + "Plot creation failed, please speak with an admin");
+                    
             } else
-                 p.sendMessage(ChatColor.RED + "You don't qualify!");
+                 p.sendMessage(ChatColor.RED + "This area seems to have been modified by another player in the last 60 days. Cannot make plot here");
+        } else {
+            p.sendMessage(ChatColor.RED + "You may only own up to 1 plot maximum at this time");
+            return false;
         }
         
         return true;
@@ -161,6 +191,7 @@ public class CreativePlots  implements Listener{
         int count = 0;
         Set<String> keys = plugin.getRegionControl().getRegionsByOwner(player).keySet();
         for (String key : keys){
+            System.out.println(key);
             if (key.contains("cplot_"))
                 count++;
         }
@@ -187,10 +218,22 @@ public class CreativePlots  implements Listener{
     }
     
     private boolean isQualified(String player, Location loc){
+        List<Integer> exclude = new ArrayList<Integer>(){{
+            add(Material.DIRT.getId());
+            add(Material.SAND.getId());
+            add(Material.GRAVEL.getId());
+            add(Material.GRASS.getId());
+            add(Material.STONE.getId());
+            
+        }};
         CoreProtectAPI cp_plugin = getCoreProtect();
         if (cp_plugin == null)
             return false;
-        List<String[]> data = cp_plugin.performLookup(null, 60*60*60*24*60, 5, loc, null, null);
+        List<String[]> data = new ArrayList<String[]>();
+        for (int i=0;i<255;i=i+5){
+            loc.setY(i);
+            data.addAll(cp_plugin.performLookup(null, 60*60*60*24*60, 5, loc, null, exclude));
+        }
         
         for (String[] value: data){
             ParseResult result = cp_plugin.parseResult(value);
