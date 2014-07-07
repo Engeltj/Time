@@ -6,9 +6,7 @@ package com.tengel.time;
 
 import com.mewin.WGRegionEvents.events.RegionEnterEvent;
 import com.mewin.WGRegionEvents.events.RegionLeaveEvent;
-import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import com.tengel.time.serialization.SPlayerInventory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +40,7 @@ import org.bukkit.plugin.Plugin;
  * @author Tim
  */
 public class CreativePlots  implements Listener{
-    HashMap<String,SPlayerInventory> data;
+    HashMap<String,TimePlayerInventory> data;
     private final Time plugin;
     public CreativePlots(Time plugin){
         this.plugin = plugin;
@@ -61,7 +59,7 @@ public class CreativePlots  implements Listener{
     public void onRegionLeave(RegionLeaveEvent e){
         ProtectedRegion pr = e.getRegion();
         Player p = e.getPlayer();
-        if (p != null && pr != null && pr.getId().contains("cplot_") && pr.isOwner(p.getName())){
+        if (p != null && pr != null && pr.getId().contains("cplot_") && p.getGameMode().equals(GameMode.CREATIVE)){
             p.setGameMode(GameMode.SURVIVAL);
         }
     }
@@ -255,7 +253,6 @@ public class CreativePlots  implements Listener{
         int count = 0;
         Set<String> keys = plugin.getRegionControl().getRegionsByOwner(player).keySet();
         for (String key : keys){
-            System.out.println(key);
             if (key.contains("cplot_"))
                 count++;
         }
@@ -303,7 +300,6 @@ public class CreativePlots  implements Listener{
             ParseResult result = cp_plugin.parseResult(value);
             String temp_player = result.getPlayer();
             if (!temp_player.equalsIgnoreCase(player)){
-                System.out.println(temp_player);
                 if (plugin.getServer().getPlayer(temp_player) != null)
                     return false;
             }

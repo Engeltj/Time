@@ -29,6 +29,7 @@ import org.bukkit.event.player.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -57,12 +58,32 @@ public class TimePlayerListener implements Listener {
             p.sendMessage(Double.toString(plugin.getEconomy().getBalance(p.getName())));
     }
     
-    //@EventHandler(priority=EventPriority.NORMAL)
+    @EventHandler(priority=EventPriority.NORMAL)
     public void onSignChange(SignChangeEvent event){
         String type = event.getLine(0);
-        if (type.contains("[License]") || type.contains("[Shop]") || type.contains("[Job]")){
-          ShopSigns ss = new ShopSigns(plugin, event.getPlayer());
-          ss.create(event);
+        if (type.contains("[License]") || type.contains("[Buy]") || type.contains("[Job]") || type.contains("[Sell]")){
+            String [] lines = event.getLines();
+            TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
+            TimeSigns ss = plugin.getShopSigns();
+            Sign s = (Sign) event.getBlock().getState();
+            event.setCancelled(true);
+            for (int i=0;i<lines.length;i++)
+                s.setLine(i, lines[i]);
+            ss.create(tp, s);
+        }
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onSignDestroy(BlockBreakEvent event){
+        Block b = event.getBlock();
+        if (b.getType().equals(Material.SIGN_POST) || b.getType().equals(Material.WALL_SIGN)) {
+            Sign s = (Sign) b.getState();
+            String type = s.getLine(0);
+            if (type.contains("[License]") || type.contains("[Buy]") || type.contains("[Job]") || type.contains("[Sell]")){
+                TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
+                TimeSigns ss = plugin.getShopSigns();
+                ss.remove(tp, s);
+            }
         }
     }
     
@@ -154,12 +175,14 @@ public class TimePlayerListener implements Listener {
     }*/
     
     public void setPlayerAttributes(Player p, int level){
-        double hp = 0.1598*Math.pow(level,2.0)+10;
-        if (hp > 9999D) hp = 9999; //be sure to max HP at 9999
-        p.setMaxHealth(hp);
-        p.setHealthScale(20);
-        float walkspeed = level*0.0015F+0.2F;
-        if (walkspeed > 0.425F) walkspeed = 0.425F; //approx level 150's speed is limit
+        if (level > 150) //limit abilities to max out at 150
+            level = 150;
+        //double hp = 0.1598*Math.pow(level,2.0)+10;
+        //if (hp > 9999D) hp = 9999; //be sure to max HP at 9999
+        //p.setMaxHealth(hp);
+        //p.setHealthScale(20);
+        float walkspeed = level*0.0010F+0.2F;
+        //if (walkspeed > 0.425F) walkspeed = 0.425F; //approx level 150's speed is limit
         if (walkspeed < 0.21F) walkspeed=0.21F;
         p.setWalkSpeed(walkspeed);
     }
@@ -179,19 +202,22 @@ public class TimePlayerListener implements Listener {
         board.getObjective(DisplaySlot.PLAYER_LIST).getScore(p).setScore(p.getLevel());
     }
     
-//    @EventHandler(priority=EventPriority.NORMAL)
-//    public void onPlayerLevelUp(PlayerLevelChangeEvent event){
-//        Player p = event.getPlayer();
-//        int oldLevel = event.getOldLevel();
-//        int newLevel = event.getNewLevel();
-//        p.sendMessage(ChatColor.WHITE+"You advanced from level "+ChatColor.GRAY+oldLevel + ChatColor.WHITE+" to level "+ChatColor.GRAY+newLevel);
-//        setPlayerAttributes(p, newLevel);
-//        p.setHealth(p.getMaxHealth());
-//        updatePlayerScoreboardHealth(p);
-//        updatePlayerScoreboardLevel(p);
-//    }
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onPlayerLevelChange(PlayerLevelChangeEvent event){
+        Player p = event.getPlayer();
+        int oldLevel = event.getOldLevel();
+        int newLevel = event.getNewLevel();
+        if (oldLevel < newLevel)
+            p.sendMessage(ChatColor.WHITE+"You advanced from level "+ChatColor.GRAY+oldLevel + ChatColor.WHITE+" to level "+ChatColor.GRAY+newLevel);
+        else if (oldLevel > newLevel)
+            p.sendMessage(ChatColor.WHITE+"You downgraded from level "+ChatColor.GRAY+oldLevel + ChatColor.WHITE+" to level "+ChatColor.GRAY+newLevel);
+        setPlayerAttributes(p, newLevel);
+        //p.setHealth(p.getMaxHealth());
+        updatePlayerScoreboardHealth(p);
+        updatePlayerScoreboardLevel(p);
+    }
     
-    //@EventHandler(priority=EventPriority.NORMAL)
+    @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerHealthRegen(EntityRegainHealthEvent event){
         Entity ent = event.getEntity();
         if (ent instanceof Player){
@@ -201,7 +227,7 @@ public class TimePlayerListener implements Listener {
             
     }
     
-    //@EventHandler(priority=EventPriority.NORMAL)
+    @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerHealthDamaged(EntityDamageEvent event){
         Entity ent = event.getEntity();
         if (ent instanceof Player){
@@ -210,19 +236,40 @@ public class TimePlayerListener implements Listener {
         }
     }
     
-    //@EventHandler(priority=EventPriority.NORMAL)
+    private void playerOutOfTime_message(Player p){
+        TimePlayer tp = plugin.getPlayer(p.getName());
+        p.sendMessage(ChatColor.RED + "You are in a crippled state and will need to obtain 24 hours before getting better.");
+        p.sendMessage("HINT: " + ChatColor.GRAY + "To obtain time, perhaps sell off some of your assets (items)");
+        tp.setDied(false);
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerReSpawn(PlayerRespawnEvent event){
-        updatePlayerScoreboardHealth(event.getPlayer());
+        Player p = event.getPlayer();
+        TimePlayer tp = plugin.getPlayer(p.getName());
+        updatePlayerScoreboardHealth(p);
+        if (tp.hasDied())
+            playerOutOfTime_message(p);
     }
     
-    //@EventHandler(priority=EventPriority.NORMAL)
+    @EventHandler
+    public void onPlayerDead(EntityDeathEvent event){
+        Entity e = event.getEntity();
+        if (e instanceof Player){
+            Player p = (Player) e;
+            if (p.getGameMode().equals(GameMode.CREATIVE))
+                p.getInventory().clear();
+        }
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerMove(PlayerMoveEvent event){
-        //Player p = event.getPlayer();
-        //if (p.getWalkSpeed() < 0.21)
-        //    setPlayerAttributes(p);
+        Player p = event.getPlayer();
+        if (p.getWalkSpeed() < 0.21)
+            setPlayerAttributes(p);
     }
     
-    //@EventHandler(priority=EventPriority.NORMAL)
+    @EventHandler(priority=EventPriority.NORMAL)
     public void onInteract(PlayerInteractEvent event){
         Block b;
         
@@ -240,22 +287,20 @@ public class TimePlayerListener implements Listener {
         if (b.getType().equals(Material.SIGN_POST) || b.getType().equals(Material.WALL_SIGN)) {
             Sign s = (Sign) b.getState();
             String type = s.getLine(0);
-            if (type.contains("[License]") || type.contains("[Shop]")){
-                ShopSigns ss = new ShopSigns(plugin, event.getPlayer());
+            
+            if (type.contains("[License]") || type.contains("[Buy]")){
+                TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
+                TimeSigns ss = plugin.getShopSigns();
                 
-                int cost;
-                Pattern p = Pattern.compile("-?\\d+");
-                Matcher m = p.matcher(s.getLine(2));
-                if (m.find()){
-                    cost = Integer.valueOf(m.group());
-                } else{
-                    plugin.sendConsole("SignInteract event, error reading cost");
-                    return;
-                }
-                ss.buy(b, cost);
+                ss.buyItem(tp, s);
             } else if (type.contains("[Job]")){
-                ShopSigns ss = new ShopSigns(plugin, event.getPlayer());
-                ss.buyProfession(s.getLine(1));
+                TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
+                TimeSigns ss = plugin.getShopSigns();
+                ss.buyProfession(tp, s.getLine(1));
+            } else if(type.contains("[Sell]")){
+                TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
+                TimeSigns ss = plugin.getShopSigns();
+                ss.sellItem(tp, s);
             }
         }
     }
@@ -263,22 +308,27 @@ public class TimePlayerListener implements Listener {
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerJoin(PlayerJoinEvent event){
         final Player p = event.getPlayer();
-        plugin.addPlayer(p.getName());
-        //setPlayerAttributes(p);
-        if (p.getMaxHealth() != 20)
-            p.setMaxHealth(20L);
-        if (p.getHealth() > 20)
-            p.setHealth(20L);
+        final TimePlayer tp = plugin.addPlayer(p);
+        setPlayerAttributes(p);
         
-        //updatePlayerScoreboardLevel(p);
+        if (tp.hasDied())
+            playerOutOfTime_message(p);
+        else {
+            if (p.getMaxHealth() != 20)
+                p.setMaxHealth(20L);
+            if (p.getHealth() > 20)
+                p.setHealth(20L);
+        }
+        
         //updatePlayerScoreboardHealth(p);
         //final TimePlayerListener obj = this;
-//        plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
-//            public void run() {
-//                setPlayerAttributes(p);
-//                updatePlayerScoreboardHealth(p);
-//            }
-//        }, 20*1);
+        plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+            public void run() {
+                setPlayerAttributes(p);
+                updatePlayerScoreboardLevel(p);
+                updatePlayerScoreboardHealth(p);
+            }
+        }, 20*1);
     }
     
     @EventHandler(priority=EventPriority.NORMAL)

@@ -9,7 +9,7 @@ package com.tengel.time.structures;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.Time;
-import com.tengel.time.TimeCommands;
+import com.tengel.time.Commands;
 import com.tengel.time.WorldGuardUtil;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -174,7 +174,7 @@ public class Home implements IStructure{
                     "'"+getName()+"','"+p.getName()+"','"+newOwner.getName()+"',"+price+","+(System.currentTimeMillis()/1000 + 2*60*60)+");");
             if (newOwner.isOnline()){
                 newOwner.sendMessage(p.getName() + ChatColor.GREEN + " has offered you the home " + ChatColor.GRAY + getName() + ChatColor.GREEN + " for " + 
-                        ChatColor.RED + TimeCommands.convertSecondsToTime(price) + ChatColor.GREEN + ". Type "+ ChatColor.GRAY+"/life job accept"+ ChatColor.GREEN+" to purchase");
+                        ChatColor.RED + Commands.convertSecondsToTime(price) + ChatColor.GREEN + ". Type "+ ChatColor.GRAY+"/life job accept"+ ChatColor.GREEN+" to purchase");
             }
             return (updated > 0);
         } catch (Exception ex) {

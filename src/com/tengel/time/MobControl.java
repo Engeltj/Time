@@ -9,7 +9,7 @@ package com.tengel.time;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import com.tengel.time.runnables.RunnableSpawn;
+import com.tengel.time.runnables.TimeMonsterSpawn;
 import com.tengel.time.structures.TimeMonster;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -78,7 +78,7 @@ public class MobControl implements Listener {
         try {
             st = con.createStatement();
             st.executeUpdate("INSERT INTO `spawns` (type,x,y,z) VALUES ('"+type+"',"+loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ()+");");
-            RunnableSpawn rs = new RunnableSpawn(plugin, loc, type);
+            TimeMonsterSpawn rs = new TimeMonsterSpawn(plugin, loc, type);
             rs.run();
         } catch (Exception ex) {
             plugin.sendConsole("Failed to add new spawn for '"+type+"' in MobControl class, " + ex);
@@ -204,7 +204,7 @@ public class MobControl implements Listener {
             TimeMonster monster = plugin.getMobControl().getTimeMonster(ent.getUniqueId());
             if (monster != null){
                 double lvl_dead = plugin.getMobControl().getLevel(ent);
-                plugin.getServer().getScheduler().runTaskLater(plugin, new RunnableSpawn(plugin,getTimeMonster(ent.getUniqueId()).getSpawnLocation(), ent.getType().name()), 20*10);
+                plugin.getServer().getScheduler().runTaskLater(plugin, new TimeMonsterSpawn(plugin,getTimeMonster(ent.getUniqueId()).getSpawnLocation(), ent.getType().name()), 20*10);
                 removeTimeMonster(ent.getUniqueId());
                 int exp = (int) Math.ceil(lvl_dead/12.0);
                 event.setDroppedExp(exp);
@@ -275,7 +275,7 @@ public class MobControl implements Listener {
                         return;
                     } else {
                         plugin.getMobControl().removeTimeMonster(creature.getUniqueId());
-                        plugin.getServer().getScheduler().runTaskLater(plugin, new RunnableSpawn(plugin, event.getLocation(), creature.getType().name()), 20*10);
+                        plugin.getServer().getScheduler().runTaskLater(plugin, new TimeMonsterSpawn(plugin, event.getLocation(), creature.getType().name()), 20*10);
                         event.setCancelled(true);
                         return;
                     }

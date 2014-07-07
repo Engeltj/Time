@@ -4,10 +4,10 @@
  * and open the template in the editor.
  */
 
-package com.tengel.time.homes;
+package com.tengel.time.runnables;
 
 import com.tengel.time.Time;
-import com.tengel.time.TimeCommands;
+import com.tengel.time.Commands;
 import com.tengel.time.mysql.Homes;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
@@ -34,7 +34,7 @@ public class UpdateHomes implements Runnable {
             return false;
         } else {
             if (p.isOnline()){
-                p.sendMessage(ChatColor.GREEN + "You just paid your daily rent of " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(amount));
+                p.sendMessage(ChatColor.GREEN + "You just paid your daily rent of " + ChatColor.GRAY + Commands.convertSecondsToTime(amount));
             }
         }
         return true;
@@ -62,7 +62,7 @@ public class UpdateHomes implements Runnable {
                         if (p_lord != null){
                             plugin.getEconomy().depositPlayer(landlord, rent);
                             if (p_lord.isOnline()){
-                                p_lord.sendMessage(plugin.getPluginName()+ renter + " has paid you his/her daily rent of " + ChatColor.GREEN + TimeCommands.convertSecondsToTime(rent));
+                                p_lord.sendMessage(plugin.getPluginName()+ renter + " has paid you his/her daily rent of " + ChatColor.GREEN + Commands.convertSecondsToTime(rent));
                             }
                         }
                     }

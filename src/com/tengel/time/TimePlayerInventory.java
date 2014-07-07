@@ -2,12 +2,10 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.tengel.time.serialization;
+package com.tengel.time;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -17,7 +15,7 @@ import org.bukkit.inventory.PlayerInventory;
  *
  * @author Tim
  */
-public class SPlayerInventory implements java.io.Serializable {
+public class TimePlayerInventory implements java.io.Serializable {
     private transient Player p;
     private transient ItemStack [] pi_creative = new ItemStack[36];
     private transient ItemStack [] pa_creative = new ItemStack[4]; //player armour
@@ -29,7 +27,7 @@ public class SPlayerInventory implements java.io.Serializable {
     private ArrayList spi_survival;
     private ArrayList spa_survival;
     
-    public SPlayerInventory(Player p){
+    public TimePlayerInventory(Player p){
         this.p = p;
         if (p.getGameMode() == GameMode.SURVIVAL){
             pi_survival = p.getInventory().getContents().clone();
@@ -39,13 +37,13 @@ public class SPlayerInventory implements java.io.Serializable {
             pi_creative = p.getInventory().getContents().clone();
             pa_creative = p.getInventory().getArmorContents().clone();
         }
+        registered_gm = p.getGameMode();
     }
     
     public void switchInventory(GameMode gm){
-        System.out.println("reg_old: " + registered_gm);
+        System.out.println(p.getName() + ", old: " + registered_gm);
         PlayerInventory pi = p.getInventory();
         if ((gm == GameMode.CREATIVE) && (registered_gm != GameMode.CREATIVE)){
-            System.out.println("We made it here 2..");
             pi_survival = pi.getContents();
             pa_survival = pi.getArmorContents();
             pi.setContents(pi_creative);
@@ -58,7 +56,7 @@ public class SPlayerInventory implements java.io.Serializable {
             pi.setArmorContents(pa_survival);
             registered_gm = GameMode.SURVIVAL;
         }  
-         System.out.println("reg_new: " + registered_gm);
+         System.out.println(p.getName() + ", new: " + registered_gm);
     }
     
     public void updateInventoryData(){

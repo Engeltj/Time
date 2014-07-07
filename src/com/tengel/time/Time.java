@@ -6,6 +6,8 @@
 
 package com.tengel.time;
 
+import com.tengel.time.runnables.UpdatePlayers;
+import com.tengel.time.runnables.UpdateSigns;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -15,7 +17,7 @@ import com.tengel.time.profs.Builder;
 import com.tengel.time.profs.Gatherer;
 import com.tengel.time.profs.Landlord;
 import com.tengel.time.profs.TimeProfession;
-import com.tengel.time.runnables.RunnableSpawn;
+import com.tengel.time.runnables.TimeMonsterSpawn;
 import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
 import net.milkbowl.vault.economy.Economy;
@@ -64,16 +66,15 @@ public final class Time extends JavaPlugin {
     private final UpdatePlayers timeUpdater;
     private HashMap<String, TimePlayer> players;
     private HashMap<String, Home> homes;
-    //private HashMap<UUID, TimeMonster> monsters;
     private Economy economy = null;
     private String pluginName;
-    //private final TimePlayers players;
     private File configSigns;
     public WorldGuardPlugin worldGuard;
     public WorldEditPlugin worldEdit;
     private TimeSQL sql;
     private MobControl mobcontrol;
     private CreativePlots creative_plots;
+    private TimeSigns shop_signs;
     
     public Gatherer prof_miner;
     public Gatherer prof_farmer;
@@ -92,6 +93,7 @@ public final class Time extends JavaPlugin {
         setupSql();
         PluginManager pm = getServer().getPluginManager();
         creative_plots = new CreativePlots(this);
+        shop_signs = new TimeSigns(this);
         worldGuard = (WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard");
         worldEdit = (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
         prof_miner = new Gatherer(this, TimeProfession.MINER);
@@ -111,9 +113,6 @@ public final class Time extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        //loadTimePlayers();
-        //loadHomes();
-        //setupHealthBar();
         
         pluginName = "[" + pm.getPlugin("Time").getName() + "] ";
         final Time plugin = this;
@@ -125,6 +124,7 @@ public final class Time extends JavaPlugin {
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 60, 1800 * 20);
         getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
             public void run() {
+                shop_signs.load();
                 plugin.loadHomes();
                 plugin.loadTimePlayers();
                 plugin.setupHealthBar();
@@ -141,6 +141,7 @@ public final class Time extends JavaPlugin {
     public void onDisable() {
         this.getServer().getScheduler().cancelTasks(this);
         Iterator it = this.players.entrySet().iterator();
+        this.shop_signs.save();
         while (it.hasNext()) {
             Map.Entry pairs = (Map.Entry)it.next();
             TimePlayer p = (TimePlayer) pairs.getValue();
@@ -148,7 +149,12 @@ public final class Time extends JavaPlugin {
             it.remove();
         }
         getLogger().info("Time by Engeltj has been disabled");
-        
+    }
+    
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        Commands tc = new Commands(this, sender, cmd, label, args);
+        return tc.executeCommand();
     }
     
     public void processSchematics(){
@@ -266,7 +272,7 @@ public final class Time extends JavaPlugin {
             while (rs.next()){
                 Location loc = new Location(w,rs.getInt("x"),rs.getInt("y"),rs.getInt("z"));
                 //TimeMonster monster = new TimeMonster(this,rs.getInt("id"));
-                getServer().getScheduler().runTask(this, new RunnableSpawn(this, loc, rs.getString("type")));
+                getServer().getScheduler().runTask(this, new TimeMonsterSpawn(this, loc, rs.getString("type")));
                 //monster.spawnWithCheck();
                 //monsters.put(monster.getUniqueId(), monster);
             }
@@ -291,7 +297,7 @@ public final class Time extends JavaPlugin {
     
     public void loadTimePlayers(){
         for (Player player: getServer().getOnlinePlayers())
-            addPlayer(player.getName());
+            addPlayer(player);
     }
     
     private boolean setupEconomy() {
@@ -318,10 +324,11 @@ public final class Time extends JavaPlugin {
         return players;
     }
     
-    public TimePlayer addPlayer(String name){
-        TimePlayer tp = new TimePlayer(this, name);
+    public TimePlayer addPlayer(Player player){
+        TimePlayer tp = new TimePlayer(this, player);
         tp.load();
-        return players.put(name, tp);
+        players.put(tp.getName(), tp);
+        return tp;
     }
     
     public void removePlayer(String name){
@@ -390,9 +397,13 @@ public final class Time extends JavaPlugin {
         return creative_plots;
     }
     
+    public TimeSigns getShopSigns(){
+        return shop_signs;
+    }
+    
     public File getConfigSigns(){
         if (configSigns == null)
-            configSigns = new File(this.getDataFolder() + "/signs.yml");
+            configSigns = new File(this.getDataFolder() + File.separator + "signs.yml");
         if (!this.configSigns.exists()){
             try {
                 this.configSigns.createNewFile();
@@ -418,12 +429,6 @@ public final class Time extends JavaPlugin {
                 loc = new Location(world, 362, 66, 391);
         }
         return loc;
-    }
-    
-    @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        TimeCommands tc = new TimeCommands(this, sender, cmd, label, args);
-        return tc.executeCommand();
     }
     
     public Material getItemMaterial(String id_or_name){

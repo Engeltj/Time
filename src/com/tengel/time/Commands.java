@@ -29,18 +29,18 @@ import org.bukkit.scheduler.BukkitRunnable;
  *
  * @author Tim
  */
-public class TimeCommands implements Listener{
+public class Commands implements Listener{
     private Time plugin;
     private CommandSender sender;
     private Command cmd;
     private String label;
     private String[] args;
     
-    public TimeCommands(){
+    public Commands(){
         
     }
     
-    public TimeCommands(Time plugin, CommandSender sender, Command cmd, String label, String[] args) {
+    public Commands(Time plugin, CommandSender sender, Command cmd, String label, String[] args) {
         this.sender = sender;
         this.plugin = plugin;
         this.cmd = cmd;

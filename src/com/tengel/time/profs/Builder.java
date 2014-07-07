@@ -10,7 +10,7 @@ import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.Time;
-import com.tengel.time.TimeCommands;
+import com.tengel.time.Commands;
 import com.tengel.time.WorldGuardUtil;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
@@ -75,14 +75,14 @@ public class Builder {
             double pay = getPlayerBuildWorth(sender) * progress/100*progress/100;
             sender.sendMessage(ChatColor.GREEN + "Progress: "+ChatColor.GRAY+df.format(progress)+ChatColor.RED+"%");
             sender.sendMessage(ChatColor.GREEN + "If you "+ChatColor.GRAY+"/life job done"+ChatColor.GREEN+" now, you will be awarded "+
-                    ChatColor.GRAY+TimeCommands.convertSecondsToTime(pay)+ChatColor.GREEN+" ("+df.format(progress*progress/100)+"% of maximum earnings)");
+                    ChatColor.GRAY+Commands.convertSecondsToTime(pay)+ChatColor.GREEN+" ("+df.format(progress*progress/100)+"% of maximum earnings)");
         } else if (args[1].equalsIgnoreCase("done")){
             double progress = checkPlayerBuildProgress(sender);
             double pay = getPlayerBuildWorth(sender) * progress/100*progress/100;
             setPlayerBuildComplete(sender.getName(), pr);
             EconomyResponse er = plugin.getEconomy().depositPlayer(sender.getName(),pay);
             if (er.transactionSuccess()){
-                sender.sendMessage(ChatColor.GREEN + "Congratulations! You have been given " + ChatColor.GRAY + TimeCommands.convertSecondsToTime(pay) +
+                sender.sendMessage(ChatColor.GREEN + "Congratulations! You have been given " + ChatColor.GRAY + Commands.convertSecondsToTime(pay) +
                         ChatColor.GREEN + " life!");
                 sender.sendMessage(ChatColor.GREEN + "You managed to complete " + ChatColor.GRAY + df.format(progress) + ChatColor.GREEN + "% of this construct");
             } else {
@@ -139,7 +139,7 @@ public class Builder {
             addPlayerBuild(sender.getName(),schematic, start, end);
             return pr;
         } catch (Exception ex) {
-            Logger.getLogger(TimeCommands.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Commands.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
     }

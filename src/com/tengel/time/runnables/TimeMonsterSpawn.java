@@ -6,16 +6,13 @@
 
 package com.tengel.time.runnables;
 
-import com.avaje.ebeaninternal.server.deploy.BeanDescriptor;
 import com.tengel.time.Time;
 import com.tengel.time.structures.TimeMonster;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.Statement;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -23,12 +20,12 @@ import org.bukkit.scheduler.BukkitRunnable;
  *
  * @author Tim
  */
-public class RunnableSpawn extends BukkitRunnable {
+public class TimeMonsterSpawn extends BukkitRunnable {
     private final Time plugin;
     private final Location location;
     private final EntityType type;
     
-    public RunnableSpawn(Time plugin, Location location, String type){
+    public TimeMonsterSpawn(Time plugin, Location location, String type){
         this.plugin = plugin;
         this.location = location;
         this.type = EntityType.valueOf(type);

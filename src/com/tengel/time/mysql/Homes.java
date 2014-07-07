@@ -187,14 +187,14 @@ public class Homes {
                     setRentPrice(home, new_price);
                     if (p != null && p.isOnline()){
                         
-                        p.sendMessage(ChatColor.GREEN + "Your home '"+ChatColor.GRAY+home_name+ChatColor.GREEN+"' rent price has changed to "+ChatColor.GRAY+TimeCommands.convertSecondsToTime(new_price)+
+                        p.sendMessage(ChatColor.GREEN + "Your home '"+ChatColor.GRAY+home_name+ChatColor.GREEN+"' rent price has changed to "+ChatColor.GRAY+Commands.convertSecondsToTime(new_price)+
                                 ChatColor.GREEN+" per day.");
                     }
                 } else if (p.isOnline()){
                     long last_warned = System.currentTimeMillis()/1000 - getLastWarnedNewRentPrice(home);
                     if (last_warned > 24*60*60){
-                        p.sendMessage(ChatColor.GREEN + "Your home '"+ChatColor.GRAY+home_name+ChatColor.GREEN+"' rent price will change to "+ChatColor.GRAY+TimeCommands.convertSecondsToTime(new_price)+
-                                ChatColor.GREEN+" per day in " + ChatColor.GRAY+TimeCommands.convertSecondsToTime(time));
+                        p.sendMessage(ChatColor.GREEN + "Your home '"+ChatColor.GRAY+home_name+ChatColor.GREEN+"' rent price will change to "+ChatColor.GRAY+Commands.convertSecondsToTime(new_price)+
+                                ChatColor.GREEN+" per day in " + ChatColor.GRAY+Commands.convertSecondsToTime(time));
                     }
                 }
             }
@@ -606,7 +606,7 @@ public class Homes {
                     "'"+home+"','"+p.getName()+"','"+newOwner.getName()+"',"+price+","+(System.currentTimeMillis()/1000 + 2*60*60)+");");
             if (newOwner.isOnline()){
                 newOwner.sendMessage(p.getName() + ChatColor.GREEN + " has offered you the home " + ChatColor.GRAY + getName(home) + ChatColor.GREEN + " for " + 
-                        ChatColor.RED + TimeCommands.convertSecondsToTime(price) + ChatColor.GREEN + ". Type "+ ChatColor.GRAY+"/life job accept"+ ChatColor.GREEN+" to purchase");
+                        ChatColor.RED + Commands.convertSecondsToTime(price) + ChatColor.GREEN + ". Type "+ ChatColor.GRAY+"/life job accept"+ ChatColor.GREEN+" to purchase");
             }
             return (updated > 0);
         } catch (Exception ex) {
