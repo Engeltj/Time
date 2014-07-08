@@ -61,7 +61,7 @@ public class TimeSigns extends Config {
         Map<String, Object> map = loadConfiguration(getConfigFile()).getValues(false);
         for (String key : map.keySet()){
             String[] coords = key.split(",");
-            System.out.println(key);
+            //System.out.println(key);
             String world = this.getString(key+".world");
             if (world == null)
                 world = "Time";
@@ -69,6 +69,7 @@ public class TimeSigns extends Config {
             Material m = Material.getMaterial(this.getString(key+".item"));
             int price = this.getInt(key+".price");
             int quantity = this.getInt(key+".quantity");
+            //int stock = this.getInt(key+".stock");
             Location loc = new Location(w, Integer.valueOf(coords[0]),Integer.valueOf(coords[1]),Integer.valueOf(coords[2]));
             Block b = loc.getBlock();
             if (b.getType().equals(Material.SIGN_POST) || b.getType().equals(Material.WALL_SIGN)) {
@@ -79,22 +80,33 @@ public class TimeSigns extends Config {
                     setSignPrice(s, price);
                 if (quantity > 0)
                     setSignQuantity(s, quantity);
+                else if (s.getLine(0).contains("Buy")){
+                    ConfigItemStock cis = new ConfigItemStock(plugin);
+                    setSignStock(s, cis.getStock(m.name()));
+                }
+                signs.put(key, s);
+                    
             } else
                 plugin.sendConsole("No sign found at location " + key + " on world " + w.getName());
         }
     }
     
-    private void setSignPrice(Sign s, int price){
+    public void setSignPrice(Sign s, int price){
         s.setLine(2, ChatColor.GREEN+String.valueOf(price)+" mins");
         s.update();
     }
     
-    private void setSignQuantity(Sign s, int quantity){
+    public void setSignQuantity(Sign s, int quantity){
         s.setLine(3, "Quantity: "+String.valueOf(quantity));
         s.update();
     }
     
-    private void setSignMaterial(Sign s, String material){
+    public void setSignStock(Sign s, int quantity){
+        s.setLine(3, "Stock: "+String.valueOf(quantity));
+        s.update();
+    }
+    
+    public void setSignMaterial(Sign s, String material){
         s.setLine(1, material);
         s.update();
     }
@@ -127,13 +139,13 @@ public class TimeSigns extends Config {
     }
     
     private boolean buyBlockLicense(TimePlayer tp, Material m, int cost){
-        EconomyResponse es = getPlugin().getEconomy().withdrawPlayer(tp.getName(), cost*60);
+        EconomyResponse es = plugin.getEconomy().withdrawPlayer(tp.getName(), cost*60);
         if (es.transactionSuccess()){
             if (tp.addBlockLicense(m.getId())){
                 tp.sendMessage(ChatColor.BLUE + m.name().toLowerCase() + ChatColor.YELLOW + " license aquired!");
             } else {
                 tp.sendMessage("It appears you already own the license to mine " + m.name().toLowerCase());
-                getPlugin().getEconomy().depositPlayer(tp.getName(), cost*60);
+                plugin.getEconomy().depositPlayer(tp.getName(), cost*60);
             }
             return true;
         }
@@ -154,7 +166,7 @@ public class TimeSigns extends Config {
     }
     
     private void buyItem(TimePlayer tp, Material m, int cost, int quantity){
-        EconomyResponse es = getPlugin().getEconomy().withdrawPlayer(tp.getName(), cost*60);
+        EconomyResponse es = plugin.getEconomy().withdrawPlayer(tp.getName(), cost*60);
         if (es.transactionSuccess()){
             ItemStack item = new ItemStack(m, quantity);
             tp.getPlayer().getInventory().addItem(item);
@@ -165,17 +177,22 @@ public class TimeSigns extends Config {
             tp.sendMessage(ChatColor.RED + "Insufficent life, transaction cancelled");
     }
     
-    private void donateItem(TimePlayer tp, Material m){
+    private void donateItem(TimePlayer tp, Sign s, Material m){
         ItemStack is = new ItemStack(m);
         PlayerInventory pi = tp.getPlayer().getInventory();
         if (pi.containsAtLeast(is, 1)){
             ConfigReputation cr = new ConfigReputation(plugin);
+            ConfigItemStock cis = new ConfigItemStock(plugin);
             int rep = cr.getItemRep(m.name());
             pi.removeItem(is);
-            tp.addRep(rep);
+            cis.addStock(m.name(), 1);
+            this.setSignStock(s, cis.getStock(m.name()));
             tp.getPlayer().updateInventory();
             tp.sendMessage(ChatColor.YELLOW + "You have just donated 1x " + ChatColor.GREEN + m.name().toLowerCase()+ChatColor.YELLOW+" for "+ChatColor.GREEN+ 
                     rep + ChatColor.YELLOW + " reputation");
+            if (!tp.addRep(rep)){
+                tp.sendMessage(ChatColor.GRAY + "It looks like you've reached your daily reputation gain limit (500). You will not gain any more reputation for today");
+            }
         } else
             tp.sendMessage(ChatColor.RED + "You don't have any "+ChatColor.YELLOW + m.name() + ChatColor.RED+ " to donate");
     }
@@ -192,7 +209,7 @@ public class TimeSigns extends Config {
                 return;
             }
             if (donate){
-                donateItem(tp, m);
+                donateItem(tp, sign, m);
             } else {
                 if (balance >= cost)
                     buyItem(tp, m, cost, quantity);
@@ -215,7 +232,7 @@ public class TimeSigns extends Config {
             }
             payment *= quantity;
             tp.getPlayer().updateInventory();
-            getPlugin().getEconomy().depositPlayer(tp.getName(), payment*60);
+            plugin.getEconomy().depositPlayer(tp.getName(), payment*60);
             tp.sendMessage(ChatColor.YELLOW + "You have just sold "+String.valueOf(quantity)+"x " + ChatColor.GREEN + m.name().toLowerCase()+ChatColor.YELLOW+" for "+ChatColor.GREEN+ 
                     String.valueOf(payment) +  " mins" + ChatColor.YELLOW+ " of time");
         } else
@@ -245,7 +262,7 @@ public class TimeSigns extends Config {
         }
 
         Material m = plugin.getItemMaterial(sign.getLine(1));
-        plugin.sendConsole("test: " + sign.getLine(1));
+        //plugin.sendConsole("test: " + sign.getLine(1));
         if (m == null){
             tp.sendMessage(ChatColor.RED + "Invalid item name or ID on line 2");
             dropSign(sign.getLocation());
@@ -255,7 +272,7 @@ public class TimeSigns extends Config {
         try {
             cost = Integer.parseInt(sign.getLine(2));
         }catch (Exception e){
-            tp.sendMessage(getPlugin().getPluginName() + "Invalid cost on line 3.");
+            tp.sendMessage(ChatColor.RED + "Invalid cost on line 3.");
             dropSign(sign.getLocation());
             return false;
         }
@@ -265,11 +282,12 @@ public class TimeSigns extends Config {
             sign.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "  [License]");
         else if (sign.getLine(0).contains("[Buy]")){
             sign.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "  [Buy]");
-            ConfigShop cs = new ConfigShop(plugin);
+            ConfigItemPrices cs = new ConfigItemPrices(plugin);
             ConfigReputation cr = new ConfigReputation(plugin);
+            ConfigItemStock cis = new ConfigItemStock(plugin);
             cs.updateItem(m.name(), cost);
             cr.verifyItem(m.name());
-            setSignQuantity(sign, quantity);
+            setSignStock(sign, cis.getStock(m.name()));
         } else if (sign.getLine(0).contains("[Sell]")){
             sign.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "  [Sell]");
 //                ConfigShop sc = new ConfigShop(plugin);
@@ -301,7 +319,7 @@ public class TimeSigns extends Config {
             }
             save();
         } else{
-            tp.sendMessage(getPlugin().getPluginName() + ChatColor.RED + "You do not have permissions to do that!");
+            tp.sendMessage(ChatColor.RED + "You do not have permissions to do that!");
             dropSign(sign.getLocation());
         }
     }
@@ -314,7 +332,7 @@ public class TimeSigns extends Config {
             this.signs.remove(path);
             save();
         } else{
-            tp.sendMessage(getPlugin().getPluginName() + ChatColor.RED + "You do not have permissions to do that!");
+            tp.sendMessage(ChatColor.RED + "You do not have permissions to do that!");
         }
     }
     
@@ -323,8 +341,8 @@ public class TimeSigns extends Config {
         location.getWorld().dropItemNaturally(location, new ItemStack(Material.SIGN, 1));
     }
     
-    public Time getPlugin(){
-        return this.plugin;
+    public Map<String, Sign> getSigns(){
+        return this.signs;
     }
     
     public void save(){

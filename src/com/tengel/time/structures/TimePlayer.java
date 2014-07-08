@@ -36,6 +36,7 @@ public class TimePlayer implements IStructure {
     private long start; //players first appearance
     private int bounty;
     private int reputation;
+    private int reputation_gain = 0;
     private boolean jailed;
     private List<Short> blockLicenses;
     private Time plugin;
@@ -63,6 +64,7 @@ public class TimePlayer implements IStructure {
                 this.setZone(rs.getShort("zone"));
                 this.setDied(rs.getBoolean("died"));
                 this.setRep(rs.getInt("reputation"));
+                this.reputation_gain = rs.getInt("reputation_gain");
                 
                 this.jobs = new HashMap<TimeProfession, Integer>();
                 String db_jobs = rs.getString("jobs");
@@ -264,8 +266,16 @@ public class TimePlayer implements IStructure {
         return false;
     }
     
-    public void addRep(int rep){
-        reputation += rep;
+    public boolean addRep(int rep){
+        if (reputation_gain < 500){
+            if (rep+reputation_gain > 500)
+                rep = 500-reputation_gain;
+            reputation += rep;
+            reputation_gain += rep;
+            return true;
+        } else
+            return false;
+        
     }
     
     public void updatePlayer(Player p){

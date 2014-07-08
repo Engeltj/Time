@@ -12,8 +12,8 @@ import java.io.File;
  *
  * @author Tim
  */
-public class ConfigShop extends Config {    
-    public ConfigShop(Time plugin){
+public class ConfigItemPrices extends Config {    
+    public ConfigItemPrices(Time plugin){
         super(plugin);
         setConfigFile(new File(plugin.getDataFolder() + File.separator + "item_prices.yml").getAbsoluteFile());
         
@@ -29,13 +29,12 @@ public class ConfigShop extends Config {
             }catch (Exception ignored){}
     }
     
-    public void updateItem(String name, double cost){
+    public void updateItem(String name, int cost){
         set(name, cost);
         save();
     }
     
-    public double getItemPrice(int id){
-        String item = Integer.toString(id);
-        return getDouble(item);
+    public int getItemPrice(String item){
+        return getInt(item);
     }
 }
