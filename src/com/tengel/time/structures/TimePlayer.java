@@ -35,12 +35,13 @@ public class TimePlayer implements IStructure {
     private short zone;
     private long start; //players first appearance
     private int bounty;
+    private int reputation;
     private boolean jailed;
     private List<Short> blockLicenses;
     private Time plugin;
     private TimePlayerInventory spi;
     private boolean adminMode = false;
-    private boolean died = false;
+    private boolean died;
     
     public boolean flagConfirm;
     
@@ -61,6 +62,7 @@ public class TimePlayer implements IStructure {
                 this.setJailed(rs.getBoolean("jailed"));
                 this.setZone(rs.getShort("zone"));
                 this.setDied(rs.getBoolean("died"));
+                this.setRep(rs.getInt("reputation"));
                 
                 this.jobs = new HashMap<TimeProfession, Integer>();
                 String db_jobs = rs.getString("jobs");
@@ -135,8 +137,16 @@ public class TimePlayer implements IStructure {
             
             for (short license : blockLicenses)
                 st.executeUpdate("REPLACE INTO `licenses` SET license="+license+" WHERE player='"+player.getName()+"' AND license="+license+";");
-            st.executeUpdate("UPDATE `players` SET life="+plugin.getEconomy().getBalance(player.getName())+",bounty="+bounty+",zone="+zone+
-                    ",lastseen="+System.currentTimeMillis()/1000+",jobs='"+jobsString+"',jailed="+jailed+" WHERE name='"+player.getName()+"';");
+            st.executeUpdate("UPDATE `players` SET " +
+                    "life="+plugin.getEconomy().getBalance(player.getName())+
+                    ",bounty="+bounty+
+                    ",zone="+zone+
+                    ",lastseen="+System.currentTimeMillis()/1000+
+                    ",jobs='"+jobsString+"'"+
+                    ",jailed="+jailed+
+                    ",reputation="+reputation+
+                    ",died="+died+
+                    " WHERE name='"+player.getName()+"';");
         } catch (Exception ex) {
             plugin.sendConsole("Failed to update db ford '"+player.getName()+"' in TimePlayer class, " + ex);
         }
@@ -173,11 +183,18 @@ public class TimePlayer implements IStructure {
     }
     
     public void outOfTime(){
+        died = true;
         player.sendMessage(ChatColor.RED + "You've run out of time!!!");
         player.setHealth(0D);
         player.setMaxHealth(2D);
         player.setLevel(1);
-        died = true;
+        
+    }
+    
+    public void outOfTimeRestore(){
+        player.sendMessage(ChatColor.GREEN+"It looks like you have accumulated 24 hours of time once again! You are no longer crippled");
+        player.setMaxHealth(2D);
+        died = false;
     }
     
     public boolean removeJob(TimeProfession job){
@@ -223,8 +240,12 @@ public class TimePlayer implements IStructure {
         died = false;
     }
     
-    public void setBalance(int balance){
-        plugin.getEconomy().getBalance(player.getName());
+//    public void setBalance(int balance){
+//        plugin.getEconomy().getBalance(player.getName());
+//    }
+    
+    public void setRep(int rep){
+        this.reputation = rep;
     }
     
     public void addBounty(int amount){
@@ -241,6 +262,14 @@ public class TimePlayer implements IStructure {
         if (!hasBlockLicense(block))
             return blockLicenses.add((short)block);
         return false;
+    }
+    
+    public void addRep(int rep){
+        reputation += rep;
+    }
+    
+    public void updatePlayer(Player p){
+        this.player = p;
     }
     
     public Player getPlayer(){

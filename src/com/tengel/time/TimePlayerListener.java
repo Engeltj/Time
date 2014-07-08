@@ -237,19 +237,17 @@ public class TimePlayerListener implements Listener {
     }
     
     private void playerOutOfTime_message(Player p){
-        TimePlayer tp = plugin.getPlayer(p.getName());
         p.sendMessage(ChatColor.RED + "You are in a crippled state and will need to obtain 24 hours before getting better.");
-        p.sendMessage("HINT: " + ChatColor.GRAY + "To obtain time, perhaps sell off some of your assets (items)");
-        tp.setDied(false);
+        p.sendMessage("HINT: " + ChatColor.GRAY + "To obtain time, perhaps sell off some of your assets (gold, diamond, emerald, or food)");
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerReSpawn(PlayerRespawnEvent event){
         Player p = event.getPlayer();
         TimePlayer tp = plugin.getPlayer(p.getName());
+        tp.updatePlayer(p);
         updatePlayerScoreboardHealth(p);
-        if (tp.hasDied())
-            playerOutOfTime_message(p);
+        playerOutOfTime_message(p);
     }
     
     @EventHandler
@@ -273,8 +271,8 @@ public class TimePlayerListener implements Listener {
     public void onInteract(PlayerInteractEvent event){
         Block b;
         
-        if (event.getAction()!=Action.RIGHT_CLICK_BLOCK)
-            return;
+//        if (event.getAction()!=Action.RIGHT_CLICK_BLOCK)
+//            return;
         if (!event.hasBlock()) {
             try {
                 b = event.getPlayer().getTargetBlock(null, 5);
@@ -288,19 +286,28 @@ public class TimePlayerListener implements Listener {
             Sign s = (Sign) b.getState();
             String type = s.getLine(0);
             
-            if (type.contains("[License]") || type.contains("[Buy]")){
+            if (type.contains("[License]")){
                 TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
                 TimeSigns ss = plugin.getShopSigns();
-                
-                ss.buyItem(tp, s);
+                ss.buyBlockLicense(tp, s);
+                event.setCancelled(true);
+            } else if (type.contains("[Buy]")){
+                System.out.println("Hey!");
+                boolean donate = (event.getAction()==Action.LEFT_CLICK_BLOCK);
+                TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
+                TimeSigns ss = plugin.getShopSigns();
+                ss.buyItem(tp, s, donate);
+                event.setCancelled(true);
             } else if (type.contains("[Job]")){
                 TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
                 TimeSigns ss = plugin.getShopSigns();
                 ss.buyProfession(tp, s.getLine(1));
+                event.setCancelled(true);
             } else if(type.contains("[Sell]")){
                 TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
                 TimeSigns ss = plugin.getShopSigns();
                 ss.sellItem(tp, s);
+                event.setCancelled(true);
             }
         }
     }

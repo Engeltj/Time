@@ -43,11 +43,15 @@ public class UpdatePlayers implements Runnable {
                 if (tp.getBounty() == 0)
                     player.sendMessage(ChatColor.GREEN + "You are free and cleared of all charges");
             }
-            if ((tp.getAge() > 7*24*60*60)){ //7 days
+            if ((tp.getAge() > 60) && !tp.hasDied()){ //7 days
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), updateInterval);
-                if (!es.transactionSuccess() && !tp.hasDied()){
+                if (!es.transactionSuccess()){
                     if (!tp.getJailed())
                         tp.outOfTime();
+                }
+            } else if(tp.hasDied()){
+                if (plugin.getEconomy().getBalance(tp.getName()) > 24*60*60){
+                    tp.outOfTimeRestore();
                 }
             }
         }

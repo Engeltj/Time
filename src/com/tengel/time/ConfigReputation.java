@@ -12,16 +12,17 @@ import java.io.File;
  *
  * @author Tim
  */
-public class ConfigShop extends Config {    
-    public ConfigShop(Time plugin){
+public class ConfigReputation extends Config {
+
+    public ConfigReputation(Time plugin) {
         super(plugin);
-        setConfigFile(new File(plugin.getDataFolder() + File.separator + "item_prices.yml").getAbsoluteFile());
+        setConfigFile(new File(plugin.getDataFolder() + File.separator + "item_reputation.yml").getAbsoluteFile());
         
         if (!getConfigFile().exists()){
             try {
                 getConfigFile().createNewFile();
             } catch (Exception e){
-                plugin.sendConsole("Error creating item_prices.yml");
+                plugin.sendConsole("Error creating item_reputation.yml");
             }
         } else
             try{
@@ -29,13 +30,17 @@ public class ConfigShop extends Config {
             }catch (Exception ignored){}
     }
     
-    public void updateItem(String name, double cost){
-        set(name, cost);
-        save();
+    public void verifyItem(String name){
+        getItemRep(name);
     }
     
-    public double getItemPrice(int id){
-        String item = Integer.toString(id);
-        return getDouble(item);
+    public int getItemRep(String name){
+        int rep = getInt(name);
+        if (rep < 1){
+            set(name, 1);
+            save();
+            return 1;
+        }else return rep;
     }
+    
 }
