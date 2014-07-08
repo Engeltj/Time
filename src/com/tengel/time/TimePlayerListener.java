@@ -117,6 +117,7 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler
     public void onWorldSave(WorldSaveEvent event){
+        plugin.saveConfigs();
         Map<String, TimePlayer> map = plugin.getPlayers();
         for (String key : map.keySet())
             map.get(key).save();

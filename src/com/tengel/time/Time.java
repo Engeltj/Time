@@ -74,7 +74,11 @@ public final class Time extends JavaPlugin {
     private TimeSQL sql;
     private MobControl mobcontrol;
     private CreativePlots creative_plots;
+    
     private TimeSigns shop_signs;
+    private ConfigItemPrices shop_prices;
+    private ConfigItemStock shop_stock;
+    private ConfigReputation item_reputation;
     
     public Gatherer prof_miner;
     public Gatherer prof_farmer;
@@ -93,13 +97,18 @@ public final class Time extends JavaPlugin {
         setupSql();
         PluginManager pm = getServer().getPluginManager();
         creative_plots = new CreativePlots(this);
+        
         shop_signs = new TimeSigns(this);
+        shop_prices = new ConfigItemPrices(this);
+        shop_stock = new ConfigItemStock(this);
+        item_reputation = new ConfigReputation(this);
+        
         worldGuard = (WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard");
         worldEdit = (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
         prof_miner = new Gatherer(this, TimeProfession.MINER);
         prof_farmer = new Gatherer(this, TimeProfession.FARMER);
         prof_builder = new Builder(this);
-        prof_landlord = new Landlord(this);
+        prof_landlord = new Landlord(this);        
         
         mobcontrol = new MobControl(this, getServer().getWorld("Time"));
         
@@ -136,12 +145,23 @@ public final class Time extends JavaPlugin {
         processSchematics();
         
     }
+    
+    public void saveConfigs(){
+        this.shop_signs.save();
+        this.item_reputation.save();
+        this.shop_prices.save();
+        this.shop_stock.save();
+    }
  
     @Override
     public void onDisable() {
         this.getServer().getScheduler().cancelTasks(this);
+        saveConfigs();
+        this.shop_prices = null;
+        this.item_reputation = null;
+        this.shop_stock = null;
+        this.shop_signs = null;
         Iterator it = this.players.entrySet().iterator();
-        this.shop_signs.save();
         while (it.hasNext()) {
             Map.Entry pairs = (Map.Entry)it.next();
             TimePlayer p = (TimePlayer) pairs.getValue();
@@ -399,6 +419,18 @@ public final class Time extends JavaPlugin {
     
     public TimeSigns getShopSigns(){
         return shop_signs;
+    }
+    
+    public ConfigItemPrices getConfigItemPrices(){
+        return this.shop_prices;
+    }
+    
+    public ConfigItemStock getConfigItemStock(){
+        return this.shop_stock;
+    }
+    
+    public ConfigReputation getConfigReputation(){
+        return this.item_reputation;
     }
     
     public File getConfigSigns(){

@@ -14,9 +14,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
-import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
@@ -27,7 +24,6 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bukkit.World;
-import org.bukkit.configuration.MemorySection;
 import org.bukkit.inventory.PlayerInventory;
 
 /**
@@ -81,7 +77,7 @@ public class TimeSigns extends Config {
                 if (quantity > 0)
                     setSignQuantity(s, quantity);
                 else if (s.getLine(0).contains("Buy")){
-                    ConfigItemStock cis = new ConfigItemStock(plugin);
+                    ConfigItemStock cis = plugin.getConfigItemStock();
                     setSignStock(s, cis.getStock(m.name()));
                 }
                 signs.put(key, s);
@@ -169,6 +165,7 @@ public class TimeSigns extends Config {
         EconomyResponse es = plugin.getEconomy().withdrawPlayer(tp.getName(), cost*60);
         if (es.transactionSuccess()){
             ItemStack item = new ItemStack(m, quantity);
+            plugin.getConfigItemStock().removeStock(m.name(), 1);
             tp.getPlayer().getInventory().addItem(item);
             tp.getPlayer().updateInventory();
             tp.sendMessage(ChatColor.YELLOW+"You have just purchased "+String.valueOf(quantity)+"x " + ChatColor.GREEN + m.name().toLowerCase()+ChatColor.YELLOW+" for " +
@@ -181,8 +178,8 @@ public class TimeSigns extends Config {
         ItemStack is = new ItemStack(m);
         PlayerInventory pi = tp.getPlayer().getInventory();
         if (pi.containsAtLeast(is, 1)){
-            ConfigReputation cr = new ConfigReputation(plugin);
-            ConfigItemStock cis = new ConfigItemStock(plugin);
+            ConfigReputation cr = plugin.getConfigReputation();
+            ConfigItemStock cis = plugin.getConfigItemStock();
             int rep = cr.getItemRep(m.name());
             pi.removeItem(is);
             cis.addStock(m.name(), 1);
@@ -211,10 +208,13 @@ public class TimeSigns extends Config {
             if (donate){
                 donateItem(tp, sign, m);
             } else {
-                if (balance >= cost)
-                    buyItem(tp, m, cost, quantity);
-                else
-                    tp.sendMessage(ChatColor.RED + "Insufficient time");
+                if (plugin.getConfigItemStock().getStock(m.name()) > 0){
+                    if (balance >= cost)
+                        buyItem(tp, m, cost, quantity);
+                    else
+                        tp.sendMessage(ChatColor.RED + "Insufficient time");
+                } else
+                    tp.sendMessage(ChatColor.RED + "This item appears to be out of stock, a player must donate to this shop to increase stock level.");
             }
         } else
             tp.sendMessage(ChatColor.RED + "You do not have permissions to do that!");
@@ -282,9 +282,9 @@ public class TimeSigns extends Config {
             sign.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "  [License]");
         else if (sign.getLine(0).contains("[Buy]")){
             sign.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "  [Buy]");
-            ConfigItemPrices cs = new ConfigItemPrices(plugin);
-            ConfigReputation cr = new ConfigReputation(plugin);
-            ConfigItemStock cis = new ConfigItemStock(plugin);
+            ConfigItemPrices cs = plugin.getConfigItemPrices();
+            ConfigReputation cr = plugin.getConfigReputation();
+            ConfigItemStock cis = plugin.getConfigItemStock();
             cs.updateItem(m.name(), cost);
             cr.verifyItem(m.name());
             setSignStock(sign, cis.getStock(m.name()));

@@ -32,7 +32,6 @@ public class ConfigItemStock extends Config {
     
     public void setStock(String item, int stock){
         set(item, stock);
-        save();
     }
     
     public int getStock(String item){
@@ -44,7 +43,6 @@ public class ConfigItemStock extends Config {
         if (stock < 0)
             stock = 0;
         set(item, stock);
-        save();
     }
     
     public void removeStock(String item, int amount){

@@ -38,7 +38,6 @@ public class ConfigReputation extends Config {
         int rep = getInt(name);
         if (rep < 1){
             set(name, 1);
-            save();
             return 1;
         }else return rep;
     }

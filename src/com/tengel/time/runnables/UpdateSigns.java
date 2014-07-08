@@ -35,8 +35,8 @@ public class UpdateSigns implements Runnable {
     public void run() {
         TimeSigns ts = plugin.getShopSigns();
         Map<String, Sign> signs = ts.getSigns();
-        ConfigItemStock cis = new ConfigItemStock(plugin);
-        ConfigItemPrices cip = new ConfigItemPrices(plugin);
+        ConfigItemStock cis = plugin.getConfigItemStock();
+        ConfigItemPrices cip = plugin.getConfigItemPrices();
         for (String key : signs.keySet()){
             Sign s = signs.get(key);
             if (s.getLine(0).contains("Buy")){

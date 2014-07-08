@@ -31,7 +31,6 @@ public class ConfigItemPrices extends Config {
     
     public void updateItem(String name, int cost){
         set(name, cost);
-        save();
     }
     
     public int getItemPrice(String item){
