@@ -19,6 +19,7 @@ import com.tengel.time.profs.Landlord;
 import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.runnables.TimeMonsterSpawn;
 import com.tengel.time.structures.Home;
+import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Location;
@@ -61,14 +62,13 @@ import org.bukkit.scoreboard.Scoreboard;
  * @author Tim
  */
 public final class Time extends JavaPlugin {
-    private final TimePlayerListener playerListener;
-    private final RegionControl worldGuardListener;
-    private final UpdatePlayers timeUpdater;
+    private TimePlayerListener playerListener;
+    private RegionControl worldGuardListener;
+    private UpdatePlayers timeUpdater;
     private HashMap<String, TimePlayer> players;
     private HashMap<String, Home> homes;
-    private Economy economy = null;
+    private Economy economy;
     private String pluginName;
-    private File configSigns;
     public WorldGuardPlugin worldGuard;
     public WorldEditPlugin worldEdit;
     private TimeSQL sql;
@@ -84,16 +84,19 @@ public final class Time extends JavaPlugin {
     public Gatherer prof_farmer;
     public Builder prof_builder;
     public Landlord prof_landlord;
+    private final Time plugin;
     
     public Time() {
-        players = new HashMap<String, TimePlayer>();
-        playerListener = new TimePlayerListener(this);
-        worldGuardListener = new RegionControl(this);
-        timeUpdater = new UpdatePlayers(this,1);
+        plugin = this;
     }
     
     @Override
     public void onEnable(){
+        players = new HashMap<String, TimePlayer>();
+        playerListener = new TimePlayerListener(this);
+        worldGuardListener = new RegionControl(this);
+        timeUpdater = new UpdatePlayers(this,1);
+        
         setupSql();
         PluginManager pm = getServer().getPluginManager();
         creative_plots = new CreativePlots(this);
@@ -124,26 +127,24 @@ public final class Time extends JavaPlugin {
         }
         
         pluginName = "[" + pm.getPlugin("Time").getName() + "] ";
-        final Time plugin = this;
         pm.registerEvents(this.playerListener, this);
         pm.registerEvents(creative_plots, this);
         pm.registerEvents(this.worldGuardListener, this);
-        pm.registerEvents(mobcontrol, this);
+        //pm.registerEvents(mobcontrol, this);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, timeUpdater, 0, timeUpdater.getUpdateInterval() * 20);
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 60, 1800 * 20);
+        getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 60, 5 * 60 * 20);
         getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
             public void run() {
                 shop_signs.load();
                 plugin.loadHomes();
                 plugin.loadTimePlayers();
                 plugin.setupHealthBar();
-                plugin.loadMonsters();
+                //plugin.loadMonsters();
             }
         });
         
         getLogger().info("Time by Engeltj has been enabled");
-        processSchematics();
-        
+        //processSchematics();
     }
     
     public void saveConfigs(){
@@ -157,10 +158,6 @@ public final class Time extends JavaPlugin {
     public void onDisable() {
         this.getServer().getScheduler().cancelTasks(this);
         saveConfigs();
-        this.shop_prices = null;
-        this.item_reputation = null;
-        this.shop_stock = null;
-        this.shop_signs = null;
         Iterator it = this.players.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pairs = (Map.Entry)it.next();
@@ -168,6 +165,26 @@ public final class Time extends JavaPlugin {
             p.save();
             it.remove();
         }
+        this.shop_prices = null;
+        this.item_reputation = null;
+        this.shop_stock = null;
+        this.shop_signs = null;
+        this.mobcontrol = null;
+        this.creative_plots = null;
+        this.economy = null;
+        this.homes = null;
+        this.playerListener = null;
+        this.players = null;
+        this.pluginName = null;
+        this.prof_builder = null;
+        this.prof_farmer = null;
+        this.prof_landlord = null;
+        this.prof_miner = null;
+        this.sql = null;
+        this.timeUpdater = null;
+        this.worldEdit = null;
+        this.worldGuard = null;
+        this.worldGuardListener = null;
         getLogger().info("Time by Engeltj has been disabled");
     }
     
@@ -431,19 +448,6 @@ public final class Time extends JavaPlugin {
     
     public ConfigReputation getConfigReputation(){
         return this.item_reputation;
-    }
-    
-    public File getConfigSigns(){
-        if (configSigns == null)
-            configSigns = new File(this.getDataFolder() + File.separator + "signs.yml");
-        if (!this.configSigns.exists()){
-            try {
-                this.configSigns.createNewFile();
-            } catch (Exception e){
-                this.sendConsole("Error creating signs.yml");
-            }
-        }
-        return this.configSigns;
     }
     
     public Location getLocation(int zone, String type){
