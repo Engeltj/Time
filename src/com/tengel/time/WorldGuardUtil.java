@@ -14,6 +14,7 @@ import com.sk89q.worldedit.bukkit.BukkitPlayer;
 import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.bukkit.selections.Polygonal2DSelection;
+import com.sk89q.worldedit.bukkit.selections.Selection;
 import com.sk89q.worldedit.data.DataException;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.schematic.SchematicFormat;
@@ -134,27 +135,35 @@ public class WorldGuardUtil {
         mgr.save();
         return region;
     }
+    
+    public com.sk89q.worldedit.BlockVector convertToSk89qBV(Location location){
+        return new com.sk89q.worldedit.BlockVector(location.getX(),location.getY(),location.getZ());
+    }
 
     public ProtectedRegion createRegionFromSelection(Player p, String rgName){
         RegionManager mgr = wgp.getGlobalRegionManager().get(world);
         WorldEditPlugin wep = plugin.worldEdit;
-        final LocalSession session = wep.getSession(p);
-        LocalWorld w = BukkitUtil.getLocalWorld(p.getWorld());
+        //final LocalSession session = wep.getSession(p);
+        //LocalWorld w = BukkitUtil.getLocalWorld(p.getWorld());
         ProtectedRegion region=null;
         try {
-            Region sel = session.getSelection(w);
+            Selection sel = wep.getSelection(p);
             if (sel instanceof Polygonal2DSelection) {
                 Polygonal2DSelection polySel = (Polygonal2DSelection) sel;
                 int minY = polySel.getNativeMinimumPoint().getBlockY();
                 int maxY = polySel.getNativeMaximumPoint().getBlockY();
                 region = new ProtectedPolygonalRegion(rgName, polySel.getNativePoints(), minY, maxY);
+                System.out.println("POLY!!");
             } else { /// default everything to cuboid
-                region = new ProtectedCuboidRegion(rgName, sel.getMinimumPoint().toBlockVector(), sel.getMaximumPoint().toBlockVector());
+                region = new ProtectedCuboidRegion(rgName, convertToSk89qBV(sel.getMinimumPoint()), convertToSk89qBV(sel.getMaximumPoint()));
+                System.out.println("CUBOID!!");
             }
             region.setPriority(11); /// some relatively high priority
             wgp.getRegionManager(world).addRegion(region);
             mgr.save();
-        } catch (Exception ignored){}
+        } catch (Exception e){
+            System.out.println("createRegionFromSelection encountered error: " + e);
+        }
         return region;
     }
 

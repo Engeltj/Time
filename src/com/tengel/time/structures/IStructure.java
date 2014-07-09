@@ -12,7 +12,7 @@ package com.tengel.time.structures;
  * @author Tim
  */
 public interface IStructure {
-    public void load();
-    public void save();
-    public void remove();
+    public boolean load();
+    public boolean save();
+    public boolean remove();
 }

@@ -142,7 +142,7 @@ public final class Time extends JavaPlugin {
                 //plugin.loadMonsters();
             }
         });
-        
+        Runtime.getRuntime().addShutdownHook(new ServerStopHandler(this));
         getLogger().info("Time by Engeltj has been enabled");
         //processSchematics();
     }
@@ -396,12 +396,12 @@ public final class Time extends JavaPlugin {
         return this.homes;
     }
     
-    public Home addHome(String name){
+    public void addHome(String name){
         Home home = homes.get(name);
         if (home == null)
             home = new Home(this, name);
-        home.load();
-        return homes.put(name, home);
+        if (home.load())
+            homes.put(name, home);
     }
     
     public void addHome(Home home){

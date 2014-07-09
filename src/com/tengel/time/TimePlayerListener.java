@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.world.WorldEvent;
 import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
@@ -119,6 +120,7 @@ public class TimePlayerListener implements Listener {
     @EventHandler
     public void onWorldSave(WorldSaveEvent event){
         plugin.save();
+        plugin.sendConsole("Time saved.");
     }
     
     @EventHandler(priority=EventPriority.NORMAL)

@@ -53,7 +53,7 @@ public class TimePlayer implements IStructure {
         this.plugin = plugin;
     }
     
-    public void load(){
+    public boolean load(){
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -112,9 +112,10 @@ public class TimePlayer implements IStructure {
             plugin.sendConsole("Failed to create TimePlayer for '"+player.getName()+"', " + ex);
             loaded = false;
         }
+        return loaded;
     }
     
-    public void save(){
+    public boolean save(){
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -155,9 +156,11 @@ public class TimePlayer implements IStructure {
                     ",reputation="+reputation+
                     ",died="+died+
                     " WHERE name='"+player.getName()+"';");
+            return true;
         } catch (Exception ex) {
             plugin.sendConsole("Failed to update db ford '"+player.getName()+"' in TimePlayer class, " + ex);
         }
+        return false;
     }
     
     private void create(){
@@ -173,7 +176,7 @@ public class TimePlayer implements IStructure {
         
     }
     
-    public void remove(){
+    public boolean remove(){
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -185,9 +188,11 @@ public class TimePlayer implements IStructure {
             st.executeUpdate("DELETE FROM `inventories` WHERE player='"+player.getName()+"';");
             st.executeUpdate("UPDATE `homes` SET renter='' WHERE renter='"+player.getName()+"';");
             st.executeUpdate("UPDATE `homes` SET owner='' WHERE owner='"+player.getName()+"';");
+            return true;
         } catch (Exception ex) {
             plugin.sendConsole("Failed remove profile of player "+player.getName()+", "+ ex);
         }
+        return false;
     }
     
     public void outOfTime(){

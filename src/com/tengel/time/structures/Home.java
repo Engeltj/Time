@@ -11,6 +11,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.Time;
 import com.tengel.time.Commands;
 import com.tengel.time.WorldGuardUtil;
+import com.tengel.time.exceptions.HomeFailedToCreateException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -32,13 +33,13 @@ public class Home implements IStructure{
     
     private int price=0;
     private int new_price=0;
-    private long price_changed=0;
-    private long price_warned=0;
+    private long price_changed=0L;
+    private long price_warned=0L;
     
     private String type="";
     private String landlord="";
     private String renter="";
-    private long lastpay=0;
+    private long lastpay=0L;
     private Vector door;
     
     public Home(Time plugin, String name){
@@ -46,7 +47,7 @@ public class Home implements IStructure{
         this.name = name;
     }
     
-    public Home(Time plugin, Player p, String name, String type){
+    public Home(Time plugin, Player p, String name, String type) throws HomeFailedToCreateException{
         if (name == null || name.length()==0)
             name = "home_" + System.currentTimeMillis()/1000;
         else if (!name.contains("home_"))
@@ -57,39 +58,47 @@ public class Home implements IStructure{
         else if (type.equalsIgnoreCase("home"))
             type = "house";
         WorldGuardUtil wgu = new WorldGuardUtil(plugin, p.getWorld());
-        if (!wgu.saveSchematic(p, "homes", name))
+        if (!wgu.saveSchematic(p, "homes", name)){
             p.sendMessage(ChatColor.RED + "Failed to save schematic for home '"+name+"', aborting home create.");
-        if (wgu.createRegionFromSelection(p, name) == null)
+            throw new HomeFailedToCreateException("Schematic save failure");
+        }
+        if (wgu.createRegionFromSelection(p, name) == null){
             p.sendMessage(ChatColor.RED + "Failed to create region for home '"+name+"', aborting home create.");
+            throw new HomeFailedToCreateException("Region creation failure");
+        }
         this.door = p.getLocation().toVector();
         this.plugin = plugin;
         this.name = name;
         this.type = type;
     }
     
-    public void load() {
+    public boolean load() {
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
             st = con.createStatement();
             ResultSet rs = st.executeQuery("SELECT * FROM `homes` WHERE name='"+name+"';");
-            display_name = rs.getString("display_name");
-            zone = rs.getShort("zone");
-            price = rs.getInt("price");
-            new_price = rs.getInt("new_price");
-            price_changed = rs.getLong("price_changed");
-            price_warned = rs.getLong("price_warned");
-            type = rs.getString("type");
-            landlord = rs.getString("landlord");
-            renter = rs.getString("renter");
-            lastpay = rs.getLong("lastpay");
-            door = new Vector(rs.getDouble("x"),rs.getDouble("y"),rs.getDouble("z"));
+            if (rs.next()){
+                display_name = rs.getString("display_name");
+                zone = rs.getShort("zone");
+                price = rs.getInt("price");
+                new_price = rs.getInt("new_price");
+                price_changed = rs.getLong("price_changed");
+                price_warned = rs.getLong("price_warned");
+                type = rs.getString("type");
+                landlord = rs.getString("landlord");
+                renter = rs.getString("renter");
+                lastpay = rs.getLong("lastpay");
+                door = new Vector(rs.getDouble("x"),rs.getDouble("y"),rs.getDouble("z"));
+                return true;
+            }
         } catch (Exception ex) {
-            plugin.sendConsole("Failed to create entry for home '"+name+"' in Home class, " + ex);
+            plugin.sendConsole("Failed to load entry for home '"+name+"' in Home class, " + ex);
         }
+        return false;
     }
 
-    public void save() {
+    public boolean save() {
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -100,12 +109,12 @@ public class Home implements IStructure{
                     + "display_name='%s',"
                     + "price=%d,"
                     + "new_price=%d,"
-                    + "price_changed=%.0f,"
-                    + "price_warned=%.0f,"
+                    + "price_changed=%d,"
+                    + "price_warned=%d,"
                     + "type='%s',"
                     + "landlord='%s',"
                     + "renter='%s',"
-                    + "lastpay=%.0f,"
+                    + "lastpay=%d,"
                     + "x=%f,"
                     + "y=%f,"
                     + "z=%f", zone,display_name,price,new_price,price_changed,price_warned,
@@ -113,13 +122,15 @@ public class Home implements IStructure{
             if (rs.first())
                 st.executeUpdate("UPDATE `homes` SET "+query+" WHERE name='"+name+"';");
             else
-                st.executeUpdate("INSERT INTO `homes` SET "+query+";");
+                st.executeUpdate("INSERT INTO `homes` SET name='"+name+"',"+query+";");
+            return true;
         } catch (Exception ex) {
             plugin.sendConsole("Failed to create/update entry for home '"+name+"' in Home class, " + ex);
         }
+        return false;
     }
 
-    public void remove() {
+    public boolean remove() {
         Connection con = plugin.getSql().getConnection();
         Statement st;
         try {
@@ -129,9 +140,11 @@ public class Home implements IStructure{
             WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.getServer().getWorld("Time"));
             wgu.deleteRegion(getName());
             plugin.getHomes().remove(this);
+            return true;
         } catch (Exception ex) {
             plugin.sendConsole("Failed to delete entry for home '"+name+"' in Home class, " + ex);
         }
+        return false;
     }
     
     public void reset(){
@@ -210,10 +223,10 @@ public class Home implements IStructure{
         return getRentWorth()*30;
     }
     
-    public double getRentWorth(){
+    public int getRentWorth(){
         WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.getServer().getWorlds().get(0));
         com.sk89q.worldedit.Vector v = wgu.getSchematicDimensions(getName(), "homes");
-        double area = v.getX()*v.getY()*v.getZ();
+        int area = (int) Math.ceil(v.getX()*v.getY()*v.getZ());
         return (area + area*5*getZone())*120;
     }
     

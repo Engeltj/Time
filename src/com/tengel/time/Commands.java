@@ -6,6 +6,7 @@
 
 package com.tengel.time;
 
+import com.tengel.time.exceptions.HomeFailedToCreateException;
 import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
@@ -13,6 +14,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -223,6 +226,7 @@ public class Commands implements Listener{
             sender.sendMessage(ChatColor.GRAY + "update" + ChatColor.GREEN + "  > Updates schematic prices");
             sender.sendMessage(ChatColor.GRAY + "createspawn [difficulty]" + ChatColor.GREEN + "  > Creates a spawn of select difficulty (1-5, 5=hardest)");
             sender.sendMessage(ChatColor.GRAY + "spawn [monster name]" + ChatColor.GREEN + "  > Sets your location to spawn the specified monster");
+            sender.sendMessage(ChatColor.GRAY + "save" + ChatColor.GREEN + "  > Saves plugin data to flatfiles and database");
         } else if (args[1].equalsIgnoreCase("on")){
             plugin.getPlayer(sender.getName()).setAdminMode(true);
             sender.sendMessage(ChatColor.GREEN+"Admin mode has been activated");
@@ -261,7 +265,11 @@ public class Commands implements Listener{
                 sender.sendMessage(ChatColor.RED+"Invalid monster, your choices are: ");
                 sender.sendMessage(ChatColor.RED+"BLAZE CAVE_SPIDER CREEPER ENDERMAN GHAST GIANT IRON_GOLEM MAGMA_CUBE PIG_ZOMBIE SILVERFISH SKELETON SLIME SPIDER WOLF ZOMBIE ");
             }   
-        }
+        } else if (args[1].equalsIgnoreCase("save")){
+            plugin.save();
+            sender.sendMessage(ChatColor.GREEN+"All data saved :) ");
+        } else
+            sender.sendMessage(ChatColor.RED+"Invalid option");
     }
     
     public boolean commandsPlot(CommandSender sender, String[] args){
@@ -342,9 +350,17 @@ public class Commands implements Listener{
                 if (args.length >= 5)
                     type = args[4];
                 if (plugin.getHome(name) == null) {
-                    Home new_home = new Home(plugin, p, name, type);
-                    plugin.addHome(new_home);
-                    sender.sendMessage(ChatColor.GREEN+"Home created successfully, door is set where you were standing");
+                    Home new_home;
+                    try {
+                        new_home = new Home(plugin, p, name, type);
+                        plugin.addHome(new_home);
+                        new_home.setPrice(new_home.getRentWorth());
+                        sender.sendMessage(ChatColor.GREEN+"Home created successfully, door is set where you were standing");
+                    } catch (HomeFailedToCreateException ex) {
+                        System.out.println(ex.getMessage());
+                        sender.sendMessage(ChatColor.RED+"Failed to create home");
+                    }
+                    
                 } else
                     sender.sendMessage(ChatColor.RED+"Home failed to create, name already taken");
             } else if (args[2].equalsIgnoreCase("update")){
