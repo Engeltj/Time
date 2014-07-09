@@ -44,6 +44,8 @@ public class TimePlayer implements IStructure {
     private boolean adminMode = false;
     private boolean died;
     
+    private boolean loaded = false;
+    
     public boolean flagConfirm;
     
     public TimePlayer(Time plugin, Player player){
@@ -66,6 +68,8 @@ public class TimePlayer implements IStructure {
                 this.setRep(rs.getInt("reputation"));
                 this.reputation_gain = rs.getInt("reputation_gain");
                 
+                System.out.println(rs.getBoolean("died"));
+                System.out.println(rs.getInt("died"));
                 this.jobs = new HashMap<TimeProfession, Integer>();
                 String db_jobs = rs.getString("jobs");
                 String [] jobs = db_jobs.split(",");
@@ -103,8 +107,10 @@ public class TimePlayer implements IStructure {
                     blockLicenses.add(licenses.getShort("license"));
             } else
                 create();
+            loaded = true;
         } catch (Exception ex) {
             plugin.sendConsole("Failed to create TimePlayer for '"+player.getName()+"', " + ex);
+            loaded = false;
         }
     }
     
@@ -221,6 +227,17 @@ public class TimePlayer implements IStructure {
         return false;
     }
     
+    public void setPassword(String password){
+        Connection con = plugin.getSql().getConnection();
+        Statement st;
+        try {
+            st = con.createStatement();
+            st.executeUpdate("UPDATE `players` SET password='"+plugin.md5(password)+"' WHERE name='"+getName()+"';");
+        } catch (Exception ex){
+            plugin.sendConsole("Failed to set password for " + getName());
+        }
+    }
+    
     public void setZone(short zone){
         this.zone = zone;
     }
@@ -239,7 +256,7 @@ public class TimePlayer implements IStructure {
     }
     
     public void setDied(boolean value){
-        died = false;
+        died = value;
     }
     
 //    public void setBalance(int balance){
@@ -324,6 +341,10 @@ public class TimePlayer implements IStructure {
     
     public boolean hasDied(){
         return died;
+    }
+    
+    public boolean isLoaded(){
+        return loaded;
     }
     
     public void sendMessage(String message){

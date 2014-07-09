@@ -74,36 +74,6 @@ public class TimeSQL {
             plugin.sendConsole(ex.getMessage());
         }
     }
-        
-    private String md5(String md5) {
-        try {
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
-            byte[] array = md.digest(md5.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (byte anArray : array) {
-                sb.append(Integer.toHexString((anArray & 0xFF) | 0x100).substring(1, 3));
-            }
-            return sb.toString();
-         } catch (Exception ignored) {}
-         return null;
-     }
-    
-    public void addPlayer(String name, String password){
-        verifyConnection();
-        try {
-            Statement st = con.createStatement();
-            ResultSet rs = st.executeQuery("SELECT * FROM `players` WHERE name='"+ name +"';");
-            int rows = 0;
-            if (rs.last())
-                rows = rs.getRow();
-            if (rows == 0)
-                st.executeUpdate("INSERT INTO `players` (name, password) VALUES ('"+name+"','"+md5(password)+"');");
-            else
-                st.executeUpdate("UPDATE `players` SET password='"+md5(password)+"' WHERE name='"+name+"';");
-        } catch (Exception ex) {
-            plugin.sendConsole(ex.getMessage());
-        }
-    }
     
     public Connection getConnection(){
         verifyConnection();

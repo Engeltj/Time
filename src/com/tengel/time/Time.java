@@ -147,24 +147,21 @@ public final class Time extends JavaPlugin {
         //processSchematics();
     }
     
-    public void saveConfigs(){
+    public void save(){
         this.shop_signs.save();
         this.item_reputation.save();
         this.shop_prices.save();
         this.shop_stock.save();
+        for (String key : homes.keySet())
+            homes.get(key).save();
+        for (String key : players.keySet())
+            players.get(key).save();
     }
  
     @Override
     public void onDisable() {
         this.getServer().getScheduler().cancelTasks(this);
-        saveConfigs();
-        Iterator it = this.players.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry pairs = (Map.Entry)it.next();
-            TimePlayer p = (TimePlayer) pairs.getValue();
-            p.save();
-            it.remove();
-        }
+        save();
         this.shop_prices = null;
         this.item_reputation = null;
         this.shop_stock = null;
@@ -386,16 +383,17 @@ public final class Time extends JavaPlugin {
         return null;
     }
     
-    public HashMap<String, Home> getHomes(String player){
-        Iterator it = homes.entrySet().iterator();
-        HashMap<String, Home> p_homes = new HashMap<String, Home>();
-        while (it.hasNext()){
-            Entry ent = (Entry) it.next();
-            Home t_home = (Home) ent.getValue();
-            if (t_home.getRenter().equals(player))
-                p_homes.put((String)ent.getKey(), (Home)ent.getValue());
+    public Map<String, Home> getHomesByOwner(String player){
+        Map<String, Home> p_homes = new HashMap<String, Home>();
+        for (String home : homes.keySet()){
+            Home h = homes.get(home);
+            p_homes.put(home, h);
         }
         return p_homes;
+    }
+    
+    public Map<String, Home> getHomes(){
+        return this.homes;
     }
     
     public Home addHome(String name){
@@ -490,4 +488,17 @@ public final class Time extends JavaPlugin {
         DecimalFormat df = new DecimalFormat(String.valueOf(zeros));
         return df.format(num);
     }
+    
+    public String md5(String md5) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            byte[] array = md.digest(md5.getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte anArray : array) {
+                sb.append(Integer.toHexString((anArray & 0xFF) | 0x100).substring(1, 3));
+            }
+            return sb.toString();
+         } catch (Exception ignored) {}
+         return null;
+     }
 }

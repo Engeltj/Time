@@ -31,6 +31,8 @@ public class UpdatePlayers implements Runnable {
         for (Player player : plugin.getServer().getOnlinePlayers()){
             boolean wrongZone = rc.isWrongZone(player);
             TimePlayer tp = plugin.getPlayer(player.getName());
+            if (!tp.isLoaded())
+                continue;
             if (wrongZone){
                 plugin.getEconomy().withdrawPlayer(player.getName(), updateInterval);
                 //ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());

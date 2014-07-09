@@ -10,7 +10,6 @@ import com.mewin.WGRegionEvents.events.RegionEnterEvent;
 import com.sk89q.worldguard.domains.DefaultDomain;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -20,6 +19,7 @@ import org.bukkit.event.Listener;
 
 import com.sk89q.worldguard.protection.GlobalRegionManager;
 import com.sk89q.worldguard.protection.databases.ProtectionDatabaseException;
+import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -44,31 +44,64 @@ public class RegionControl implements Listener {
         Player p = e.getPlayer();
         if (isWrongZone(p.getName(), getZoneId(rgName)))
             p.sendMessage(ChatColor.RED + "You are in a the wrong time zone! Please leave immediately.");
-        Homes h = new Homes(plugin);
-        if (h.isHome(rgName)){
-            TimePlayer tp = plugin.getPlayer(p.getName());
-            if (h.isAvailable(rgName)){
-                double price = h.getRentPrice(rgName);
-                p.sendMessage(ChatColor.GREEN + "This home is available for " + ChatColor.GRAY + Commands.convertSecondsToTime(price) +
+        //Homes h = new Homes(plugin);
+//        if (h.isHome(rgName)){
+//            TimePlayer tp = plugin.getPlayer(p.getName());
+//            if (h.isAvailable(rgName)){
+//                double price = h.getRentPrice(rgName);
+//                p.sendMessage(ChatColor.GREEN + "This home is available for " + ChatColor.GRAY + Commands.convertSecondsToTime(price) +
+//                    ChatColor.GREEN + " per day. Type " + ChatColor.GRAY + "/life home rent" + ChatColor.GREEN + " to rent.");
+//            } else {
+//                String renter = h.getRenter(rgName);
+//                if (renter.equalsIgnoreCase(p.getName()))
+//                    p.sendMessage(ChatColor.GREEN + "Welcome home " + ChatColor.GRAY + p.getName());
+//                else if (renter.length() > 0)
+//                    p.sendMessage(ChatColor.GREEN + "Welcome to " + ChatColor.GRAY + renter + "'s" + ChatColor.GREEN+ " home");
+//            }
+//            if (tp.hasJob(TimeProfession.LANDLORD)){
+//                String lord = h.getLandlord(rgName);
+//                if (lord.length() > 0 && !h.getRenter(rgName).equalsIgnoreCase(p.getName())){
+//                    if (lord.equalsIgnoreCase(p.getName()))
+//                        p.sendMessage(ChatColor.GRAY + "You own this apartment");
+//                    else
+//                        p.sendMessage(ChatColor.GRAY + "The landlord of this apartment is " + ChatColor.GRAY + lord);
+//                }
+//                else if (lord.length() == 0){
+//                    double price = h.getBuyWorth(rgName);
+//                    p.sendMessage(ChatColor.GREEN + "This may be owned by you for renting out for " + ChatColor.GRAY + Commands.convertSecondsToTime(price) +
+//                            ChatColor.GREEN + ". Type " + ChatColor.GRAY + "/life home buy" + ChatColor.GREEN + " to purchase.");
+//                }
+//            }
+//        }
+    }
+    
+    @EventHandler
+    public void onHomeEnter(RegionEnterEvent event){
+        Home h = plugin.getHome(event.getRegion().getId());
+        if (h != null){
+            TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
+            if (!h.hasRenter()){
+                double price = h.getRentPrice();
+                tp.sendMessage(ChatColor.GREEN + "This home is available for " + ChatColor.GRAY + Commands.convertSecondsToTime(price) +
                     ChatColor.GREEN + " per day. Type " + ChatColor.GRAY + "/life home rent" + ChatColor.GREEN + " to rent.");
             } else {
-                String renter = h.getRenter(rgName);
-                if (renter.equalsIgnoreCase(p.getName()))
-                    p.sendMessage(ChatColor.GREEN + "Welcome home " + ChatColor.GRAY + p.getName());
+                String renter = h.getRenter();
+                if (renter.equalsIgnoreCase(tp.getName()))
+                    tp.sendMessage(ChatColor.GREEN + "Welcome home " + ChatColor.GRAY + tp.getName());
                 else if (renter.length() > 0)
-                    p.sendMessage(ChatColor.GREEN + "Welcome to " + ChatColor.GRAY + renter + "'s" + ChatColor.GREEN+ " home");
+                    tp.sendMessage(ChatColor.GREEN + "Welcome to " + ChatColor.GRAY + renter + "'s" + ChatColor.GREEN+ " home");
             }
             if (tp.hasJob(TimeProfession.LANDLORD)){
-                String lord = h.getLandlord(rgName);
-                if (lord.length() > 0 && !h.getRenter(rgName).equalsIgnoreCase(p.getName())){
-                    if (lord.equalsIgnoreCase(p.getName()))
-                        p.sendMessage(ChatColor.GRAY + "You own this apartment");
+                String lord = h.getLandlord();
+                if (lord.length() > 0 && !h.getRenter().equalsIgnoreCase(tp.getName())){
+                    if (lord.equalsIgnoreCase(tp.getName()))
+                        tp.sendMessage(ChatColor.GRAY + "You own this apartment");
                     else
-                        p.sendMessage(ChatColor.GRAY + "The landlord of this apartment is " + ChatColor.GRAY + lord);
+                        tp.sendMessage(ChatColor.GRAY + "The landlord of this apartment is " + ChatColor.GRAY + lord);
                 }
                 else if (lord.length() == 0){
-                    double price = h.getBuyWorth(rgName);
-                    p.sendMessage(ChatColor.GREEN + "This may be owned by you for renting out for " + ChatColor.GRAY + Commands.convertSecondsToTime(price) +
+                    double price = h.getBuyWorth();
+                    tp.sendMessage(ChatColor.GREEN + "This may be owned by you for renting out for " + ChatColor.GRAY + Commands.convertSecondsToTime(price) +
                             ChatColor.GREEN + ". Type " + ChatColor.GRAY + "/life home buy" + ChatColor.GREEN + " to purchase.");
                 }
             }

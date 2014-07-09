@@ -8,6 +8,7 @@ package com.tengel.time;
 
 import com.tengel.time.profs.Police;
 import com.tengel.time.profs.TimeProfession;
+import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
 import java.util.Map;
@@ -117,10 +118,7 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler
     public void onWorldSave(WorldSaveEvent event){
-        plugin.saveConfigs();
-        Map<String, TimePlayer> map = plugin.getPlayers();
-        for (String key : map.keySet())
-            map.get(key).save();
+        plugin.save();
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
@@ -252,7 +250,7 @@ public class TimePlayerListener implements Listener {
     }
     
     @EventHandler
-    public void onPlayerDead(EntityDeathEvent event){
+    public void onPlayerDeath(EntityDeathEvent event){
         Entity e = event.getEntity();
         if (e instanceof Player){
             Player p = (Player) e;

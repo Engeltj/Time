@@ -7,7 +7,7 @@
 package com.tengel.time.profs;
 
 import com.tengel.time.Time;
-import com.tengel.time.mysql.Homes;
+import com.tengel.time.structures.Home;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
@@ -37,11 +37,10 @@ public class Landlord {
             sender.sendMessage(ChatColor.GRAY + command + "price <new price>" + ChatColor.GREEN + "  > Sets the new daily " + ChatColor.DARK_GREEN + "rent" + ChatColor.GREEN+
                     " cost for the home you are standing in (ex: price 5h 43m)");
         } else {
-            Homes h = new Homes(plugin);
             Player p = plugin.getServer().getPlayer(sender.getName());
             Location loc = p.getLocation();
-            String home = h.getHome(loc);
-            if (home.length()==0){
+            Home h = plugin.getHome(loc);
+            if (h == null){
                 sender.sendMessage(ChatColor.RED + "Please stand inside a home first.");
                 return;
             }
@@ -67,21 +66,21 @@ public class Landlord {
             } else if (args[1].equalsIgnoreCase("disown")){
                 h.disown(p);
             } else if (args[1].equalsIgnoreCase("name")){
-                if (!h.hasDisplayName(args[2]))
-                    h.setDisplayName(p, args[2]);
-                else
-                    sender.sendMessage(ChatColor.RED + "Display name "+args[2]+" already taken, try another");
+//                if (!h.hasDisplayName(args[2]))
+                    h.setDisplayName(args[2]);
+//                else
+//                    sender.sendMessage(ChatColor.RED + "Display name "+args[2]+" already taken, try another");
             } else if (args[1].equalsIgnoreCase("price")){
-                double price = getPriceFromArgs(args);
-                h.setPrice(p, price);
+                int price = getPriceFromArgs(args);
+                h.setPrice(price);
             }
         }
     }
     
     
-    private double getPriceFromArgs(String[] args){
+    private int getPriceFromArgs(String[] args){
         Pattern p = Pattern.compile("-?\\d+");
-        double total = 0;
+        int total = 0;
         for (int i=3;i<args.length;i++){
             Matcher m = p.matcher(args[i]);
             if (m.find()){

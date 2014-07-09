@@ -6,7 +6,6 @@
 
 package com.tengel.time;
 
-import com.tengel.time.mysql.Homes;
 import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
@@ -188,7 +187,8 @@ public class Commands implements Listener{
             plugin.prof_builder.createBuild(sender, "test.schematic");
         } else if (args[0].equalsIgnoreCase("password")){
             if (args.length > 1){
-                plugin.getSql().addPlayer(sender.getName(), args[1]);
+                TimePlayer tp = plugin.getPlayer(sender.getName());
+                tp.setPassword(args[1]);
                 sender.sendMessage(ChatColor.GREEN + "Password has been set, visit " + ChatColor.GRAY + "http://depthsonline.com/minecraft" + ChatColor.GREEN + " to login");
             } else 
                 sender.sendMessage(ChatColor.RED + "Please specify a password!");
@@ -234,7 +234,7 @@ public class Commands implements Listener{
             wgu.updateBuildWorth(plugin.prof_builder.getSchematics());
             sender.sendMessage(ChatColor.GREEN+"Home prices updated");
         } else if (args[1].equalsIgnoreCase("home")){
-            Homes h = new Homes(plugin);
+            //Homes h = new Homes(plugin);
             adminCommandsHome(sender, args);
         } else if (args[1].equalsIgnoreCase("createspawn")){
             int difficulty;
@@ -278,44 +278,39 @@ public class Commands implements Listener{
     public boolean commandsHome(CommandSender sender, String[] args){
         TimePlayer tp = plugin.getPlayer(sender.getName());
         Player p = plugin.getServer().getPlayer(sender.getName());
-        Home home = plugin.getHome(p.getLocation());
-        if (home == null){
+        Home h = plugin.getHome(p.getLocation());
+        if (h == null){
             if (args.length >= 3)
-                home = plugin.getHome(args[2]);
+                h = plugin.getHome(args[2]);
         }
-        if (home == null){
-            HashMap<String, Home> p_homes = plugin.getHomes(p.getName());
-            if (p_homes.size() == 1)
-                home = (Home)p_homes.entrySet().iterator().next().getValue();
-        }
+        if (h == null)
+            h = plugin.getHome(plugin.getPlayer(sender.getName()).getPlayer().getLocation());
         
         if (args[1].equalsIgnoreCase("rent")){
-            if (home == null)
+            if (h == null)
                 p.sendMessage(ChatColor.RED + "Please specify a home, or stand in a home first");
             else
-                home.rent(p);
+                h.rent(p);
         } else if (args[1].equalsIgnoreCase("buy")){
             if (tp.hasJob(TimeProfession.LANDLORD)){
-                if (home == null)
+                if (h == null)
                     p.sendMessage(ChatColor.RED + "Please specify a home, or stand in a home first");
                 else
-                    home.buy(p);
+                    h.buy(p);
             } else
                 sender.sendMessage(ChatColor.RED + "You need to be a landlord to purchase, you may only rent this home");
             
         } else if (args[1].equalsIgnoreCase("teleport")){
-            HashMap<String, Home> homes = plugin.getHomes(sender.getName());
+            Map<String, Home> homes = plugin.getHomesByOwner(sender.getName());
             if (homes.size() == 0)
                 sender.sendMessage(ChatColor.RED + "You are currently not renting any homes");
-            else if (!homes.containsValue(home)){
+            else if (!homes.containsValue(h)){
                 sender.sendMessage("Choices:");
-                Iterator i = homes.entrySet().iterator();
-                while (i.hasNext()){
-                    Entry e = (Entry) i.next();
-                    sender.sendMessage(ChatColor.GREEN+e.getKey().toString());
+                for (String home : homes.keySet()){
+                    sender.sendMessage(ChatColor.GREEN+home);
                 }
             } else {
-                org.bukkit.util.Vector v = home.getDoor();
+                org.bukkit.util.Vector v = h.getDoor();
                 Location loc = new Location(plugin.getServer().getWorld("Time"), v.getX(), v.getY(), v.getZ());
                 plugin.getServer().getPlayer(sender.getName()).teleport(loc);
                 sender.sendMessage(ChatColor.GREEN+"You've been taken to your front door");
@@ -335,6 +330,7 @@ public class Commands implements Listener{
         }
         if (args.length == 2){
             sender.sendMessage(ChatColor.GRAY + "create <name> [type]" + ChatColor.GREEN + "  > Create a new home, defaults to type apartment");
+            sender.sendMessage(ChatColor.GRAY + "remove <name>" + ChatColor.GREEN + "  > Create a new home, defaults to type apartment");
             sender.sendMessage(ChatColor.GRAY + "update <name>" + ChatColor.GREEN + "  > Update the region of a home");
             sender.sendMessage(ChatColor.GRAY + "reset <name>" + ChatColor.GREEN + "  > Reset home to factory state");
         } else {
@@ -345,8 +341,8 @@ public class Commands implements Listener{
                     name = args[3];
                 if (args.length >= 5)
                     type = args[4];
-                Home new_home = new Home(plugin, p, name, type);
-                if (plugin.getHome(new_home.getName()) == null) {
+                if (plugin.getHome(name) == null) {
+                    Home new_home = new Home(plugin, p, name, type);
                     plugin.addHome(new_home);
                     sender.sendMessage(ChatColor.GREEN+"Home created successfully, door is set where you were standing");
                 } else
@@ -372,6 +368,12 @@ public class Commands implements Listener{
                 if (home != null)
                     home.reset();
                 else
+                    sender.sendMessage(ChatColor.RED+"Please stand in or specify a valid home first");
+            } else if (args[2].equalsIgnoreCase("remove")){
+                if (home != null){
+                    home.remove();
+                    sender.sendMessage(ChatColor.GREEN+"Home successfully reset and removed!");
+                } else
                     sender.sendMessage(ChatColor.RED+"Please stand in or specify a valid home first");
             }
         }

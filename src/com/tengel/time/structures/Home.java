@@ -95,8 +95,20 @@ public class Home implements IStructure{
         try {
             st = con.createStatement();
             ResultSet rs = st.executeQuery("SELECT * FROM `homes` WHERE name='"+name+"';");
-            String query = String.format("zone=%d,price=%d,new_price=%d,price_changed=%.0f," +
-                        "price_warned=%.0f,type='%s',landlord='%s',renter='%s',lastpay=%.0f,x=%f,y=%f,z=%f", zone,price,new_price,price_changed,price_warned,
+            String query = String.format(""
+                    + "zone=%d,"
+                    + "display_name='%s',"
+                    + "price=%d,"
+                    + "new_price=%d,"
+                    + "price_changed=%.0f,"
+                    + "price_warned=%.0f,"
+                    + "type='%s',"
+                    + "landlord='%s',"
+                    + "renter='%s',"
+                    + "lastpay=%.0f,"
+                    + "x=%f,"
+                    + "y=%f,"
+                    + "z=%f", zone,display_name,price,new_price,price_changed,price_warned,
                         type,landlord,renter,lastpay,door.getX(),door.getY(),door.getZ());
             if (rs.first())
                 st.executeUpdate("UPDATE `homes` SET "+query+" WHERE name='"+name+"';");
@@ -112,8 +124,11 @@ public class Home implements IStructure{
         Statement st;
         try {
             st = con.createStatement();
-            st.executeQuery("DELETE FROM `homes` WHERE name='"+name+"';");
+            reset();
+            st.executeUpdate("DELETE FROM `homes` WHERE name='"+name+"';");
             WorldGuardUtil wgu = new WorldGuardUtil(plugin, plugin.getServer().getWorld("Time"));
+            wgu.deleteRegion(getName());
+            plugin.getHomes().remove(this);
         } catch (Exception ex) {
             plugin.sendConsole("Failed to delete entry for home '"+name+"' in Home class, " + ex);
         }
@@ -237,7 +252,11 @@ public class Home implements IStructure{
     }
     
     public boolean hasRenter(){
-        return (renter == null || renter.length()==0);
+        return (!(renter == null || renter.length()==0));
+    }
+    
+    public void setDisplayName(String name){
+        display_name = name.substring(0, 20);
     }
     
     public void setPrice(int new_price){

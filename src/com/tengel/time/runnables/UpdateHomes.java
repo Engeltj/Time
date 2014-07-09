@@ -8,12 +8,13 @@ package com.tengel.time.runnables;
 
 import com.tengel.time.Time;
 import com.tengel.time.Commands;
-import com.tengel.time.mysql.Homes;
+import com.tengel.time.structures.Home;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  *
@@ -41,23 +42,22 @@ public class UpdateHomes implements Runnable {
     }
     
     public void run() {
-        Homes h = new Homes(plugin);
-        ArrayList<String> homes = h.getHomes();
+        Map<String, Home> homes = plugin.getHomes();
         long time = System.currentTimeMillis()/1000;
-        h.updateHomeRentPricesWithLandlords();
-        for (String home : homes){
-            long lastpay = h.getLastPay(home);
+        //h.updateHomeRentPricesWithLandlords(); //unsure what this does
+        for (String home : homes.keySet()){
+            Home h = homes.get(home);
+            long lastpay = h.getLastPay();
             long diff = time - lastpay;
             if (diff > 24*60*60){
-                String renter = h.getRenter(home);
+                String renter = h.getRenter();
                 Player p = plugin.getServer().getPlayer(renter);
                 if (renter.length() != 0){
-                    double rent = h.getRentPrice(home);
+                    double rent = h.getRentPrice();
                     if (!chargePlayer(p, rent)){
-                        //ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(p.getName());
-                        h.setRenter(home, "");
+                        h.setRenter("");
                     } else {
-                        String landlord = h.getLandlord(home);
+                        String landlord = h.getLandlord();
                         Player p_lord = plugin.getServer().getPlayer(landlord);
                         if (p_lord != null){
                             plugin.getEconomy().depositPlayer(landlord, rent);
