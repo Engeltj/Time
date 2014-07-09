@@ -4,19 +4,23 @@
  * and open the template in the editor.
  */
 
-package com.tengel.time;
+package com.tengel.time.runnables;
+
+import com.tengel.time.Time;
 
 /**
  *
  * @author Tim
  */
-public class ServerStopHandler extends Thread {
+public class TimeSave implements Runnable {
     final Time plugin;
-    public ServerStopHandler(Time plugin){
+    
+    public TimeSave(Time plugin){
         this.plugin = plugin;
     }
-    
     public void run() {
         plugin.save();
+        plugin.sendConsole("Time plugin saved.");
     }
+    
 }

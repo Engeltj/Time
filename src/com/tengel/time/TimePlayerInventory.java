@@ -27,6 +27,8 @@ public class TimePlayerInventory implements java.io.Serializable {
     private ArrayList spi_survival;
     private ArrayList spa_survival;
     
+    private ArrayList p_unclaimed = new ArrayList();//from house eviction
+    
     public TimePlayerInventory(Player p){
         this.p = p;
         if (p.getGameMode() == GameMode.SURVIVAL){
@@ -74,6 +76,7 @@ public class TimePlayerInventory implements java.io.Serializable {
         spa_creative = new ArrayList();
         spi_survival = new ArrayList();
         spa_survival = new ArrayList();
+        
         for (ItemStack is : pi_creative){
             if (is != null)
                 spi_creative.add(is.serialize());
@@ -134,5 +137,15 @@ public class TimePlayerInventory implements java.io.Serializable {
             else
                 pa_survival[i] = null;
         }
+    }
+    
+    public void addUnclaimed(ItemStack is){
+        this.p_unclaimed.add(is.serialize());
+    }
+    
+    public ItemStack popUnclaimed(){
+        ItemStack is = ItemStack.deserialize((Map<String,Object>)p_unclaimed.get(0));
+        this.p_unclaimed.remove(0);
+        return is;
     }
 }

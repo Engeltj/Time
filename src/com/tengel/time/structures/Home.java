@@ -6,6 +6,11 @@
 
 package com.tengel.time.structures;
 
+import com.sk89q.worldedit.BlockVector;
+import com.sk89q.worldedit.BlockWorldVector;
+import com.sk89q.worldedit.LocalWorld;
+import com.sk89q.worldedit.bukkit.BukkitUtil;
+import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.Time;
@@ -17,8 +22,13 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 /**
@@ -193,6 +203,31 @@ public class Home implements IStructure{
         }
     }
     
+    public boolean evict(){
+        World w = plugin.getServer().getWorld("Time");
+        LocalWorld lw = BukkitUtil.getLocalWorld(w);
+        ProtectedRegion pr = plugin.worldGuard.getRegionManager(w).getRegion(name);
+        CuboidRegion cr = new CuboidRegion(pr.getMinimumPoint().toBlockVector(), pr.getMaximumPoint().toBlockVector());
+        TimePlayer tp = plugin.getPlayer(getRenter());
+        for (BlockVector bv : cr){
+            Block b = BukkitUtil.toBlock(new BlockWorldVector(lw, bv));
+            if (b.getType().equals(Material.CHEST)){
+                Chest c = (Chest) b.getState();
+                Inventory i = c.getBlockInventory();
+                for (ItemStack is : i.getContents()){
+                    if (is != null) {
+                        tp.getPlayerInventory().addUnclaimed(is);
+                        i.removeItem(is);
+                    }
+                }
+            }
+        }
+        setRenter("");
+        setLastPay(0L);
+        reset();
+        return true;
+    }
+    
     public boolean sell(Player p, Player newOwner, double price){
         Connection con = plugin.getSql().getConnection();
         Statement st;
@@ -288,11 +323,20 @@ public class Home implements IStructure{
     }
     
     public void setRenter(String player){
+        World w = plugin.getServer().getWorld("Time");
+        RegionManager rm = plugin.worldGuard.getRegionManager(w);
+        ProtectedRegion pr = rm.getRegion(name);
+        if (pr != null)
+            plugin.getRegionControl().setRegionOwner(renter, pr);
         renter = player;
     }
     
     public void setLandlord(String player){
         landlord = player;
+    }
+    
+    public void setLastPay(long time){
+        this.lastpay = time;
     }
     
     public boolean setType(String type){

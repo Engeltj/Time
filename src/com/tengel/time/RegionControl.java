@@ -237,4 +237,12 @@ public class RegionControl implements Listener {
         dd.addPlayer(owner);
         pr.setOwners(dd);
     }
+    
+    public void setRegionOwner(String owner, ProtectedRegion pr){
+        DefaultDomain dd = pr.getOwners();
+        dd.removeAll();
+        if (owner != null && !owner.isEmpty())
+            dd.addPlayer(owner);
+        pr.setOwners(dd);
+    }
 }

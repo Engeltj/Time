@@ -18,8 +18,8 @@ import com.tengel.time.profs.Gatherer;
 import com.tengel.time.profs.Landlord;
 import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.runnables.TimeMonsterSpawn;
+import com.tengel.time.runnables.TimeSave;
 import com.tengel.time.structures.Home;
-import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Location;
@@ -34,7 +34,6 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -132,7 +131,8 @@ public final class Time extends JavaPlugin {
         pm.registerEvents(this.worldGuardListener, this);
         //pm.registerEvents(mobcontrol, this);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, timeUpdater, 0, timeUpdater.getUpdateInterval() * 20);
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 60, 5 * 60 * 20);
+        getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 60*20, 5*60*20);
+        getServer().getScheduler().scheduleSyncRepeatingTask(this, new TimeSave(this), 10*60*20, 10*60*20);
         getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
             public void run() {
                 shop_signs.load();
@@ -142,7 +142,6 @@ public final class Time extends JavaPlugin {
                 //plugin.loadMonsters();
             }
         });
-        Runtime.getRuntime().addShutdownHook(new ServerStopHandler(this));
         getLogger().info("Time by Engeltj has been enabled");
         //processSchematics();
     }

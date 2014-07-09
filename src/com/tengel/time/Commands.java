@@ -181,7 +181,13 @@ public class Commands implements Listener{
             }
         } else if (args[0].equalsIgnoreCase("home")){
             if (args.length == 1){
-                sender.sendMessage(ChatColor.GRAY + "rent" + ChatColor.GREEN + "  > Rent the home you are currently standing in");
+                TimePlayer tp = plugin.getPlayer(sender.getName());
+                Location loc = tp.getPlayer().getLocation();
+                Home h = plugin.getHome(loc);
+                if (h == null || !h.getRenter().equalsIgnoreCase(tp.getName()))
+                    sender.sendMessage(ChatColor.GRAY + "rent" + ChatColor.GREEN + "  > Rent the home you are currently standing in");
+                else
+                    sender.sendMessage(ChatColor.GRAY + "unrent" + ChatColor.GREEN + "  > Unrent the home you are currently standing in");
                 sender.sendMessage(ChatColor.GRAY + "buy" + ChatColor.GREEN + "  > Purchase the home to get a cut of the income from renters");
                 sender.sendMessage(ChatColor.GRAY + "teleport <home>" + ChatColor.GREEN + "  > Teleports you to one of your specified homes");
             } else 
@@ -296,13 +302,23 @@ public class Commands implements Listener{
         
         if (args[1].equalsIgnoreCase("rent")){
             if (h == null)
-                p.sendMessage(ChatColor.RED + "Please specify a home, or stand in a home first");
+                p.sendMessage(ChatColor.RED + "Please specify a valid home, or stand in a home first");
             else
                 h.rent(p);
+        } else if (args[1].equalsIgnoreCase("unrent")){
+            if (h == null)
+                p.sendMessage(ChatColor.RED + "Please specify a valid home, or stand in a home first");
+            else if (h.getRenter().equalsIgnoreCase(p.getName())){
+                if (h.evict())
+                    p.sendMessage(ChatColor.GREEN + "You have been evicted");
+                else
+                    p.sendMessage(ChatColor.GREEN + "Something went wrong with evict, please speak with an admin");                    
+            }else
+                p.sendMessage(ChatColor.RED + "You are currently not renting this homes");
         } else if (args[1].equalsIgnoreCase("buy")){
             if (tp.hasJob(TimeProfession.LANDLORD)){
                 if (h == null)
-                    p.sendMessage(ChatColor.RED + "Please specify a home, or stand in a home first");
+                    p.sendMessage(ChatColor.RED + "Please specify a valid home, or stand in a home first");
                 else
                     h.buy(p);
             } else
