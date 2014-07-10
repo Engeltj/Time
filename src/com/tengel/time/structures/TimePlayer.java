@@ -54,6 +54,31 @@ public class TimePlayer implements IStructure {
     public TimePlayer(Time plugin, String name){
         this.player = plugin.getServer().getPlayer(name);
         this.plugin = plugin;
+        this.name = name;
+    }
+    
+    
+    
+     private void loadInventory(byte[] buf){
+        try {
+            ObjectInputStream objectIn = new ObjectInputStream(new ByteArrayInputStream(buf));
+            this.inventory = (TimePlayerInventory) objectIn.readObject();
+            this.inventory.performDeserialization(player);
+        } catch (Exception ignored){
+            plugin.sendConsole("New inventory");
+            this.inventory = new TimePlayerInventory(player);
+        }
+    }
+     
+    private void loadBank(byte[] buf){
+        try {
+           ObjectInputStream objectIn = new ObjectInputStream(new ByteArrayInputStream(buf));
+            this.bank = (TimeBank) objectIn.readObject();
+            this.bank.performDeserialization();
+        } catch (Exception ignored){
+            plugin.sendConsole("New bank");
+            this.bank = new TimeBank();
+        }
     }
     
     public boolean load(){
@@ -71,25 +96,9 @@ public class TimePlayer implements IStructure {
                 this.setRep(rs.getInt("reputation"));
                 this.reputation_gain = rs.getInt("reputation_gain");
                 
-                byte[] buf = rs.getBytes("inventory");
-                if (buf != null){
-                  ObjectInputStream objectIn = new ObjectInputStream(new ByteArrayInputStream(buf));
-                  this.inventory = (TimePlayerInventory) objectIn.readObject();
-                  this.inventory.performDeserialization(player);
-                } else {
-                    plugin.sendConsole("New inventory");
-                    this.inventory = new TimePlayerInventory(player);
-                }
+                loadInventory(rs.getBytes("inventory"));
+                loadBank(rs.getBytes("bank"));
                 
-                buf = rs.getBytes("bank");
-                if (buf != null){
-                  ObjectInputStream objectIn = new ObjectInputStream(new ByteArrayInputStream(buf));
-                  this.bank = (TimeBank) objectIn.readObject();
-                  this.bank.performDeserialization();
-                } else {
-                    plugin.sendConsole("New bank");
-                    this.bank = new TimeBank();
-                }
                 
                 this.jobs = new HashMap<TimeProfession, Integer>();
                 String db_jobs = rs.getString("jobs");
@@ -130,8 +139,9 @@ public class TimePlayer implements IStructure {
                 create();
             loaded = true;
         } catch (Exception ex) {
-            plugin.sendConsole("Failed to create TimePlayer for '"+name+"', " + ex);
+            plugin.sendConsole("Failed to load TimePlayer for '"+name+"', " + ex);
             loaded = false;
+            player.kickPlayer("Failed to load your data, email engeltj@gmail.com for assistance.");
         }
         return loaded;
     }
@@ -167,7 +177,6 @@ public class TimePlayer implements IStructure {
             
             for (short license : blockLicenses)
                 st.executeUpdate("REPLACE INTO `licenses` SET license="+license+" WHERE player='"+name+"' AND license="+license+";");
-            
             inventory.updateInventoryData();
             inventory.performSerialization();
             bank.performSerialization();
@@ -185,6 +194,7 @@ public class TimePlayer implements IStructure {
             pstmt.setObject(9,inventory);
             pstmt.setObject(10,bank);
             pstmt.executeUpdate();
+            
 //            st.executeUpdate("UPDATE `players` SET " +
 //                    "life="++
 //                    ",bounty="+bounty+

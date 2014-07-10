@@ -66,6 +66,7 @@ public final class Time extends JavaPlugin {
     private UpdatePlayers timeUpdater;
     private HashMap<String, TimePlayer> players;
     private HashMap<String, Home> homes;
+    private TimeBankHandler bank_handler;
     private Economy economy;
     private String pluginName;
     public WorldGuardPlugin worldGuard;
@@ -95,7 +96,7 @@ public final class Time extends JavaPlugin {
         playerListener = new TimePlayerListener(this);
         worldGuardListener = new RegionControl(this);
         timeUpdater = new UpdatePlayers(this,1);
-        
+        bank_handler = new TimeBankHandler(this);
         setupSql();
         PluginManager pm = getServer().getPluginManager();
         creative_plots = new CreativePlots(this);
@@ -126,11 +127,12 @@ public final class Time extends JavaPlugin {
         }
         
         pluginName = "[" + pm.getPlugin("Time").getName() + "] ";
-        pm.registerEvents(this.playerListener, this);
+        pm.registerEvents(playerListener, this);
         pm.registerEvents(creative_plots, this);
-        pm.registerEvents(this.worldGuardListener, this);
+        pm.registerEvents(worldGuardListener, this);
+        pm.registerEvents(bank_handler, this);
         //pm.registerEvents(mobcontrol, this);
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, timeUpdater, 0, timeUpdater.getUpdateInterval() * 20);
+        //getServer().getScheduler().scheduleSyncRepeatingTask(this, timeUpdater, 0, timeUpdater.getUpdateInterval() * 20);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 60*20, 5*60*20);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new TimeSave(this), 10*60*20, 10*60*20);
         getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
@@ -171,6 +173,7 @@ public final class Time extends JavaPlugin {
         this.homes = null;
         this.playerListener = null;
         this.players = null;
+        this.bank_handler = null;
         this.pluginName = null;
         this.prof_builder = null;
         this.prof_farmer = null;
@@ -405,7 +408,8 @@ public final class Time extends JavaPlugin {
         Map<String, Home> p_homes = new HashMap<String, Home>();
         for (String home : homes.keySet()){
             Home h = homes.get(home);
-            p_homes.put(home, h);
+            if (h.getRenter().equalsIgnoreCase(player))
+                p_homes.put(home, h);
         }
         return p_homes;
     }

@@ -8,7 +8,14 @@ package com.tengel.time;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 
@@ -17,72 +24,117 @@ import org.bukkit.inventory.ItemStack;
  * @author Tim
  */
 public class TimeBank implements java.io.Serializable {
-    private transient ItemStack [] depot;
+    private transient ArrayList<ItemStack> depot_items;
     private ArrayList sdepot;
     private long balance;
     private int last_compound;
     private int depot_size = 1024;
     
     public TimeBank(){
-        depot = new ItemStack[50];
+        depot_items = new ArrayList<ItemStack>();
     }
     
     public TimeBank(int depot_size){
-        depot = new ItemStack[50];
+        depot_items = new ArrayList<ItemStack>();
         this.depot_size = depot_size;
     }
     
     public void performSerialization(){
         sdepot = new ArrayList();
         
-        for (ItemStack is : depot){
+        for (ItemStack is : depot_items){
             if (is != null)
                 sdepot.add(is.serialize());
-            else
-                sdepot.add(null);
         }
     }
     
     public void performDeserialization(){
-        depot = new ItemStack[depot_size];
+        depot_items = new ArrayList<ItemStack>();
         for (int i=0;i<sdepot.size();i++){
             Object obj = sdepot.get(i);
             if (obj != null)
-                depot[i] = ItemStack.deserialize((Map<String,Object>) obj);
-            else
-                depot[i] = null;
+                depot_items.add(ItemStack.deserialize((Map<String,Object>) obj));
         }
     }
     
-    public boolean setItem(ItemStack is, int slot){
-        if (slot > depot_size || slot < 1)
-            return false;
-        depot[slot-1] = is.clone();
-        return true;
-    }    
+//    public boolean setItem(ItemStack is, int slot){
+//        if (slot > depot_size || slot < 1)
+//            return false;
+//        depot_items[slot-1] = is.clone();
+//        return true;
+//    }    
     
-    public boolean removeItem(int slot){
-        if (slot > depot_size || slot < 1)
-            return false;
-        depot[slot-1] = null;
-        return true;
+//    public boolean removeItem(int slot){
+//        if (slot > depot_size || slot < 1)
+//            return false;
+//        depot_items[slot-1] = null;
+//        return true;
+//    }
+    
+//    public ItemStack getItem(int slot){
+//        if (slot > depot_size || slot < 1)
+//            return null;
+//        return depot_items[slot-1];
+//    }
+    
+    public Inventory createDepot(){
+       int size = 9*6;
+       Inventory depot = Bukkit.createInventory(null, size, "Depot");
+       for (ItemStack is : depot_items){
+           if (is != null)
+            depot.addItem(is);
+       }
+//       for (int i=0;i<depot_items.length;i++){
+//           ItemStack is = depot_items[i];
+//           if (is == null)
+//               depot.addItem(new ItemStack(Material.AIR));
+//           else {
+//               System.out.println("addItem DEPOT: " + depot_items[i].getType().toString());
+//               depot.addItem(depot_items[i]);
+//           }
+//       }
+       return depot;
     }
     
-    public ItemStack getItem(int slot){
-        if (slot > depot_size || slot < 1)
-            return null;
-        return depot[slot-1];
+    public Inventory getDepot(){
+        return createDepot();
     }
     
     public boolean addItem(ItemStack item){
-        for (int i=0;i<depot.length;i++){
-            if (depot[i] == null){
-                depot[i] = item.clone();
-                return true;
-            }  
+        if (item != null){
+            depot_items.add(item);
+            return true;
         }
         return false;
     }
+    
+    public void updateDepotItems(Inventory inv){
+        int i = 0;
+        for (ItemStack is: inv.getContents()){
+            if (i+1 > depot_items.size())
+                depot_items.add(is);
+            else
+                depot_items.set(i, is);
+            i++;
+        }
+        Iterator it = depot_items.iterator();
+        while (it.hasNext()){
+            ItemStack is = (ItemStack) it.next();
+            if (is == null || is.getType().equals(Material.AIR))
+                it.remove();
+        }
+    }
+    
+//    public boolean removeItem(ItemStack item){
+//        for (int i=0;i<depot_items.length;i++){
+//            if (item.equals(depot_items[i])){
+//                System.out.println("removeItem Time BANK: " + item.getType().toString());
+//                depot_items[i] = null;
+//                return true;
+//            }  
+//        }
+//        return false;
+//    }
     
     public long getBalance(){
         return balance;

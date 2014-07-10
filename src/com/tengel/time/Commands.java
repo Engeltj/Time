@@ -330,7 +330,7 @@ public class Commands implements Listener{
                 sender.sendMessage(ChatColor.RED + "You are currently not renting any homes");
             else if (!homes.containsValue(h)){
                 sender.sendMessage("Choices:");
-                for (String home : homes.keySet()){
+                for (String home : plugin.getHomesByOwner(sender.getName()).keySet()){
                     sender.sendMessage(ChatColor.GREEN+home);
                 }
             } else {
