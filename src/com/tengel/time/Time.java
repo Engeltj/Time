@@ -330,7 +330,7 @@ public final class Time extends JavaPlugin {
     
     public void loadTimePlayers(){
         for (Player player: getServer().getOnlinePlayers())
-            addPlayer(player);
+            addPlayer(player.getName());
     }
     
     private boolean setupEconomy() {
@@ -353,11 +353,30 @@ public final class Time extends JavaPlugin {
         return players.get(name);
     }
     
+    public TimeBank getBank(String player){
+        TimePlayer tp = getPlayer(player);
+        if (tp == null){
+            tp = new TimePlayer(this, player);
+            tp.load();
+        }
+        return tp.getPlayerBank();
+    }
+    
+    public void setBank(TimeBank bank, String player){
+        TimePlayer tp = getPlayer(player);
+        if (tp == null){
+            tp = new TimePlayer(this, player);
+            tp.load();
+        }
+        tp.setPlayerBank(bank);
+        tp.save();
+    }
+    
     public Map<String, TimePlayer> getPlayers(){
         return players;
     }
     
-    public TimePlayer addPlayer(Player player){
+    public TimePlayer addPlayer(String player){
         TimePlayer tp = new TimePlayer(this, player);
         tp.load();
         players.put(tp.getName(), tp);

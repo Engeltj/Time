@@ -15,6 +15,7 @@ import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.Time;
 import com.tengel.time.Commands;
+import com.tengel.time.TimeBank;
 import com.tengel.time.WorldGuardUtil;
 import com.tengel.time.exceptions.HomeFailedToCreateException;
 import java.sql.Connection;
@@ -208,7 +209,7 @@ public class Home implements IStructure{
         LocalWorld lw = BukkitUtil.getLocalWorld(w);
         ProtectedRegion pr = plugin.worldGuard.getRegionManager(w).getRegion(name);
         CuboidRegion cr = new CuboidRegion(pr.getMinimumPoint().toBlockVector(), pr.getMaximumPoint().toBlockVector());
-        TimePlayer tp = plugin.getPlayer(getRenter());
+        TimeBank tb = plugin.getBank(getRenter());
         for (BlockVector bv : cr){
             Block b = BukkitUtil.toBlock(new BlockWorldVector(lw, bv));
             if (b.getType().equals(Material.CHEST)){
@@ -216,7 +217,7 @@ public class Home implements IStructure{
                 Inventory i = c.getBlockInventory();
                 for (ItemStack is : i.getContents()){
                     if (is != null) {
-                        tp.getPlayerInventory().addUnclaimed(is);
+                        tb.addItem(is);
                         i.removeItem(is);
                     }
                 }

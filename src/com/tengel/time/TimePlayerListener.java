@@ -316,7 +316,7 @@ public class TimePlayerListener implements Listener {
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerJoin(PlayerJoinEvent event){
         final Player p = event.getPlayer();
-        final TimePlayer tp = plugin.addPlayer(p);
+        final TimePlayer tp = plugin.addPlayer(p.getName());
         setPlayerAttributes(p);
         
         if (tp.hasDied())
@@ -328,8 +328,6 @@ public class TimePlayerListener implements Listener {
                 p.setHealth(20L);
         }
         
-        //updatePlayerScoreboardHealth(p);
-        //final TimePlayerListener obj = this;
         plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
             public void run() {
                 setPlayerAttributes(p);
