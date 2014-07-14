@@ -22,9 +22,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 /**
  *
@@ -50,6 +50,7 @@ public class TimePlayer implements IStructure {
     private boolean loaded = false;
     
     public boolean flagConfirm;
+    private ItemStack confirm_enchant;
     
     public TimePlayer(Time plugin, String name){
         this.player = plugin.getServer().getPlayer(name);
@@ -57,14 +58,12 @@ public class TimePlayer implements IStructure {
         this.name = name;
     }
     
-    
-    
-     private void loadInventory(byte[] buf){
+    private void loadInventory(byte[] buf){
         try {
             ObjectInputStream objectIn = new ObjectInputStream(new ByteArrayInputStream(buf));
             this.inventory = (TimePlayerInventory) objectIn.readObject();
             this.inventory.performDeserialization(player);
-        } catch (Exception ignored){
+        } catch (Exception ex){
             plugin.sendConsole("New inventory");
             this.inventory = new TimePlayerInventory(player);
         }
@@ -75,7 +74,7 @@ public class TimePlayer implements IStructure {
            ObjectInputStream objectIn = new ObjectInputStream(new ByteArrayInputStream(buf));
             this.bank = (TimeBank) objectIn.readObject();
             this.bank.performDeserialization();
-        } catch (Exception ignored){
+        } catch (Exception ex){
             plugin.sendConsole("New bank");
             this.bank = new TimeBank();
         }
@@ -112,24 +111,6 @@ public class TimePlayer implements IStructure {
                         this.jobs.put(TimeProfession.valueOf(job), skill);
                     }
                 }
-//                ResultSet inventory = st.executeQuery("SELECT data FROM `inventories` WHERE player='"+name+"';");
-//                if (inventory.next()){                    
-//                    byte[] buf = inventory.getBytes(1);
-//                    ObjectInputStream objectIn = null;
-//                    if (buf != null){
-//                      objectIn = new ObjectInputStream(new ByteArrayInputStream(buf));
-//                      this.spi = (TimePlayerInventory) objectIn.readObject();
-//                      this.spi.performDeserialization(player);
-//                    } else {
-//                        Bukkit.getServer().getConsoleSender().sendMessage("New");
-//                        this.spi = new TimePlayerInventory(player);
-//                    }
-//                        
-//                    
-//                } else {
-//                    Bukkit.getServer().getConsoleSender().sendMessage("New");
-//                    this.spi = new TimePlayerInventory(player);
-//                }
                 
                 blockLicenses = new ArrayList<Short>();
                 ResultSet licenses = st.executeQuery("SELECT * FROM `licenses` WHERE player='"+name+"';");
@@ -163,18 +144,6 @@ public class TimePlayer implements IStructure {
                 jobsString += pairs.getKey() + ",";
             }
             
-//            inventory.updateInventoryData();
-//            inventory.performSerialization();
-//            ResultSet rs = st.executeQuery("SELECT * FROM `inventories` WHERE player='"+name+"';");
-//            String statement = "";
-//            if (rs.first())
-//                statement = "UPDATE `inventories` SET data=? WHERE player='"+name+"';";
-//            else
-//                statement = "INSERT INTO `inventories` (player, data) VALUE ('"+name+"',?);";
-//            PreparedStatement pstmt = con.prepareStatement(statement);
-//            pstmt.setObject(1, inventory);
-//            pstmt.executeUpdate();
-            
             for (short license : blockLicenses)
                 st.executeUpdate("REPLACE INTO `licenses` SET license="+license+" WHERE player='"+name+"' AND license="+license+";");
             inventory.updateInventoryData();
@@ -194,17 +163,6 @@ public class TimePlayer implements IStructure {
             pstmt.setObject(9,inventory);
             pstmt.setObject(10,bank);
             pstmt.executeUpdate();
-            
-//            st.executeUpdate("UPDATE `players` SET " +
-//                    "life="++
-//                    ",bounty="+bounty+
-//                    ",zone="+zone+
-//                    ",lastseen="+System.currentTimeMillis()/1000+
-//                    ",jobs='"+jobsString+"'"+
-//                    ",jailed="+jailed+
-//                    ",reputation="+reputation+
-//                    ",died="+died+
-//                    " WHERE name='"+name+"';");
             return true;
         } catch (Exception ex) {
             plugin.sendConsole("Failed to update db for '"+name+"' in TimePlayer class, " + ex);
@@ -407,6 +365,20 @@ public class TimePlayer implements IStructure {
     
     public boolean isLoaded(){
         return loaded;
+    }
+    
+    public boolean confirmEnchantment(ItemStack is){
+        if (this.confirm_enchant.equals(is))
+            return true;
+        else {
+            this.confirm_enchant = is;
+            plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+                public void run() {
+                    confirm_enchant = null;
+                }
+            }, 20*5); //5 seconds (20 ticks/s)
+            return false;
+        }
     }
     
     public void sendMessage(String message){

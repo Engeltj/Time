@@ -8,10 +8,8 @@ package com.tengel.time;
 
 import com.tengel.time.profs.Police;
 import com.tengel.time.profs.TimeProfession;
-import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
-import java.util.Map;
 import java.util.UUID;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -29,10 +27,11 @@ import org.bukkit.event.player.*;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.milkbowl.vault.economy.EconomyResponse;
+import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
-import org.bukkit.event.world.WorldEvent;
 import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
@@ -115,6 +114,28 @@ public class TimePlayerListener implements Listener {
                 }
             }
         }
+    }
+    
+    @EventHandler
+    public void onEnchant(EnchantItemEvent event){
+        int cost = event.getExpLevelCost()*60;
+        TimePlayer tp = plugin.getPlayer(event.getEnchanter().getName());
+        if (tp.confirmEnchantment(event.getItem())){
+            EconomyResponse er = plugin.getEconomy().withdrawPlayer(tp.getName(), cost);
+            if (er.transactionSuccess()){
+                event.setExpLevelCost(0);
+            } else {
+                tp.sendMessage(ChatColor.RED + "It seems you cannot afford this enchantment");
+                event.setCancelled(true);
+            }
+                
+            
+        } else {
+            tp.sendMessage(ChatColor.YELLOW + "Enchanting this item will cost you " + ChatColor.RED + cost + " days " +
+                    ChatColor.YELLOW + " of life, to confirm try again");
+            event.setCancelled(true);
+        }
+        
     }
     
     @EventHandler
