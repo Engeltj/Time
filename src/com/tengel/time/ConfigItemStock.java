@@ -38,15 +38,16 @@ public class ConfigItemStock extends Config {
         return getInt(item);
     }
     
-    public void addStock(String item, int amount){
+    public int addStock(String item, int amount){
         int stock = getInt(item) + amount;
         if (stock < 0)
             stock = 0;
         set(item, stock);
+        return stock;
     }
     
-    public void removeStock(String item, int amount){
-        addStock(item, amount*-1);
+    public int removeStock(String item, int amount){
+        return addStock(item, amount*-1);
     }
     
 }

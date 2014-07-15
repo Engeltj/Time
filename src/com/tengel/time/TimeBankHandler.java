@@ -100,7 +100,6 @@ public class TimeBankHandler implements Listener {
      * @return 
      */
     public String getBank(Location loc){
-        System.out.println("CHECKING IF BANK");
         Set<String> regions = plugin.getRegionControl().getRegions(loc).keySet();
         for (String region : regions){
             if (region.contains("bank_"))

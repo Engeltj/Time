@@ -161,17 +161,20 @@ public class TimeSigns extends Config {
             tp.sendMessage(ChatColor.RED + "You do not have permissions to do that!");
     }
     
-    private void buyItem(TimePlayer tp, Material m, int cost, int quantity){
+    private void buyItem(TimePlayer tp, Sign sign, Material m, int cost){
+        int savings = (int) Math.floor(Math.min(tp.getRep()/50000D, 1.00) * 0.15 * cost);
+        cost -= savings;
         EconomyResponse es = plugin.getEconomy().withdrawPlayer(tp.getName(), cost*60);
         if (es.transactionSuccess()){
-            ItemStack item = new ItemStack(m, quantity);
-            plugin.getConfigItemStock().removeStock(m.name(), 1);
+            ItemStack item = new ItemStack(m);
+            int new_stock = plugin.getConfigItemStock().removeStock(m.name(), 1);
+            setSignStock(sign, new_stock);
             tp.getPlayer().getInventory().addItem(item);
             tp.getPlayer().updateInventory();
-            tp.sendMessage(ChatColor.YELLOW+"You have just purchased "+String.valueOf(quantity)+"x " + ChatColor.GREEN + m.name().toLowerCase()+ChatColor.YELLOW+" for " +
-                    ChatColor.RED+String.valueOf(cost) + " mins" +ChatColor.YELLOW+" of time");
+            tp.sendMessage(ChatColor.YELLOW+"You have just purchased " + ChatColor.GREEN + m.name().toLowerCase()+ChatColor.YELLOW+" for " +
+                    ChatColor.RED+String.valueOf(cost) + " mins" +ChatColor.YELLOW+", saving " + ChatColor.GREEN + (int)Math.ceil(savings) + " min(s)" + ChatColor.YELLOW+" due to your reputation");
         } else
-            tp.sendMessage(ChatColor.RED + "Insufficent life, transaction cancelled");
+            tp.sendMessage(ChatColor.RED + "You require " + (int)Math.ceil(cost - tp.getBalance()/60) + " more mins to purchase" );
     }
     
     private void donateItem(TimePlayer tp, Sign s, Material m){
@@ -182,8 +185,8 @@ public class TimeSigns extends Config {
             ConfigItemStock cis = plugin.getConfigItemStock();
             int rep = cr.getItemRep(m.name());
             pi.removeItem(is);
-            cis.addStock(m.name(), 1);
-            this.setSignStock(s, cis.getStock(m.name()));
+            int new_stock = cis.addStock(m.name(), 1);
+            setSignStock(s, new_stock);
             tp.getPlayer().updateInventory();
             tp.sendMessage(ChatColor.YELLOW + "You have just donated 1x " + ChatColor.GREEN + m.name().toLowerCase()+ChatColor.YELLOW+" for "+ChatColor.GREEN+ 
                     rep + ChatColor.YELLOW + " reputation");
@@ -197,10 +200,7 @@ public class TimeSigns extends Config {
     public void buyItem(TimePlayer tp, Sign sign, boolean donate){
         if (plugin.getPlayerListener().checkPermissions(tp.getPlayer(), "buy.items", false)){
             Material m = plugin.getItemMaterial(sign.getLine(1));
-            double balance = plugin.getEconomy().getBalance(tp.getName());
-            int quantity = getNumberFromLine(sign.getLine(3));
-            if (quantity == 0)quantity = 1;
-            int cost = getNumberFromLine(sign.getLine(2)) * quantity;
+            int cost = getNumberFromLine(sign.getLine(2));
             if (m == null || cost == 0){
                 tp.sendMessage(ChatColor.RED+"It appears this sign is wrong, please report it to an admin.");
                 return;
@@ -209,10 +209,7 @@ public class TimeSigns extends Config {
                 donateItem(tp, sign, m);
             } else {
                 if (plugin.getConfigItemStock().getStock(m.name()) > 0){
-                    if (balance >= cost)
-                        buyItem(tp, m, cost, quantity);
-                    else
-                        tp.sendMessage(ChatColor.RED + "Insufficient time");
+                    buyItem(tp, sign, m, cost);
                 } else
                     tp.sendMessage(ChatColor.RED + "This item appears to be out of stock, a player must donate to this shop to increase stock level.");
             }
@@ -232,9 +229,11 @@ public class TimeSigns extends Config {
             }
             payment *= quantity;
             tp.getPlayer().updateInventory();
-            plugin.getEconomy().depositPlayer(tp.getName(), payment*60);
+            int bonus = (int) Math.floor(Math.min(tp.getRep()/50000D, 1.00) * 0.50 * payment);
+            plugin.getEconomy().depositPlayer(tp.getName(), (payment+bonus)*60);
             tp.sendMessage(ChatColor.YELLOW + "You have just sold "+String.valueOf(quantity)+"x " + ChatColor.GREEN + m.name().toLowerCase()+ChatColor.YELLOW+" for "+ChatColor.GREEN+ 
-                    String.valueOf(payment) +  " mins" + ChatColor.YELLOW+ " of time");
+                    String.valueOf(payment+bonus) +  " mins" + ChatColor.YELLOW+ " of time, earning an extra " + ChatColor.GREEN + bonus + " min(s)" + ChatColor.YELLOW+
+                    " because of your reputation!");
         } else
             tp.sendMessage(ChatColor.RED + "You don't have any "+ChatColor.YELLOW + m.name() + ChatColor.RED+ " to sell");
     }

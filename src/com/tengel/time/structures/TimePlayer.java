@@ -339,6 +339,10 @@ public class TimePlayer implements IStructure {
         return jailed;
     }
     
+    public int getRep(){
+        return this.reputation;
+    }
+    
     public int getBounty(){
         return bounty;
     }
@@ -349,6 +353,10 @@ public class TimePlayer implements IStructure {
     
     public long getAge(){
         return System.currentTimeMillis()/1000 - start;
+    }
+    
+    public float getBalance(){
+        return (float) plugin.getEconomy().getBalance(name);
     }
     
     public TimePlayerInventory getPlayerInventory(){

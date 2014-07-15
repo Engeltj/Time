@@ -293,8 +293,6 @@ public class TimePlayerListener implements Listener {
     public void onInteract(PlayerInteractEvent event){
         Block b;
         
-//        if (event.getAction()!=Action.RIGHT_CLICK_BLOCK)
-//            return;
         if (!event.hasBlock()) {
             try {
                 b = event.getPlayer().getTargetBlock(null, 5);
@@ -314,7 +312,6 @@ public class TimePlayerListener implements Listener {
                 ss.buyBlockLicense(tp, s);
                 event.setCancelled(true);
             } else if (type.contains("[Buy]")){
-                System.out.println("Hey!");
                 boolean donate = (event.getAction()==Action.LEFT_CLICK_BLOCK);
                 TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
                 TimeSigns ss = plugin.getShopSigns();

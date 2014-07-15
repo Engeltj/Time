@@ -39,7 +39,7 @@ public class ConfigReputation extends Config {
         if (rep < 1){
             set(name, 1);
             return 1;
-        }else return rep;
+        } else return rep;
     }
     
 }
