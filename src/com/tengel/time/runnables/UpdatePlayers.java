@@ -36,10 +36,8 @@ public class UpdatePlayers implements Runnable {
             if (wrongZone){
                 plugin.getEconomy().withdrawPlayer(player.getName(), updateInterval);
                 //ConfigPlayer cp = plugin.getTimePlayers().getPlayerConfig(player.getName());
-                if (tp.getBounty() <= 0)
-                    player.sendMessage(ChatColor.RED + "You've been added to the wanted list!");
                 //if (es.transactionSuccess())
-                    tp.addBounty(updateInterval);
+                tp.addBounty(updateInterval);
             } else if (tp.getBounty() > 0){
                 tp.addBounty(updateInterval*-1);
                 if (tp.getBounty() == 0)
@@ -52,7 +50,7 @@ public class UpdatePlayers implements Runnable {
                         tp.outOfTime();
                 }
             } else if(tp.hasDied()){
-                if (plugin.getEconomy().getBalance(tp.getName()) > 24*60*60){
+                if (plugin.getEconomy().getBalance(tp.getName()) >= 24*60*60){
                     tp.outOfTimeRestore();
                 }
             }

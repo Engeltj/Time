@@ -120,7 +120,7 @@ public class TimeBankHandler implements Listener {
                     p.openInventory(depot);
                     event.setCancelled(true);
                 } else if(b.getType().equals(Material.ENDER_CHEST)){
-                    System.out.println("TIME CAPSULE!");
+//                    System.out.println("TIME CAPSULE!");
                     bank.open(p);
                     event.setCancelled(true);
                 }

@@ -11,6 +11,9 @@ import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
@@ -22,17 +25,16 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.SignChangeEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.player.*;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.event.enchantment.EnchantItemEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.*;
+
 import org.bukkit.event.world.WorldSaveEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -270,16 +272,36 @@ public class TimePlayerListener implements Listener {
         TimePlayer tp = plugin.getPlayer(p.getName());
         tp.updatePlayer(p);
         updatePlayerScoreboardHealth(p);
-        playerOutOfTime_message(p);
+        if (tp.hasDied())
+            playerOutOfTime_message(p);
     }
     
     @EventHandler
-    public void onPlayerDeath(EntityDeathEvent event){
-        Entity e = event.getEntity();
-        if (e instanceof Player){
-            Player p = (Player) e;
-            if (p.getGameMode().equals(GameMode.CREATIVE))
-                p.getInventory().clear();
+    public void onPlayerDeath(PlayerDeathEvent event){
+        Player p = event.getEntity();
+        event.setKeepLevel(true);
+        event.setDroppedExp(0);
+        TimePlayer tp = plugin.getPlayer(p.getName());
+        if (p.getGameMode().equals(GameMode.CREATIVE)){
+            for (ItemStack is : event.getDrops()){
+                is.setType(Material.AIR);
+            }
+        }
+        float exp = p.getExp();
+        float exp_lost = exp * 0.05f;
+        p.setExp(exp - exp_lost);
+        float balance = tp.getBalance();
+        float balance_lost = 0;
+        if (!tp.hasDied())
+            balance_lost = (float) Math.floor(balance * 0.05);
+        plugin.getEconomy().withdrawPlayer(tp.getName(), balance_lost);
+        Player killer = event.getEntity().getKiller();
+        if (killer != null){
+            TimePlayer tp_killer = plugin.getPlayer(killer.getName());
+            tp_killer.sendMessage("You've leeched " + ChatColor.GREEN + Commands.convertSecondsToTime(balance_lost) + ChatColor.RESET + " from this kill");
+            if (balance_lost < 30*60)
+                balance_lost = 30*60;
+            tp_killer.addBounty(balance_lost*2);
         }
     }
     

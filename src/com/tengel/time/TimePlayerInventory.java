@@ -43,7 +43,7 @@ public class TimePlayerInventory implements java.io.Serializable {
     }
     
     public void switchInventory(GameMode gm){
-        System.out.println(p.getName() + ", old: " + registered_gm);
+//        System.out.println(p.getName() + ", old: " + registered_gm);
         PlayerInventory pi = p.getInventory();
         if ((gm == GameMode.CREATIVE) && (registered_gm != GameMode.CREATIVE)){
             pi_survival = pi.getContents();
@@ -58,7 +58,7 @@ public class TimePlayerInventory implements java.io.Serializable {
             pi.setArmorContents(pa_survival);
             registered_gm = GameMode.SURVIVAL;
         }  
-         System.out.println(p.getName() + ", new: " + registered_gm);
+//         System.out.println(p.getName() + ", new: " + registered_gm);
     }
     
     public void updateInventoryData(){

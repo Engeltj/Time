@@ -100,7 +100,7 @@ public class TimePlayer implements IStructure {
                 
                 loadInventory(rs.getBytes("inventory"));
                 loadBank(rs.getBytes("bank"));
-                
+                this.updateLife(rs.getInt("lastseen"));
                 
                 //this.jobs = new HashMap<TimeProfession, Integer>();
                 String db_jobs = rs.getString("jobs");
@@ -182,9 +182,10 @@ public class TimePlayer implements IStructure {
         //Statement st;
         try {
             //st = con.createStatement();
+            start = System.currentTimeMillis()/1000;
             PreparedStatement pstmt = con.prepareStatement("INSERT INTO `players` (name, start, inventory, bank) VALUES (?,?,?,?);");
             pstmt.setString(1, name);
-            pstmt.setLong(2, System.currentTimeMillis()/1000);
+            pstmt.setLong(2, start);
             pstmt.setObject(3, inventory);
             pstmt.setObject(4, bank);
             pstmt.executeUpdate();
@@ -192,6 +193,7 @@ public class TimePlayer implements IStructure {
         } catch (Exception ex) {
             plugin.sendConsole("Failed to create entry for player '"+name+"' in TimePlayer class, " + ex);
         }
+        player.setExp(0f);
         player.setLevel(1);
         Location start_loc = new Location(plugin.getServer().getWorld("Time"), 342.5D, 59D, 377D, 180F, 1F);
         player.teleport(start_loc);
@@ -235,18 +237,37 @@ public class TimePlayer implements IStructure {
     }
     
     public void outOfTime(){
-        died = true;
         player.sendMessage(ChatColor.RED + "You've run out of time!!!");
-        player.setHealth(0D);
         player.setMaxHealth(2D);
-        player.setLevel(1);
+        player.setHealth(0D);
+        //player.setLevel(1);
+        died = true;
         
     }
     
     public void outOfTimeRestore(){
         player.sendMessage(ChatColor.GREEN+"It looks like you have accumulated 24 hours of time once again! You are no longer crippled");
-        player.setMaxHealth(2D);
+        player.setMaxHealth(20D);
         died = false;
+    }
+    
+    private void updateLife(int lastseen){
+        long interest = bank.compoundInterest(plugin.getInterestRate());
+        if (interest > 0)
+            sendMessage(ChatColor.YELLOW + "You've earned " + ChatColor.GREEN + Commands.convertSecondsToTime(interest) + ChatColor.YELLOW +
+                    " in interest today due to your bank balance!");
+        long balance = (long) plugin.getEconomy().getBalance(name);
+        long owing = System.currentTimeMillis()/1000 - lastseen;
+        if (owing > balance){
+            owing -= balance;
+            setBalance(0L);
+            long bank_balance = bank.getBalance();
+            if (owing > bank_balance)
+                owing = bank_balance;
+            bank.setBalance(bank_balance - owing);
+        }
+        else
+            setBalance(balance - owing);
     }
     
     public boolean removeJob(TimeProfession job){
@@ -303,9 +324,10 @@ public class TimePlayer implements IStructure {
         died = value;
     }
     
-//    public void setBalance(int balance){
-//        plugin.getEconomy().getBalance(name);
-//    }
+    public void setBalance(long balance){
+        plugin.getEconomy().withdrawPlayer(name, plugin.getEconomy().getBalance(name));
+        plugin.getEconomy().depositPlayer(name, balance);
+    }
     
     public void setRep(int rep){
         this.reputation = rep;
@@ -315,9 +337,12 @@ public class TimePlayer implements IStructure {
         this.bank = bank;
     }
     
-    public void addBounty(int amount){
-        if (amount < 0) amount = 0;
+    public void addBounty(float amount){
+        if (bounty == 0 && amount > 0)
+            sendMessage(ChatColor.RED + "You've been added to the wanted list! See " + ChatColor.BOLD + "/life bounty");
         bounty += amount;
+        if (bounty < 0)
+            bounty = 0;
     }
     
     public void addSkill(TimeProfession tp, int amount){
@@ -384,7 +409,10 @@ public class TimePlayer implements IStructure {
     }
     
     public long getAge(){
-        return System.currentTimeMillis()/1000 - start;
+        if (isLoaded())
+            return System.currentTimeMillis()/1000 - start;
+        else
+            return 0;
     }
     
     public float getBalance(){

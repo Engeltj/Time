@@ -68,7 +68,7 @@ public class CreativePlots  implements Listener{
     }
     
     @EventHandler
-    public void onBlockPlace(PlayerInteractEvent event){
+    public void onInteract(PlayerInteractEvent event){
         Player p = event.getPlayer();
         Block b = event.getClickedBlock();
         if (b != null && (p.getGameMode() == GameMode.SURVIVAL) && !p.isOp()){
@@ -91,15 +91,17 @@ public class CreativePlots  implements Listener{
                 }
 
             }
-            boolean plot = false;
-            Set<String> keys = plugin.getRegionControl().getRegions(b.getLocation()).keySet();
-            for (String key : keys){
-                if (key.contains("cplot_"))
-                    plot = true;
-            }
-            if (!plot){
-                p.sendMessage(ChatColor.RED + "You may not interact with blocks outside of plot");
-                event.setCancelled(true);
+            if (b != null){
+                boolean plot = false;
+                Set<String> keys = plugin.getRegionControl().getRegions(b.getLocation()).keySet();
+                for (String key : keys){
+                    if (key.contains("cplot_"))
+                        plot = true;
+                }
+                if (!plot){
+                    p.sendMessage(ChatColor.RED + "You may not interact with blocks outside of plot");
+                    event.setCancelled(true);
+                }
             }
         }
     }

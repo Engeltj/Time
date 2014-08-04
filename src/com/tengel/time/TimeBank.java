@@ -120,12 +120,12 @@ public class TimeBank implements java.io.Serializable {
      * @param rate  The current interest rate in %
      * @return      The amount gained from the compound
      */
-    public long compoundInterest(int rate){
+    public long compoundInterest(double rate){
         Calendar calendar = Calendar.getInstance();
         int day = calendar.get(Calendar.DAY_OF_YEAR);
         if (day != last_compound){
             long before = balance;
-            balance += balance * (rate/100L);
+            balance += balance * (rate);
             last_compound = day;
             return (balance - before);
         }

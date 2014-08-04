@@ -80,6 +80,8 @@ public final class Time extends JavaPlugin {
     private ConfigItemStock shop_stock;
     private ConfigReputation item_reputation;
     
+    private double interestRate = 0;
+    
     public Gatherer prof_miner;
     public Gatherer prof_farmer;
     public Builder prof_builder;
@@ -132,7 +134,7 @@ public final class Time extends JavaPlugin {
         pm.registerEvents(worldGuardListener, this);
         pm.registerEvents(bank_handler, this);
         //pm.registerEvents(mobcontrol, this);
-        //getServer().getScheduler().scheduleSyncRepeatingTask(this, timeUpdater, 0, timeUpdater.getUpdateInterval() * 20);
+        getServer().getScheduler().scheduleSyncRepeatingTask(this, timeUpdater, 0, timeUpdater.getUpdateInterval() * 20);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new UpdateSigns(this), 60*20, 5*60*20);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new TimeSave(this), 10*60*20, 10*60*20);
         getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
@@ -474,7 +476,6 @@ public final class Time extends JavaPlugin {
         Location loc = null;
         World world = this.getServer().getWorld("Time");
         if (type.equalsIgnoreCase("jail")){
-            
             if (zone == 0){
                 Random r = new Random(4);
                 int rand = r.nextInt();
@@ -499,6 +500,15 @@ public final class Time extends JavaPlugin {
             }
         }
         return null;
+    }
+    
+    public double getInterestRate(){
+        if (interestRate == 0){
+            Random rand = new Random();
+            int d = 50 + rand.nextInt(150);
+            interestRate = d / 10000D;
+        }
+        return interestRate;
     }
     
     public String intToString(int num, int digits) {
