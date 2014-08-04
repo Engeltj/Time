@@ -26,11 +26,11 @@ public class TimePlayerInventory implements java.io.Serializable {
     private ArrayList spa_creative;
     private ArrayList spi_survival;
     private ArrayList spa_survival;
-    
-    private ArrayList p_unclaimed = new ArrayList();//from house eviction
+    private ArrayList p_unclaimed; //from house eviction
     
     public TimePlayerInventory(Player p){
         this.p = p;
+        p_unclaimed = new ArrayList();
         if (p.getGameMode() == GameMode.SURVIVAL){
             pi_survival = p.getInventory().getContents().clone();
             pa_survival = p.getInventory().getArmorContents().clone();

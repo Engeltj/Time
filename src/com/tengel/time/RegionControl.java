@@ -145,7 +145,9 @@ public class RegionControl implements Listener {
     
     public boolean isWrongZone(String player, int zone){
         TimePlayer tp = plugin.getPlayer(player);
-        return zone > tp.getZone();
+        if (tp != null)
+            return zone > tp.getZone();
+        return false;
     }
     
     public boolean isWrongZone(Player player){

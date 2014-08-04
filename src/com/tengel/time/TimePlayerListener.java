@@ -118,30 +118,31 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler
     public void onEnchant(EnchantItemEvent event){
-        int cost = event.getExpLevelCost()*60;
+        int cost_days = event.getExpLevelCost();
+        int cost_secs = event.getExpLevelCost()*24*60*60;
         TimePlayer tp = plugin.getPlayer(event.getEnchanter().getName());
         if (tp.confirmEnchantment(event.getItem())){
-            EconomyResponse er = plugin.getEconomy().withdrawPlayer(tp.getName(), cost);
+            EconomyResponse er = plugin.getEconomy().withdrawPlayer(tp.getName(), cost_secs);
             if (er.transactionSuccess()){
                 event.setExpLevelCost(0);
             } else {
-                tp.sendMessage(ChatColor.RED + "It seems you cannot afford this enchantment");
+                tp.sendMessage(ChatColor.RED + "You require " + ChatColor.GRAY + Commands.convertSecondsToTime(cost_secs - tp.getBalance()) +
+                        ChatColor.RED + " more time to do this.");
                 event.setCancelled(true);
             }
                 
             
         } else {
-            tp.sendMessage(ChatColor.YELLOW + "Enchanting this item will cost you " + ChatColor.RED + cost + " days " +
+            tp.sendMessage(ChatColor.YELLOW + "Enchanting this item will cost you " + ChatColor.RED + cost_days + " days" +
                     ChatColor.YELLOW + " of life, to confirm try again");
             event.setCancelled(true);
         }
-        
     }
     
     @EventHandler
     public void onWorldSave(WorldSaveEvent event){
         plugin.save();
-        plugin.sendConsole("Time saved.");
+        plugin.sendConsole("Time saved via WorldSaveEvent.");
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
@@ -351,6 +352,8 @@ public class TimePlayerListener implements Listener {
                 setPlayerAttributes(p);
                 updatePlayerScoreboardLevel(p);
                 updatePlayerScoreboardHealth(p);
+                p.sendMessage(ChatColor.GRAY+""+ChatColor.BOLD+"====> This server is Time injected <====");
+                p.sendMessage(ChatColor.GRAY+"The currency is represented by a countdown timer to your death. You may live forever so long as you upkeep your clock!");
             }
         }, 20*1);
     }

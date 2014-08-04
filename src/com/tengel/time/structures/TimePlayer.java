@@ -6,11 +6,11 @@
 
 package com.tengel.time.structures;
 
-import com.tengel.time.Time;
 import com.tengel.time.Commands;
+import com.tengel.time.Time;
 import com.tengel.time.TimeBank;
-import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.TimePlayerInventory;
+import com.tengel.time.profs.TimeProfession;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.sql.Connection;
@@ -23,6 +23,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import org.bukkit.ChatColor;
+import org.bukkit.Effect;
+import org.bukkit.Location;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -33,14 +36,14 @@ import org.bukkit.inventory.ItemStack;
 public class TimePlayer implements IStructure {
     private Player player;
     private String name;
-    private HashMap<TimeProfession, Integer> jobs;
+    private HashMap<TimeProfession, Integer> jobs = new HashMap<TimeProfession, Integer>();;
     private short zone;
     private long start; //players first appearance
     private int bounty;
     private int reputation;
     private int reputation_gain = 0;
     private boolean jailed;
-    private List<Short> blockLicenses;
+    private List<Short> blockLicenses = new ArrayList<Short>();
     private Time plugin;
     private TimePlayerInventory inventory;
     private TimeBank bank;
@@ -99,7 +102,7 @@ public class TimePlayer implements IStructure {
                 loadBank(rs.getBytes("bank"));
                 
                 
-                this.jobs = new HashMap<TimeProfession, Integer>();
+                //this.jobs = new HashMap<TimeProfession, Integer>();
                 String db_jobs = rs.getString("jobs");
                 String [] jobs = db_jobs.split(",");
                 for (String job : jobs){
@@ -112,7 +115,7 @@ public class TimePlayer implements IStructure {
                     }
                 }
                 
-                blockLicenses = new ArrayList<Short>();
+                //blockLicenses = new ArrayList<Short>();
                 ResultSet licenses = st.executeQuery("SELECT * FROM `licenses` WHERE player='"+name+"';");
                 while (licenses.next())
                     blockLicenses.add(licenses.getShort("license"));
@@ -166,21 +169,50 @@ public class TimePlayer implements IStructure {
             return true;
         } catch (Exception ex) {
             plugin.sendConsole("Failed to update db for '"+name+"' in TimePlayer class, " + ex);
+            ex.printStackTrace();
         }
         return false;
     }
     
     private void create(){
+        loadInventory(null);
+        loadBank(null);
+        
         Connection con = plugin.getSql().getConnection();
-        Statement st;
+        //Statement st;
         try {
-            st = con.createStatement();
-            st.executeUpdate("INSERT INTO `players` (name, start) VALUES ('"+name+"', "+System.currentTimeMillis()/1000+");");
+            //st = con.createStatement();
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO `players` (name, start, inventory, bank) VALUES (?,?,?,?);");
+            pstmt.setString(1, name);
+            pstmt.setLong(2, System.currentTimeMillis()/1000);
+            pstmt.setObject(3, inventory);
+            pstmt.setObject(4, bank);
+            pstmt.executeUpdate();
+            //st.executeUpdate("INSERT INTO `players` (name, start) VALUES ('"+name+"', "+System.currentTimeMillis()/1000+");");
         } catch (Exception ex) {
             plugin.sendConsole("Failed to create entry for player '"+name+"' in TimePlayer class, " + ex);
         }
         player.setLevel(1);
+        Location start_loc = new Location(plugin.getServer().getWorld("Time"), 342.5D, 59D, 377D, 180F, 1F);
+        player.teleport(start_loc);
+        player.getWorld().playSound(start_loc, Sound.BURP, 1, 1);
+        plugin.getEconomy().withdrawPlayer(name, plugin.getEconomy().getBalance(name));
         
+        plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+            public void run() {
+                try{
+                    player.sendMessage(ChatColor.GREEN+name+", here is 24 hours to begin your journey, your clock will start ticking in 7 days");
+                    plugin.getEconomy().depositPlayer(name, 24*60*60);
+                }catch(Exception ignored){};
+            }
+        }, 20*7); //5 seconds (20 ticks/s)
+        plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+            public void run() {
+                try{
+                    player.sendMessage(ChatColor.GREEN+"Type " + ChatColor.BOLD+ "/life left" + ChatColor.RESET + ChatColor.GREEN + " to see your remaining life/balance");
+                }catch(Exception ignored){};
+            }
+        }, 20*10); //5 seconds (20 ticks/s)
     }
     
     public boolean remove(){
@@ -376,15 +408,19 @@ public class TimePlayer implements IStructure {
     }
     
     public boolean confirmEnchantment(ItemStack is){
-        if (this.confirm_enchant.equals(is))
-            return true;
-        else {
-            this.confirm_enchant = is;
-            plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
-                public void run() {
-                    confirm_enchant = null;
-                }
-            }, 20*5); //5 seconds (20 ticks/s)
+        try{
+            if (this.confirm_enchant != null && this.confirm_enchant.equals(is))
+                return true;
+            else {
+                this.confirm_enchant = is;
+                plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+                    public void run() {
+                        confirm_enchant = null;
+                    }
+                }, 20*5); //5 seconds (20 ticks/s)
+                return false;
+            }
+        } catch(Exception ex){
             return false;
         }
     }
