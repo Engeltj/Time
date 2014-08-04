@@ -14,25 +14,28 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.bukkit.Location;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
-
 import net.coreprotect.CoreProtect;
 import net.coreprotect.CoreProtectAPI;
 import net.coreprotect.CoreProtectAPI.ParseResult;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
+import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -50,7 +53,7 @@ public class CreativePlots  implements Listener{
     public void onRegionEnter(RegionEnterEvent e){
         ProtectedRegion pr = e.getRegion();
         Player p = e.getPlayer();
-        if (pr.getId().contains("cplot_") && pr.isOwner(p.getName())){
+        if (pr.getId().contains("cplot_")  && !p.getGameMode().equals(GameMode.CREATIVE)){ // && pr.isOwner(p.getName())
             p.setGameMode(GameMode.CREATIVE);
         }
     }
@@ -65,12 +68,62 @@ public class CreativePlots  implements Listener{
     }
     
     @EventHandler
+    public void onBlockPlace(PlayerInteractEvent event){
+        Player p = event.getPlayer();
+        Block b = event.getClickedBlock();
+        if (b != null && (p.getGameMode() == GameMode.SURVIVAL) && !p.isOp()){
+            Set<String> keys = plugin.getRegionControl().getRegions(b.getLocation()).keySet();
+            for (String key : keys){
+                if (key.contains("cplot_")){
+                    p.sendMessage(ChatColor.RED + "You may not interact with blocks outside of plot");
+                    event.setCancelled(true);
+                }
+
+            }
+        } else if ((p.getGameMode() == GameMode.CREATIVE) && !p.isOp()){
+            ItemStack is = event.getItem();
+            if (is != null && (event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK))){
+                Material mat = is.getType();
+                if (mat.equals(Material.EGG) || mat.equals(Material.MONSTER_EGG) || mat.equals(Material.MONSTER_EGGS)){
+                    p.sendMessage(ChatColor.RED + mat.toString() + " is not allowed");
+                    event.setCancelled(true);
+                    return;
+                }
+
+            }
+            boolean plot = false;
+            Set<String> keys = plugin.getRegionControl().getRegions(b.getLocation()).keySet();
+            for (String key : keys){
+                if (key.contains("cplot_"))
+                    plot = true;
+            }
+            if (!plot){
+                p.sendMessage(ChatColor.RED + "You may not interact with blocks outside of plot");
+                event.setCancelled(true);
+            }
+        }
+    }
+    
+    @EventHandler
+    public void onDispense(BlockDispenseEvent event){
+        Block b = event.getBlock();
+        Set<String> keys = plugin.getRegionControl().getRegions(b.getLocation()).keySet();
+        for (String key : keys){
+            if (key.contains("cplot_"))
+                event.setCancelled(true);
+        }
+    }
+    
+    
+    
+    @EventHandler
     public void onBlockPlace(BlockPlaceEvent event){
         Player p = event.getPlayer();
         if ((p.getGameMode() == GameMode.CREATIVE) && !p.isOp()){
             Block b = event.getBlock();
-            if (b.getType().equals(Material.TNT)){
-                p.sendMessage(ChatColor.RED + "TNT is not allowed in creative");
+            Material mat = b.getType();
+            if (mat.equals(Material.TNT) || mat.equals(Material.MOB_SPAWNER)){
+                p.sendMessage(ChatColor.RED + mat.toString() + " is not allowed");
                 event.setCancelled(true);
             }
                 
@@ -239,6 +292,7 @@ public class CreativePlots  implements Listener{
                     if (player.equalsIgnoreCase(p.getName())){
                         ProtectedRegion pr = map.get(key);
                         restorePlotSchematic(p, pr);
+                        p.setGameMode(GameMode.SURVIVAL);
                         plugin.getRegionControl().removeRegion(pr.getId(), p.getWorld());
                         p.sendMessage(ChatColor.GREEN + "Plot destroyed!");
                         return;
