@@ -5,8 +5,8 @@
 package com.tengel.time;
 
 import java.util.ArrayList;
-import java.util.Map;
 import org.bukkit.GameMode;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -17,135 +17,98 @@ import org.bukkit.inventory.PlayerInventory;
  */
 public class TimePlayerInventory implements java.io.Serializable {
     private transient Player p;
-    private transient ItemStack [] pi_creative = new ItemStack[36];
-    private transient ItemStack [] pa_creative = new ItemStack[4]; //player armour
-    private transient ItemStack [] pi_survival = new ItemStack[36];
-    private transient ItemStack [] pa_survival = new ItemStack[4];
+    
     private GameMode registered_gm = GameMode.SURVIVAL;
-    private ArrayList spi_creative;
-    private ArrayList spa_creative;
-    private ArrayList spi_survival;
-    private ArrayList spa_survival;
-    private ArrayList p_unclaimed; //from house eviction
+    private String pi_creative = "";
+    private String pa_creative = "";
+    private String pi_survival = "";
+    private String pa_survival = "";
+    
+    private transient ArrayList<ItemStack> i_unclaimed; //from house eviction
+    private String si_unclaimed = "";
+    
     
     public TimePlayerInventory(Player p){
         this.p = p;
-        p_unclaimed = new ArrayList();
+        i_unclaimed = new ArrayList();
         if (p.getGameMode() == GameMode.SURVIVAL){
-            pi_survival = p.getInventory().getContents().clone();
-            pa_survival = p.getInventory().getArmorContents().clone();
+            pi_survival = ItemSerialization.saveItemStack(p.getInventory().getContents());
+            pa_survival = ItemSerialization.saveItemStack(p.getInventory().getArmorContents());
         }
         else {
-            pi_creative = p.getInventory().getContents().clone();
-            pa_creative = p.getInventory().getArmorContents().clone();
+            pi_creative = ItemSerialization.saveItemStack(p.getInventory().getContents());
+            pa_creative = ItemSerialization.saveItemStack(p.getInventory().getArmorContents());
         }
         registered_gm = p.getGameMode();
     }
     
     public void switchInventory(GameMode gm){
-//        System.out.println(p.getName() + ", old: " + registered_gm);
         PlayerInventory pi = p.getInventory();
         if ((gm == GameMode.CREATIVE) && (registered_gm != GameMode.CREATIVE)){
-            pi_survival = pi.getContents();
-            pa_survival = pi.getArmorContents();
-            pi.setContents(pi_creative);
-            pi.setArmorContents(pa_creative);
+            pi_survival = ItemSerialization.saveItemStack(p.getInventory().getContents());
+            pa_survival = ItemSerialization.saveItemStack(p.getInventory().getArmorContents());
+            try {
+                ItemStack [] iss_contents = ItemSerialization.loadItemStack(pi_creative);
+                ItemStack [] iss_armor = ItemSerialization.loadItemStack(pa_creative);
+                pi.setContents(iss_contents);
+                pi.setArmorContents(iss_armor);
+            } catch (Exception ex) {
+                pi_creative = "";
+                pa_creative = "";
+                pi.clear();
+                pi.setArmorContents(new ItemStack[4]); 
+            }
             registered_gm = GameMode.CREATIVE;
         } else if ((gm == GameMode.SURVIVAL) && (registered_gm != GameMode.SURVIVAL)){
-            pi_creative = pi.getContents();
-            pa_creative = pi.getArmorContents();
-            pi.setContents(pi_survival);
-            pi.setArmorContents(pa_survival);
+            pi_creative = ItemSerialization.saveItemStack(p.getInventory().getContents());
+            pa_creative = ItemSerialization.saveItemStack(p.getInventory().getArmorContents());
+            try {
+                ItemStack [] iss_contents = ItemSerialization.loadItemStack(pi_survival);
+                ItemStack [] iss_armor = ItemSerialization.loadItemStack(pa_survival);
+                pi.setContents(iss_contents);
+                pi.setArmorContents(iss_armor);
+            } catch (Exception ex) {
+                pi_survival = "";
+                pa_survival = "";
+                pi.clear();
+                pi.setArmorContents(new ItemStack[4]); 
+            }
             registered_gm = GameMode.SURVIVAL;
-        }  
-//         System.out.println(p.getName() + ", new: " + registered_gm);
-    }
-    
-    public void updateInventoryData(){
-        if (registered_gm == GameMode.SURVIVAL){
-            pi_survival = p.getInventory().getContents().clone();
-            pa_survival = p.getInventory().getArmorContents().clone();
-        } else {
-            pi_creative = p.getInventory().getContents().clone();
-            pa_creative = p.getInventory().getArmorContents().clone();
         }
     }
     
     public void performSerialization(){
-        spi_creative = new ArrayList();
-        spa_creative = new ArrayList();
-        spi_survival = new ArrayList();
-        spa_survival = new ArrayList();
-        
-        for (ItemStack is : pi_creative){
-            if (is != null)
-                spi_creative.add(is.serialize());
-            else
-                spi_creative.add(null);
+        ItemStack [] iss = new ItemStack[i_unclaimed.size()];
+        for (int i=0;i<i_unclaimed.size();i++){
+            iss[i] = i_unclaimed.get(i);
         }
-        for (ItemStack is : pa_creative){
-            if (is != null)
-                spa_creative.add(is.serialize());
-            else
-                spa_creative.add(null);
-        }
-        for (ItemStack is : pi_survival){
-            if (is != null)
-                spi_survival.add(is.serialize());
-            else
-                spi_survival.add(null);
-        }
-        for (ItemStack is : pa_survival){
-            if (is != null)
-                spa_survival.add(is.serialize());
-            else
-                spa_survival.add(null);
+        si_unclaimed = ItemSerialization.saveItemStack(iss);
+        if (registered_gm == GameMode.SURVIVAL){
+            pi_survival = ItemSerialization.saveItemStack(p.getInventory().getContents());
+            pa_survival = ItemSerialization.saveItemStack(p.getInventory().getArmorContents());
+        } else {
+            pi_creative = ItemSerialization.saveItemStack(p.getInventory().getContents());
+            pa_creative = ItemSerialization.saveItemStack(p.getInventory().getArmorContents());
         }
     }
     
     public void performDeserialization(Player p){
         this.p = p;
-        pi_creative = new ItemStack[36];
-        pa_creative = new ItemStack[4]; //player armour
-        pi_survival = new ItemStack[36];
-        pa_survival = new ItemStack[4];
-        for (int i=0;i<spi_creative.size();i++){
-            Object obj = spi_creative.get(i);
-            if (obj != null)
-                pi_creative[i] = ItemStack.deserialize((Map<String,Object>) obj);
-            else
-                pi_creative[i] = null;
-        }
-        for (int i=0;i<spa_creative.size();i++){
-            Object obj = spa_creative.get(i);
-            if (obj != null)
-                pa_creative[i] = ItemStack.deserialize((Map<String,Object>) obj);
-            else
-                pa_creative[i] = null;
-        }
-        for (int i=0;i<spi_survival.size();i++){
-            Object obj = spi_survival.get(i);
-            if (obj != null)
-                pi_survival[i] = ItemStack.deserialize((Map<String,Object>) obj);
-            else
-                pi_survival[i] = null;
-        }
-        for (int i=0;i<spa_survival.size();i++){
-            Object obj = spa_survival.get(i);
-            if (obj != null)
-                pa_survival[i] = ItemStack.deserialize((Map<String,Object>) obj);
-            else
-                pa_survival[i] = null;
-        }
+        this.i_unclaimed = new ArrayList<ItemStack>();
+        try {
+            ItemStack [] iss = ItemSerialization.loadItemStack(si_unclaimed);
+            for (ItemStack is : iss)
+                i_unclaimed.add(is);
+        } catch (InvalidConfigurationException ignored) {}
     }
     
     public void addUnclaimed(ItemStack is){
-        this.p_unclaimed.add(is.serialize());
+        this.i_unclaimed.add(is);
     }
     
     public ItemStack popUnclaimed(){
-        ItemStack is = ItemStack.deserialize((Map<String,Object>)p_unclaimed.get(0));
-        this.p_unclaimed.remove(0);
+        ItemStack is = i_unclaimed.get(0);
+        i_unclaimed.remove(0);
         return is;
     }
 }

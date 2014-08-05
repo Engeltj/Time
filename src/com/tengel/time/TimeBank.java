@@ -12,8 +12,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -25,7 +28,7 @@ import org.bukkit.inventory.ItemStack;
  */
 public class TimeBank implements java.io.Serializable {
     private transient ArrayList<ItemStack> depot_items;
-    private ArrayList sdepot;
+    private String sdepot_items = "";
     private long balance;
     private int last_compound;
     private int depot_size = 1024;
@@ -40,29 +43,31 @@ public class TimeBank implements java.io.Serializable {
     }
     
     public void performSerialization(){
-        sdepot = new ArrayList();
-        
-        for (ItemStack is : depot_items){
-            if (is != null)
-                sdepot.add(is.serialize());
+        ItemStack [] iss = new ItemStack[depot_items.size()];
+        for (int i=0;i<depot_items.size();i++){
+            iss[i] = depot_items.get(i);
         }
+        sdepot_items = ItemSerialization.saveItemStack(iss);
     }
     
     public void performDeserialization(){
         depot_items = new ArrayList<ItemStack>();
-        for (int i=0;i<sdepot.size();i++){
-            Object obj = sdepot.get(i);
-            if (obj != null)
-                depot_items.add(ItemStack.deserialize((Map<String,Object>) obj));
+        ItemStack [] iss = new ItemStack[1];
+        try {
+            iss = ItemSerialization.loadItemStack(sdepot_items);
+        } catch (InvalidConfigurationException ex) {
+            iss = new ItemStack[0];
         }
+        for (ItemStack is : iss)
+            depot_items.add(is);
     }
     
     public Inventory createDepot(){
        int size = 9*6;
        Inventory depot = Bukkit.createInventory(null, size, "Depot");
        for (ItemStack is : depot_items){
-           if (is != null)
-            depot.addItem(is);
+            if (is != null)
+                depot.addItem(is);
        }
        return depot;
     }

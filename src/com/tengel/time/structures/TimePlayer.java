@@ -149,7 +149,6 @@ public class TimePlayer implements IStructure {
             
             for (short license : blockLicenses)
                 st.executeUpdate("REPLACE INTO `licenses` SET license="+license+" WHERE player='"+name+"' AND license="+license+";");
-            inventory.updateInventoryData();
             inventory.performSerialization();
             bank.performSerialization();
             PreparedStatement pstmt = con.prepareStatement("UPDATE `players` SET " +

@@ -31,6 +31,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.*;
 
 import org.bukkit.event.world.WorldSaveEvent;
@@ -142,6 +143,13 @@ public class TimePlayerListener implements Listener {
     }
     
     @EventHandler
+    public void onRepair(PrepareItemCraftEvent event){
+        if (event.isRepair()){
+            //event.get
+        }
+    }
+    
+    @EventHandler
     public void onWorldSave(WorldSaveEvent event){
         plugin.save();
         plugin.sendConsole("Time saved via WorldSaveEvent.");
@@ -151,11 +159,12 @@ public class TimePlayerListener implements Listener {
     public void onGameModeChange(PlayerGameModeChangeEvent event){
         TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
         if (tp != null){
-            try{
+//            try{
                 tp.getPlayerInventory().switchInventory(event.getNewGameMode());
-            }catch(Exception e){
-                plugin.sendConsole("onGameModeChange: " + e.toString());
-            }
+//            }catch(Exception e){
+//                plugin.sendConsole("onGameModeChange: " + e.toString());
+//                e.printStackTrace();
+//            }
         }
     }
     
@@ -385,6 +394,7 @@ public class TimePlayerListener implements Listener {
         Player p = event.getPlayer();
         TimePlayer tp = plugin.getPlayer(p.getName());
         tp.save();
+        plugin.sendConsole(tp.getName() + " saved.");
         plugin.removePlayer(p.getName());
     }
     
