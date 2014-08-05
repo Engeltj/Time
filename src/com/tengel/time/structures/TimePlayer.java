@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -174,13 +175,12 @@ public class TimePlayer implements IStructure {
     }
     
     private void create(){
+        player.setGameMode(GameMode.SURVIVAL);
         loadInventory(null);
         loadBank(null);
         
         Connection con = plugin.getSql().getConnection();
-        //Statement st;
         try {
-            //st = con.createStatement();
             start = System.currentTimeMillis()/1000;
             PreparedStatement pstmt = con.prepareStatement("INSERT INTO `players` (name, start, inventory, bank) VALUES (?,?,?,?);");
             pstmt.setString(1, name);
@@ -188,7 +188,6 @@ public class TimePlayer implements IStructure {
             pstmt.setObject(3, inventory);
             pstmt.setObject(4, bank);
             pstmt.executeUpdate();
-            //st.executeUpdate("INSERT INTO `players` (name, start) VALUES ('"+name+"', "+System.currentTimeMillis()/1000+");");
         } catch (Exception ex) {
             plugin.sendConsole("Failed to create entry for player '"+name+"' in TimePlayer class, " + ex);
         }

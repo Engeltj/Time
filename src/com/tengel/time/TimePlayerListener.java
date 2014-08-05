@@ -158,13 +158,8 @@ public class TimePlayerListener implements Listener {
     @EventHandler(priority=EventPriority.NORMAL)
     public void onGameModeChange(PlayerGameModeChangeEvent event){
         TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
-        if (tp != null){
-//            try{
-                tp.getPlayerInventory().switchInventory(event.getNewGameMode());
-//            }catch(Exception e){
-//                plugin.sendConsole("onGameModeChange: " + e.toString());
-//                e.printStackTrace();
-//            }
+        if (tp != null && tp.isLoaded()){
+            tp.getPlayerInventory().switchInventory(event.getNewGameMode());
         }
     }
     
