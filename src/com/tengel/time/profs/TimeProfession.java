@@ -9,8 +9,14 @@ package com.tengel.time.profs;
 //import com.tengel.time.TimePlayer;
 import com.tengel.time.Time;
 import com.tengel.time.structures.TimePlayer;
+import java.util.ArrayList;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.ItemMeta;
 
 
 /**
@@ -44,20 +50,38 @@ public enum TimeProfession {
     public void give(Time plugin, Player p){
         TimePlayer tp = plugin.getPlayer(p.getName());
         if (!tp.getJobs().isEmpty()){
-            p.sendMessage(ChatColor.RED + "You already have a profession! Please '/life unemploy' first.");
+            p.sendMessage(ChatColor.RED + "You already have a profession! Please " + ChatColor.BOLD + "/life unemploy" + ChatColor.RESET + ChatColor.RED + " first.");
             return;
-        }
-        else 
+        } else {
+            tp.addJob(this);
+            this.jobOrientation(p);
             p.sendMessage(ChatColor.GREEN + "You have now become a " + this.toString().toLowerCase() + "!");
-        
-        tp.addJob(this);
+        }
     }
     
+    public void jobOrientation(Player p){
+        p.setGameMode(GameMode.SURVIVAL);
+        if (this.equals(TimeProfession.OFFICER)){
+            PlayerInventory pi = p.getInventory();
+            if (!pi.getItem(0).getType().equals(Material.STICK) || !pi.getItem(0).getItemMeta().getDisplayName().equals("Baton")){
+                ItemStack is = new ItemStack(Material.STICK, 1);
+                ItemStack is_backup = pi.getItem(0).clone();
+                ItemMeta im = is.getItemMeta();
+                im.setDisplayName("Baton");
+                ArrayList<String> lore = new ArrayList();
+                lore.add("Arrests bountied players");
+                im.setLore(lore); 
+                is.setItemMeta(im);
+                pi.setItem(0, is);
+                pi.addItem(is_backup);
+            }
+        }
+    }
     //public TimeProfession get(Time plugin, Player p){
     //    return plugin.getTimePlayers().getPlayerConfig(p.getName()).getProfession();
     //}
     
-    public int getUnemployCost(int zone){
+    public static int getUnemployCost(int zone){
         switch(zone){
             case 0: return 7*24*60*60; // 7 days
             case 1: return 7*24*60*60 *4*3; //12 weeks

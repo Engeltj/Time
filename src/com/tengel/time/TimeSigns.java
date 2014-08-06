@@ -113,7 +113,6 @@ public class TimeSigns extends Config {
         if (m.find()){
             return Integer.valueOf(m.group());
         } else{
-            //plugin.sendConsole("SignInteract event, error reading number: "+line);
             return 0;
         }
     }
@@ -256,12 +255,19 @@ public class TimeSigns extends Config {
     private boolean validateSign(TimePlayer tp, Sign sign){
         int cost,quantity=1;
         if (sign.getLine(0).contains("[Job]")){
-            sign.setLine(0, ChatColor.BOLD + "" + ChatColor.AQUA + "  [Job]");
-            return true;
+            sign.setLine(0, ChatColor.AQUA + "" + ChatColor.BOLD + "  [Job]");
+            try {
+                TimeProfession.valueOf(sign.getLine(1).toUpperCase());
+                sign.update();
+                return true;
+            } catch (IllegalArgumentException e){
+                tp.sendMessage(ChatColor.RED + "Invalid profession '" + sign.getLine(1) + "'");
+                dropSign(sign.getLocation());
+                return false;
+            }
         }
 
         Material m = plugin.getItemMaterial(sign.getLine(1));
-        //plugin.sendConsole("test: " + sign.getLine(1));
         if (m == null){
             tp.sendMessage(ChatColor.RED + "Invalid item name or ID on line 2");
             dropSign(sign.getLocation());
@@ -289,8 +295,6 @@ public class TimeSigns extends Config {
             setSignStock(sign, cis.getStock(m.name()));
         } else if (sign.getLine(0).contains("[Sell]")){
             sign.setLine(0, ChatColor.BOLD + "" + ChatColor.BLUE + "  [Sell]");
-//                ConfigShop sc = new ConfigShop(plugin);
-//                sc.updateItem(m.getId(), cost);
             setSignQuantity(sign, quantity);
         }
         setSignMaterial(sign, m.name());
@@ -315,8 +319,8 @@ public class TimeSigns extends Config {
                 if (quantity > 0)
                     this.set(path + ".quantity", quantity);
                 this.signs.put(path, sign);
+                tp.sendMessage(ChatColor.GREEN + "TimeSign created!");
             }
-            save();
         } else{
             tp.sendMessage(ChatColor.RED + "You do not have permissions to do that!");
             dropSign(sign.getLocation());
@@ -325,11 +329,14 @@ public class TimeSigns extends Config {
     
     public void remove(TimePlayer tp, Sign sign){
         if (plugin.getPlayerListener().checkPermissions(tp.getPlayer(), "create.signshop", false)){
-            Location loc = sign.getLocation();
-            String path = loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ();
-            this.set(path, null);
-            this.signs.remove(path);
-            save();
+            if (tp.getAdminMode()){
+                Location loc = sign.getLocation();
+                String path = loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ();
+                this.set(path, null);
+                this.signs.remove(path);
+                tp.sendMessage(ChatColor.GREEN + "TimeSign removed!");
+            } else
+                tp.sendMessage(ChatColor.RED + "You need to be in admin mode to remove this sign");
         } else{
             tp.sendMessage(ChatColor.RED + "You do not have permissions to do that!");
         }

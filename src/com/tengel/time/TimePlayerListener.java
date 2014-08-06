@@ -10,6 +10,7 @@ import com.tengel.time.profs.Police;
 import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,11 +32,15 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.*;
 
 import org.bukkit.event.world.WorldSaveEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -79,11 +84,14 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onSignDestroy(BlockBreakEvent event){
+        System.out.println("Hello");
         Block b = event.getBlock();
-        if (b.getType().equals(Material.SIGN_POST) || b.getType().equals(Material.WALL_SIGN)) {
+        if (b.getType().equals(Material.SIGN) || b.getType().equals(Material.SIGN_POST) || b.getType().equals(Material.WALL_SIGN)) {
             Sign s = (Sign) b.getState();
             String type = s.getLine(0);
             if (type.contains("[License]") || type.contains("[Buy]") || type.contains("[Job]") || type.contains("[Sell]")){
+                
+                event.setCancelled(true);
                 TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
                 TimeSigns ss = plugin.getShopSigns();
                 ss.remove(tp, s);
@@ -189,6 +197,41 @@ public class TimePlayerListener implements Listener {
                 }
             } else {
                 player.sendMessage(ChatColor.RED + "You need a to be a miner to obtain this material");
+            }
+        }
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onPlayerTouchRequired(InventoryClickEvent event){
+        System.out.println("Inv envent!");
+        Inventory inv = event.getInventory();
+        List<HumanEntity> viewers = inv.getViewers();
+        if (viewers.size()>0){
+            System.out.println(viewers.get(0).getName());
+            TimePlayer tp = plugin.getPlayer(viewers.get(0).getName());
+            if (tp != null){
+                if (tp.getJobs().contains(TimeProfession.OFFICER)){
+                    ItemStack is = event.getCurrentItem();
+                    if (is.getType().equals(Material.STICK)){
+                        tp.sendMessage(ChatColor.RED + "You may not move this item, required for you to do your job!");
+                        event.setCancelled(true);
+                    }
+                }
+            }
+        }
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onPlayerDropRequired(PlayerDropItemEvent event){
+        Player p = event.getPlayer();
+        TimePlayer tp = plugin.getPlayer(p.getName());
+        ItemStack is = event.getItemDrop().getItemStack();
+        if (tp != null){
+            if (tp.getJobs().contains(TimeProfession.OFFICER)){
+                if (is.getType().equals(Material.STICK)){
+                    tp.sendMessage(ChatColor.RED + "You may not move this item, required for you to do your job!");
+                    event.setCancelled(true);
+                }
             }
         }
     }

@@ -6,6 +6,7 @@
 
 package com.tengel.time.structures;
 
+import com.google.common.base.Joiner;
 import com.tengel.time.Commands;
 import com.tengel.time.Time;
 import com.tengel.time.TimeBank;
@@ -16,14 +17,17 @@ import java.io.ObjectInputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.ChatColor;
-import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -37,7 +41,8 @@ import org.bukkit.inventory.ItemStack;
 public class TimePlayer implements IStructure {
     private Player player;
     private String name;
-    private HashMap<TimeProfession, Integer> jobs = new HashMap<TimeProfession, Integer>();;
+    private List<TimeProfession> jobs = new ArrayList<TimeProfession>();
+    private Map<TimeProfession, Integer> job_skill = new HashMap<TimeProfession, Integer>();
     private short zone;
     private long start; //players first appearance
     private int bounty;
@@ -103,18 +108,22 @@ public class TimePlayer implements IStructure {
                 loadBank(rs.getBytes("bank"));
                 this.updateLife(rs.getInt("lastseen"));
                 
-                //this.jobs = new HashMap<TimeProfession, Integer>();
-                String db_jobs = rs.getString("jobs");
-                String [] jobs = db_jobs.split(",");
-                for (String job : jobs){
-                    if (job.length()>0){
-                        int skill = 0;
-                        ResultSet rs_skill = st.executeQuery("SELECT skill FROM `skills` WHERE player='"+name+"' AND job='"+job+"';");
-                        if (rs_skill.first())
-                            skill = rs_skill.getInt("skill");
-                        this.jobs.put(TimeProfession.valueOf(job), skill);
-                    }
+                String jobs = rs.getString("jobs");
+                for (String job : jobs.split(",")){
+                    try {
+                        TimeProfession prof = TimeProfession.valueOf(job);
+                        this.jobs.add(prof);
+                    } catch (Exception ex){}
                 }
+                
+                rs = st.executeQuery("SELECT skill,job FROM `skills` WHERE player='"+name+"';");
+                while (rs.next()){
+                    try {
+                        TimeProfession prof = TimeProfession.valueOf(rs.getString("job"));
+                        int skill = rs.getInt("skill");
+                        this.job_skill.put(prof, skill);
+                    } catch (IllegalArgumentException ex){}
+               }
                 
                 //blockLicenses = new ArrayList<Short>();
                 ResultSet licenses = st.executeQuery("SELECT * FROM `licenses` WHERE player='"+name+"';");
@@ -136,16 +145,14 @@ public class TimePlayer implements IStructure {
         Statement st;
         try {
             st = con.createStatement();
-            Iterator it = jobs.entrySet().iterator();
-            String jobsString = "";
-            while (it.hasNext()) {
+            Iterator it = job_skill.entrySet().iterator();
+            while (it.hasNext()){
                 Entry pairs = (Entry)it.next();
                 ResultSet rs = st.executeQuery("SELECT * FROM `skills` WHERE job='"+pairs.getKey()+"' AND player='"+name+"';");
                 if (rs.first())
                     st.executeUpdate("UPDATE `skills` SET skill="+pairs.getValue()+" WHERE job='"+pairs.getKey()+"' AND player='"+name+"';");
                 else
                     st.executeUpdate("INSERT INTO `skills` SET skill="+pairs.getValue()+",job='"+pairs.getKey()+"',player='"+name+"';");
-                jobsString += pairs.getKey() + ",";
             }
             
             for (short license : blockLicenses)
@@ -159,7 +166,7 @@ public class TimePlayer implements IStructure {
             pstmt.setInt(2,bounty);
             pstmt.setInt(3,zone);
             pstmt.setLong(4,System.currentTimeMillis()/1000);
-            pstmt.setString(5,jobsString);
+            pstmt.setString(5,Joiner.on(",").join(jobs));
             pstmt.setBoolean(6,jailed);
             pstmt.setInt(7,reputation);
             pstmt.setBoolean(8,died);
@@ -269,17 +276,17 @@ public class TimePlayer implements IStructure {
     }
     
     public boolean removeJob(TimeProfession job){
-        return (jobs.remove(job)!= null);
+        return jobs.remove(job);
     }
     
     public boolean addJob(TimeProfession job){
         if (!hasJob(job))
-            return (jobs.put(job,0)!=null);
+            return (jobs.add(job));
         return false;
     }
     
     public boolean hasJob(TimeProfession job){
-        return (jobs.get(job)!=null);
+        return jobs.contains(job);
     }
     
     public boolean hasBlockLicense(int block){
@@ -344,8 +351,8 @@ public class TimePlayer implements IStructure {
     }
     
     public void addSkill(TimeProfession tp, int amount){
-        int skill = this.getJobs().get(tp);
-        this.getJobs().put(tp, skill+amount);
+        int skill = this.job_skill.get(tp);
+        this.job_skill.put(tp, skill+amount);
     }
     
     public boolean addBlockLicense(int block){
@@ -378,7 +385,7 @@ public class TimePlayer implements IStructure {
         return name;
     }
     
-    public HashMap<TimeProfession, Integer> getJobs(){
+    public List<TimeProfession> getJobs(){
         return jobs;
     }
     
@@ -396,6 +403,10 @@ public class TimePlayer implements IStructure {
     
     public int getRep(){
         return this.reputation;
+    }
+    
+    public int getSkill(TimeProfession prof){
+        return this.job_skill.get(prof);
     }
     
     public int getBounty(){

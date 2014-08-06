@@ -12,6 +12,7 @@ import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
@@ -154,28 +155,60 @@ public class Commands implements Listener{
                 sender.sendMessage(ChatColor.GREEN + "You are not in jail");
         } else if (args[0].equalsIgnoreCase("unemploy")){
             final TimePlayer tp = plugin.getPlayer(sender.getName());
-            Runnable usetJobLeave = new BukkitRunnable() {
-                public void run() {
-                    tp.flagConfirm = false;
-                }
-            };
-            
-            plugin.getServer().getScheduler().runTaskLater(plugin, usetJobLeave, 20*10);
-            TimeProfession job = TimeProfession.UNEMPLOYED;
-            int cost = job.getUnemployCost(tp.getZone());
-            
-            if (!tp.flagConfirm){
-                tp.flagConfirm = true;
-                sender.sendMessage(ChatColor.GREEN + "Type '/"+command+" unemploy' again to leave your job at the cost of " + 
-                                        ChatColor.RED + convertSecondsToTime(cost));
+            if (tp.getJobs().size() == 0 || (tp.getJobs().size()==1 && tp.getJobs().get(0) == (TimeProfession.UNEMPLOYED))){
+                sender.sendMessage(ChatColor.RED + "You are already unemployed");
+            } else if (tp.getJobs().size() == 2 && args.length < 2){
+                sender.sendMessage(ChatColor.RED + "It seems you have two jobs, please specify which you want to leave");
             } else {
-                EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), cost);
-                if (es.transactionSuccess()){
-                    tp.removeJob(TimeProfession.UNEMPLOYED);
-                    sender.sendMessage(ChatColor.GREEN + "You have left your job! You are now unemployed.");
-                } else
-                    sender.sendMessage(ChatColor.RED + "It seems you cannot afford to lose your job.");
+                if (tp.getJobs().size() == 2){
+                    try {
+                        TimeProfession.valueOf(args[1].toUpperCase());
+                    } catch (IllegalArgumentException ex){
+                        sender.sendMessage(ChatColor.RED + "Profession '" + args[1] + " doesn't exist");
+                        return true;
+                    }
+                }
+                
+                plugin.getServer().getScheduler().runTaskLater(plugin, new BukkitRunnable() {
+                    public void run() {
+                        tp.flagConfirm = false;
+                    }
+                }, 20*10);
+                int cost = TimeProfession.getUnemployCost(tp.getZone());
+                if (!tp.flagConfirm){
+                    String job = "";
+                    if (tp.getJobs().size() == 2)
+                        job = args[1] + " ";
+                    tp.flagConfirm = true;
+                    sender.sendMessage(ChatColor.GREEN + "Type " + ChatColor.BOLD + "/"+command+" unemploy " + job + ChatColor.RESET + ChatColor.GREEN 
+                            + "again to leave your job at the cost of " + ChatColor.RED + convertSecondsToTime(cost));
+                } else {
+                    EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), cost);
+                    if (es.transactionSuccess()){
+                        if (tp.getJobs().size() == 2)
+                            tp.removeJob(TimeProfession.valueOf(args[1].toUpperCase()));
+                        else
+                            tp.removeJob(tp.getJobs().get(0));
+                        sender.sendMessage(ChatColor.GREEN + "You have left your job! You are now unemployed");
+                    } else
+                        sender.sendMessage(ChatColor.RED + "It seems you cannot afford to lose your job");
+                }
             }
+            
+        } else if (args[0].equalsIgnoreCase("employ")){
+            if (args.length < 2){
+                sender.sendMessage(ChatColor.RED + "Specify the job title you wish to obtain");
+            } else {
+                try {
+                    TimeProfession prof = TimeProfession.valueOf(args[1].toUpperCase());
+                    TimePlayer tp = plugin.getPlayer(sender.getName());
+                    if (tp != null)
+                        plugin.getShopSigns().buyProfession(tp, prof.name());
+                } catch (IllegalArgumentException ex){
+                    sender.sendMessage(ChatColor.RED + "The profession '"+args[1]+"' does not exist, try again");
+                }
+            }
+            
         } else if (args[0].equalsIgnoreCase("home")){
             if (args.length == 1){
                 TimePlayer tp = plugin.getPlayer(sender.getName());
@@ -199,20 +232,20 @@ public class Commands implements Listener{
             } else 
                 sender.sendMessage(ChatColor.RED + "Please specify a password!");
         } else if (args[0].equalsIgnoreCase("job")){
-            HashMap<TimeProfession, Integer> jobs = plugin.getPlayer(sender.getName()).getJobs();
-            Iterator it = jobs.entrySet().iterator();
-             while (it.hasNext()) {
-                Map.Entry pairs = (Map.Entry)it.next();
-                TimeProfession job = (TimeProfession) pairs.getKey();
-                if (args.length == 1){
-                    sender.sendMessage("- - - - - - - - - - - - - - - - - -");
-                    sender.sendMessage("Your current job is a " + ChatColor.GREEN + job.toString().toLowerCase());
-                    sender.sendMessage("- - - - - - - - - - - - - - - - - -");
-                }
-                if (job == TimeProfession.BUILDER)
-                    plugin.prof_builder.commands(command, sender, args);
-                if (job == TimeProfession.LANDLORD){
-                    plugin.prof_landlord.commands(command, sender, args);
+            List<TimeProfession> jobs = plugin.getPlayer(sender.getName()).getJobs();
+            if (jobs.size() == 0 || (jobs.size() == 1 && jobs.get(0) == TimeProfession.UNEMPLOYED)){
+                sender.sendMessage(ChatColor.RED+"You are unemployed, see your nearest hiring location");
+            } else {
+                for (TimeProfession prof : jobs){
+                    if (args.length == 1){
+                        sender.sendMessage("- - - - - - - - - - - - - - - - - -");
+                        sender.sendMessage("Your current job is a " + ChatColor.GREEN + prof.toString().toLowerCase());
+                        sender.sendMessage("- - - - - - - - - - - - - - - - - -");
+                    }
+                    if (prof == TimeProfession.BUILDER)
+                        plugin.prof_builder.commands(command, sender, args);
+                    if (prof == TimeProfession.LANDLORD)
+                        plugin.prof_landlord.commands(command, sender, args);
                 }
             }
         } else if (args[0].equalsIgnoreCase("admin")){
