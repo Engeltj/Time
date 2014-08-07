@@ -63,9 +63,20 @@ public enum TimeProfession {
         p.setGameMode(GameMode.SURVIVAL);
         if (this.equals(TimeProfession.OFFICER)){
             PlayerInventory pi = p.getInventory();
-            if (!pi.getItem(0).getType().equals(Material.STICK) || !pi.getItem(0).getItemMeta().getDisplayName().equals("Baton")){
+            ItemStack inv_item = pi.getItem(0);
+            String display_name = "";
+            if (inv_item != null){
+                display_name = inv_item.getItemMeta().getDisplayName();
+                if (display_name == null)
+                    display_name = "";
+            }
+            if (inv_item == null || 
+                    !inv_item.getType().equals(Material.STICK) || 
+                        !display_name.equals("Baton")){
                 ItemStack is = new ItemStack(Material.STICK, 1);
-                ItemStack is_backup = pi.getItem(0).clone();
+                ItemStack is_backup = null;
+                if (inv_item != null)
+                    is_backup = inv_item.clone();
                 ItemMeta im = is.getItemMeta();
                 im.setDisplayName("Baton");
                 ArrayList<String> lore = new ArrayList();
@@ -73,7 +84,9 @@ public enum TimeProfession {
                 im.setLore(lore); 
                 is.setItemMeta(im);
                 pi.setItem(0, is);
-                pi.addItem(is_backup);
+                if (inv_item != null)
+                    pi.addItem(is_backup);
+                p.updateInventory();
             }
         }
     }

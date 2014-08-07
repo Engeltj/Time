@@ -10,8 +10,6 @@ import com.tengel.time.exceptions.HomeFailedToCreateException;
 import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -143,7 +141,7 @@ public class Commands implements Listener{
         }
         else if (args[0].equalsIgnoreCase("bail")){
             TimePlayer tp = plugin.getPlayer(sender.getName());
-            if (tp.getJailed()){
+            if (tp.isJailed()){
                 int bounty = tp.getBounty();
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), bounty);
                 if (es.transactionSuccess()){
@@ -223,7 +221,10 @@ public class Commands implements Listener{
             } else 
                 return commandsHome(sender, args);
         } else if (args[0].equalsIgnoreCase("test")){
-            plugin.prof_builder.createBuild(sender, "test.schematic");
+            //plugin.prof_builder.createBuild(sender, "test.schematic");
+            Location loc = plugin.getLocation(0, "jail");
+            sender.sendMessage(loc.toString());
+            plugin.getServer().getPlayer(sender.getName()).teleport(loc);
         } else if (args[0].equalsIgnoreCase("password")){
             if (args.length > 1){
                 TimePlayer tp = plugin.getPlayer(sender.getName());

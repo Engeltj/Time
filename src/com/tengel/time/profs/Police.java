@@ -10,6 +10,7 @@ package com.tengel.time.profs;
 import com.tengel.time.Time;
 import com.tengel.time.structures.TimePlayer;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 /**
@@ -28,14 +29,22 @@ public class Police{
         int zone = tp.getZone();
         int bounty = tp.getBounty();
         if (bounty > 0){
-            villian.teleport(plugin.getLocation(zone, "jail"));
-            tp.setJailed(true);
-            villian.sendMessage(ChatColor.RED + "You've been jailed until your bounty expires!");
-            villian.sendMessage(ChatColor.RED + "You may pay off your bounty with " + ChatColor.GREEN + "/life bail" +
-                                    ChatColor.RED + " if you wish to seek freedom faster!");
-            cop.sendMessage("You've arrested " + ChatColor.RED + villian.getName() + ChatColor.WHITE + 
-                                    " and collected a bounty of " + ChatColor.GREEN + tp.getBountyString());
-            plugin.getEconomy().depositPlayer(cop.getName(), bounty);
+            if (!tp.isJailed()){
+                Location loc_jail = plugin.getLocation(zone, "jail");
+                if (loc_jail != null){
+                    villian.teleport(loc_jail);
+                    tp.setJailed(true);
+                    villian.sendMessage(ChatColor.RED + "You've been jailed until your bounty expires!");
+                    villian.sendMessage(ChatColor.RED + "You may pay off your bounty with " + ChatColor.GREEN + ChatColor.BOLD + "/life bail" + 
+                                            ChatColor.RESET + ChatColor.RED + " if you wish to seek freedom faster!");
+                    cop.sendMessage("You've arrested " + ChatColor.RED + villian.getName() + ChatColor.WHITE + 
+                                            " and collected a bounty of " + ChatColor.GREEN + tp.getBountyString());
+                    plugin.getEconomy().depositPlayer(cop.getName(), bounty);
+                } else
+                    plugin.sendConsole("No jail found for " + tp.getName());
+            } else
+                cop.sendMessage("This villian is already jailed");
+            
         }
     }
 }

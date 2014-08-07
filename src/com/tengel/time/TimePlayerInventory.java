@@ -77,6 +77,26 @@ public class TimePlayerInventory implements java.io.Serializable {
         }
     }
     
+    public void reloadInventory(){
+        PlayerInventory pi = p.getInventory();
+        if (registered_gm == GameMode.SURVIVAL){
+            try {
+                ItemStack [] iss_contents = ItemSerialization.loadItemStack(pi_survival);
+                ItemStack [] iss_armor = ItemSerialization.loadItemStack(pa_survival);
+                pi.setContents(iss_contents);
+                pi.setArmorContents(iss_armor);
+            } catch (Exception ignored) {}
+        } else {
+            try {
+                ItemStack [] iss_contents = ItemSerialization.loadItemStack(pi_creative);
+                ItemStack [] iss_armor = ItemSerialization.loadItemStack(pa_creative);
+                pi.setContents(iss_contents);
+                pi.setArmorContents(iss_armor);
+            } catch (Exception ignored) {}
+        }
+        
+    }
+    
     public void performSerialization(){
         ItemStack [] iss = new ItemStack[i_unclaimed.size()];
         for (int i=0;i<i_unclaimed.size();i++){

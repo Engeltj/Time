@@ -29,18 +29,16 @@ import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.*;
 
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -84,13 +82,11 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onSignDestroy(BlockBreakEvent event){
-        System.out.println("Hello");
         Block b = event.getBlock();
         if (b.getType().equals(Material.SIGN) || b.getType().equals(Material.SIGN_POST) || b.getType().equals(Material.WALL_SIGN)) {
             Sign s = (Sign) b.getState();
             String type = s.getLine(0);
             if (type.contains("[License]") || type.contains("[Buy]") || type.contains("[Job]") || type.contains("[Sell]")){
-                
                 event.setCancelled(true);
                 TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
                 TimeSigns ss = plugin.getShopSigns();
@@ -166,9 +162,8 @@ public class TimePlayerListener implements Listener {
     @EventHandler(priority=EventPriority.NORMAL)
     public void onGameModeChange(PlayerGameModeChangeEvent event){
         TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
-        if (tp != null && tp.isLoaded()){
+        if (tp != null && tp.isLoaded())
             tp.getPlayerInventory().switchInventory(event.getNewGameMode());
-        }
     }
     
     //@EventHandler(priority=EventPriority.NORMAL)
@@ -203,11 +198,9 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerTouchRequired(InventoryClickEvent event){
-        System.out.println("Inv envent!");
         Inventory inv = event.getInventory();
         List<HumanEntity> viewers = inv.getViewers();
         if (viewers.size()>0){
-            System.out.println(viewers.get(0).getName());
             TimePlayer tp = plugin.getPlayer(viewers.get(0).getName());
             if (tp != null){
                 if (tp.getJobs().contains(TimeProfession.OFFICER)){
@@ -225,10 +218,10 @@ public class TimePlayerListener implements Listener {
     public void onPlayerDropRequired(PlayerDropItemEvent event){
         Player p = event.getPlayer();
         TimePlayer tp = plugin.getPlayer(p.getName());
-        ItemStack is = event.getItemDrop().getItemStack();
         if (tp != null){
+            ItemStack is = event.getItemDrop().getItemStack();
             if (tp.getJobs().contains(TimeProfession.OFFICER)){
-                if (is.getType().equals(Material.STICK)){
+                if (is.getType().equals(Material.STICK) && is.getItemMeta().getDisplayName() != null && is.getItemMeta().getDisplayName().equals("Baton")){ 
                     tp.sendMessage(ChatColor.RED + "You may not move this item, required for you to do your job!");
                     event.setCancelled(true);
                 }
@@ -315,25 +308,42 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerReSpawn(PlayerRespawnEvent event){
-        Player p = event.getPlayer();
+        final Player p = event.getPlayer();
         TimePlayer tp = plugin.getPlayer(p.getName());
+        tp.getPlayerInventory().reloadInventory();
         tp.updatePlayer(p);
         updatePlayerScoreboardHealth(p);
         if (tp.hasDied())
             playerOutOfTime_message(p);
+        if (tp.isJailed()){
+            final int zone = tp.getZone();
+            plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+                public void run() {
+                    Location loc_jail = plugin.getLocation(zone, "jail");
+                    if (loc_jail != null)
+                       p.teleport(loc_jail);
+                }
+            }, 20*5);
+        }
     }
     
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event){
+        Player killer = event.getEntity().getKiller();
         Player p = event.getEntity();
+        TimePlayer tp = plugin.getPlayer(p.getName());
+        if (tp.isJailed()){ //cant die in jail, death cancel method
+            p.setHealth(1D);
+            event.setDeathMessage(null); 
+            return;
+        }
         event.setKeepLevel(true);
         event.setDroppedExp(0);
-        TimePlayer tp = plugin.getPlayer(p.getName());
-        if (p.getGameMode().equals(GameMode.CREATIVE)){
-            for (ItemStack is : event.getDrops()){
-                is.setType(Material.AIR);
-            }
-        }
+        
+        tp.getPlayerInventory().performSerialization();
+        for (ItemStack is : event.getDrops())
+            is.setType(Material.AIR);
+            
         float exp = p.getExp();
         float exp_lost = exp * 0.05f;
         p.setExp(exp - exp_lost);
@@ -342,14 +352,17 @@ public class TimePlayerListener implements Listener {
         if (!tp.hasDied())
             balance_lost = (float) Math.floor(balance * 0.05);
         plugin.getEconomy().withdrawPlayer(tp.getName(), balance_lost);
-        Player killer = event.getEntity().getKiller();
+        
         if (killer != null){
             TimePlayer tp_killer = plugin.getPlayer(killer.getName());
             tp_killer.sendMessage("You've leeched " + ChatColor.GREEN + Commands.convertSecondsToTime(balance_lost) + ChatColor.RESET + " from this kill");
             if (balance_lost < 30*60)
                 balance_lost = 30*60;
             tp_killer.addBounty(balance_lost*2);
-        }
+            event.setDeathMessage(ChatColor.RED + "" + ChatColor.BOLD + killer.getName() + ChatColor.RESET + 
+                    ChatColor.RED + " has murdered " + ChatColor.BOLD + tp.getName());
+        } else
+            event.setDeathMessage(null);
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
@@ -359,43 +372,44 @@ public class TimePlayerListener implements Listener {
             setPlayerAttributes(p);
     }
     
-    @EventHandler(priority=EventPriority.NORMAL)
+    @EventHandler(priority=EventPriority.HIGH)
     public void onInteract(PlayerInteractEvent event){
         Block b;
-        
-        if (!event.hasBlock()) {
-            try {
-                b = event.getPlayer().getTargetBlock(null, 5);
-            } catch (Exception e) {
-                return;
-            }
-        } else
-            b = event.getClickedBlock();
-        
-        if (b.getType().equals(Material.SIGN_POST) || b.getType().equals(Material.WALL_SIGN)) {
-            Sign s = (Sign) b.getState();
-            String type = s.getLine(0);
-            
-            if (type.contains("[License]")){
-                TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
-                TimeSigns ss = plugin.getShopSigns();
-                ss.buyBlockLicense(tp, s);
-                event.setCancelled(true);
-            } else if (type.contains("[Buy]")){
-                boolean donate = (event.getAction()==Action.LEFT_CLICK_BLOCK);
-                TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
-                TimeSigns ss = plugin.getShopSigns();
-                ss.buyItem(tp, s, donate);
-                event.setCancelled(true);
-            } else if (type.contains("[Job]")){
-                TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
-                TimeSigns ss = plugin.getShopSigns();
-                ss.buyProfession(tp, s.getLine(1));
-                event.setCancelled(true);
-            } else if(type.contains("[Sell]")){
-                TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
-                TimeSigns ss = plugin.getShopSigns();
-                ss.sellItem(tp, s);
+        TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
+        if (tp != null && !tp.getAdminMode()){
+            if (!event.hasBlock()) {
+                try {
+                    b = event.getPlayer().getTargetBlock(null, 5);
+                } catch (Exception e) {
+                    return;
+                }
+            } else
+                b = event.getClickedBlock();
+
+            if (b.getType().equals(Material.SIGN_POST) || b.getType().equals(Material.WALL_SIGN)) {
+                Sign s = (Sign) b.getState();
+                String type = s.getLine(0);
+
+                if (type.contains("[License]")){
+                    TimeSigns ss = plugin.getShopSigns();
+                    ss.buyBlockLicense(tp, s);
+                    event.setCancelled(true);
+                } else if (type.contains("[Buy]")){
+                    boolean donate = (event.getAction()==Action.LEFT_CLICK_BLOCK);
+                    TimeSigns ss = plugin.getShopSigns();
+                    ss.buyItem(tp, s, donate);
+                    event.setCancelled(true);
+                } else if (type.contains("[Job]")){
+                    TimeSigns ss = plugin.getShopSigns();
+                    ss.buyProfession(tp, s.getLine(1));
+                    event.setCancelled(true);
+                } else if(type.contains("[Sell]")){
+                    TimeSigns ss = plugin.getShopSigns();
+                    ss.sellItem(tp, s);
+                    event.setCancelled(true);
+                }
+            } else if (b.getType().equals(Material.ANVIL) && event.getAction() == Action.RIGHT_CLICK_BLOCK){
+                tp.sendMessage(ChatColor.RED + "Anvils are currently disabled, repair system is in development, please be patient! (Keep your damaged items)");
                 event.setCancelled(true);
             }
         }
@@ -407,13 +421,13 @@ public class TimePlayerListener implements Listener {
         final TimePlayer tp = plugin.addPlayer(p.getName());
         setPlayerAttributes(p);
         
-        if (tp.hasDied())
+        if (tp.hasDied()){
             playerOutOfTime_message(p);
-        else {
+            if (p.getMaxHealth() != 2)
+                p.setMaxHealth(2L);
+        } else {
             if (p.getMaxHealth() != 20)
                 p.setMaxHealth(20L);
-            if (p.getHealth() > 20)
-                p.setHealth(20L);
         }
         
         plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
@@ -436,6 +450,19 @@ public class TimePlayerListener implements Listener {
         plugin.removePlayer(p.getName());
     }
     
+    @EventHandler(priority=EventPriority.HIGH)
+    public void onTeleportWhileJailed(PlayerTeleportEvent event){
+        if (event.getCause() == TeleportCause.COMMAND){
+            Player p = event.getPlayer();
+            TimePlayer tp = plugin.getPlayer(p.getName());
+            if (tp.isJailed()){
+                tp.sendMessage(ChatColor.RED + "You may not teleport anywhere while in jail");
+                event.setCancelled(true);
+            }
+        }
+    }
+    
+    @EventHandler(priority=EventPriority.NORMAL)
     public boolean copArrest(EntityDamageByEntityEvent event){
         if (!(event.getDamager() instanceof Player))
             return false;
@@ -444,13 +471,16 @@ public class TimePlayerListener implements Listener {
         
         Player p = (Player) event.getDamager();
         TimePlayer tp = plugin.getPlayer(p.getName());
-        
-        if ((p.getItemInHand().getType() == Material.STICK) && (tp.hasJob(TimeProfession.OFFICER))){
-            Player defender = (Player) event.getEntity();
-            Police police = new Police(plugin);
-            police.arrestPlayer(p, defender);
-            return true;
-        } else return false;
+        if (tp.hasJob(TimeProfession.OFFICER)){
+            ItemStack is = p.getItemInHand();
+            if ((is.getType() == Material.STICK) && (is.getItemMeta().getDisplayName().equals("Baton"))){
+                Player defender = (Player) event.getEntity();
+                Police police = new Police(plugin);
+                police.arrestPlayer(p, defender);
+                return true;
+            }
+        }
+        return false;
     }
     
     //@EventHandler(priority=EventPriority.NORMAL)

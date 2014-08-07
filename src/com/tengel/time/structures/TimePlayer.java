@@ -17,7 +17,6 @@ import java.io.ObjectInputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,8 +24,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -157,7 +154,8 @@ public class TimePlayer implements IStructure {
             
             for (short license : blockLicenses)
                 st.executeUpdate("REPLACE INTO `licenses` SET license="+license+" WHERE player='"+name+"' AND license="+license+";");
-            inventory.performSerialization();
+            if (!this.player.isDead())
+                inventory.performSerialization();
             bank.performSerialization();
             PreparedStatement pstmt = con.prepareStatement("UPDATE `players` SET " +
                     "life=?,bounty=?,zone=?,lastseen=?,jobs=?,jailed=?,reputation=?,died=?,inventory=?,bank=?"+
@@ -397,9 +395,7 @@ public class TimePlayer implements IStructure {
         return adminMode;
     }
     
-    public boolean getJailed(){
-        return jailed;
-    }
+    
     
     public int getRep(){
         return this.reputation;
@@ -442,6 +438,10 @@ public class TimePlayer implements IStructure {
     
     public boolean isLoaded(){
         return loaded;
+    }
+    
+    public boolean isJailed(){
+        return jailed;
     }
     
     public boolean confirmEnchantment(ItemStack is){

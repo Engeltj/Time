@@ -477,9 +477,9 @@ public final class Time extends JavaPlugin {
         World world = this.getServer().getWorld("Time");
         if (type.equalsIgnoreCase("jail")){
             if (zone == 0){
-                Random r = new Random(4);
-                int rand = r.nextInt();
-                loc = new Location(world, 370, 66, 390+rand*4);
+                Random r = new Random();
+                int rand = r.nextInt(5);
+                loc = new Location(world, 370D, 66D, 390D+rand*4);
             }
         } else if (type.equalsIgnoreCase("freedom")){
             if (zone == 0)

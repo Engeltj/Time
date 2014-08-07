@@ -46,7 +46,7 @@ public class UpdatePlayers implements Runnable {
             if ((tp.getAge() > 60) && !tp.hasDied()){ //7 days
                 EconomyResponse es = plugin.getEconomy().withdrawPlayer(player.getName(), updateInterval);
                 if (!es.transactionSuccess()){
-                    if (!tp.getJailed())
+                    if (!tp.isJailed())
                         tp.outOfTime();
                 }
             } else if(tp.hasDied()){

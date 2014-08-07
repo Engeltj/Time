@@ -123,7 +123,7 @@ public class TimeSigns extends Config {
             try {
                 tprof = TimeProfession.valueOf(prof.toUpperCase());
                 tprof.give(plugin, tp.getPlayer());
-            } catch (Exception e){
+            } catch (IllegalArgumentException e){
                 tp.sendMessage(ChatColor.RED + "Invalid profession, report sign to an admin");
                 plugin.sendConsole("Invalid profession sign activated by " + tp.getName() + " at: " + (int)tp.getPlayer().getLocation().getX() + "," +
                         (int)tp.getPlayer().getLocation().getY() + "," + (int)tp.getPlayer().getLocation().getZ());
@@ -255,7 +255,7 @@ public class TimeSigns extends Config {
     private boolean validateSign(TimePlayer tp, Sign sign){
         int cost,quantity=1;
         if (sign.getLine(0).contains("[Job]")){
-            sign.setLine(0, ChatColor.AQUA + "" + ChatColor.BOLD + "  [Job]");
+            sign.setLine(0, ChatColor.AQUA + "" + ChatColor.BOLD + "[Job]");
             try {
                 TimeProfession.valueOf(sign.getLine(1).toUpperCase());
                 sign.update();
@@ -334,6 +334,7 @@ public class TimeSigns extends Config {
                 String path = loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ();
                 this.set(path, null);
                 this.signs.remove(path);
+                dropSign(sign.getLocation());
                 tp.sendMessage(ChatColor.GREEN + "TimeSign removed!");
             } else
                 tp.sendMessage(ChatColor.RED + "You need to be in admin mode to remove this sign");
