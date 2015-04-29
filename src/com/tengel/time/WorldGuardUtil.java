@@ -15,7 +15,6 @@ import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.bukkit.selections.Polygonal2DSelection;
 import com.sk89q.worldedit.bukkit.selections.Selection;
-import com.sk89q.worldedit.data.DataException;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.regions.Region;
@@ -38,19 +37,18 @@ import org.bukkit.World;
 import org.bukkit.command.CommandException;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Item;
-import org.bukkit.entity.Player;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.bukkit.entity.Player;
 
 /**
  *
@@ -270,15 +268,17 @@ public class WorldGuardUtil {
             mgr.removeRegion(region);
     }
 
-    public void pasteFirstLayer(ProtectedRegion pr, String schematic){
+    public void pasteFirstLayer(Player p, ProtectedRegion pr, String schematic){
         final WorldEditPlugin wep = plugin.worldEdit;
-        LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(), Bukkit.getConsoleSender(), world);
-        final LocalSession session = wep.getWorldEdit().getSession(bcs);
+        wep.getWorldEdit().
+//        Player bcs = new ConsolePlayer(wep, Bukkit.getConsoleSender(), world);
+        final LocalSession session = wep.getSession(p);
         session.setUseInventory(false);
-        EditSession editSession = session.createEditSession(bcs);
+        EditSession editSession = wep.createEditSession(p);
         Vector pos = new Vector(pr.getMinimumPoint());
         try {
-            session.setClipboard(getClipboard(schematic));
+            session.setClipboard(null);
+            session.setClipboard(getClipboard(p, schematic));
             session.getClipboard().paste(editSession, pos, false, false);  
             for (double x= pr.getMinimumPoint().getX(); x < pr.getMaximumPoint().getX(); x++){
                 for (double y= pr.getMinimumPoint().getY()+2; y < pr.getMaximumPoint().getY(); y++){
@@ -300,9 +300,8 @@ public class WorldGuardUtil {
 
     public boolean pasteSchematic(Player p, ProtectedRegion pr, String schematic, String subdir) {
         final WorldEditPlugin wep = plugin.worldEdit;
-        final LocalSession session = wep.getSession(p);
-        session.setUseInventory(false);
-        EditSession editSession = session.createEditSession((com.sk89q.worldedit.entity.Player) p);
+        wep.getWorldEdit().getSessionManager().
+        EditSession editSession = wep.createEditSession(p);
         Vector pos = new Vector(pr.getMinimumPoint());
         try {
 
@@ -315,18 +314,19 @@ public class WorldGuardUtil {
         }
         return false;
     }
-
+    
     public static class ConsolePlayer extends BukkitCommandSender {
-            final LocalWorld world;
-            public ConsolePlayer(WorldEditPlugin plugin, ServerInterface server, CommandSender sender, World w) {
-                    super(plugin, server, sender);
-                    world = BukkitUtil.getLocalWorld(w);
-            }
-
-            @Override
-            public boolean isPlayer() {
-                    return true;
-            }
+        final LocalWorld world;
+        
+        public ConsolePlayer(WorldEditPlugin plugin, CommandSender sender, World w) {
+            super(plugin, sender);
+            world = BukkitUtil.getLocalWorld(w);
+        }
+        
+        @Override
+        public boolean isPlayer() {
+                return true;
+        }
     }
 
 
