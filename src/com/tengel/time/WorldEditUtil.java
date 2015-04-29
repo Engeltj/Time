@@ -41,21 +41,21 @@ public class WorldEditUtil {
 		return wep;
 	}
 
-	public class ConsolePlayer extends BukkitCommandSender {
-		final LocalWorld world;
-		public ConsolePlayer(WorldEditPlugin plugin, ServerInterface server,CommandSender sender, World w) {
-			super(plugin, server, sender);
-			world = BukkitUtil.getLocalWorld(w);
-		}
-
-		@Override
-		public boolean isPlayer() {
-			return true;
-		}
-		@Override
-		public LocalWorld getWorld() {
-			return world;
-		}
-	}
+//	public class ConsolePlayer extends BukkitCommandSender {
+//		final LocalWorld world;
+//		public ConsolePlayer(WorldEditPlugin plugin, ServerInterface server,CommandSender sender, World w) {
+//			super(plugin, server, sender);
+//			world = BukkitUtil.getLocalWorld(w);
+//		}
+//
+//		@Override
+//		public boolean isPlayer() {
+//			return true;
+//		}
+//		@Override
+//		public LocalWorld getWorld() {
+//			return world;
+//		}
+//	}
 }
 

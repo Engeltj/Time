@@ -254,7 +254,7 @@ public class CreativePlots  implements Listener{
     private void restorePlotSchematic(Player p, ProtectedRegion pr){
         World w = p.getWorld();
         WorldGuardUtil wgu = new WorldGuardUtil(plugin, w);
-        wgu.pasteSchematic(pr, pr.getId(), "cplots" + File.separator + w.getName());
+        wgu.pasteSchematic(p, pr, pr.getId(), "cplots" + File.separator + w.getName());
     }
     
     public boolean create(Player p){

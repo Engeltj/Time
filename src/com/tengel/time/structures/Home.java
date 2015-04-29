@@ -164,7 +164,7 @@ public class Home implements IStructure{
         ProtectedRegion pr = mgr.getRegion(getName());
         if (pr != null){
             WorldGuardUtil wgu = new WorldGuardUtil(plugin, w);
-            wgu.pasteSchematic(pr, getName(), "homes");
+//            wgu.pasteSchematic(pr, getName(), "homes");
             
         } else
             plugin.sendConsole("Failed to reset home '"+getName()+"'");

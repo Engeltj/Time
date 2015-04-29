@@ -12,7 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
 /**
@@ -37,8 +37,13 @@ public class Gatherer {
         return earnings.get(m);
     }
     
+    public int getBlockWorth(int type){
+        Material m = Material.getMaterial(type);
+        return earnings.get(m);
+    }
+    
     private void loadEarnings(){
-        earnings = new HashMap<Material, Integer>();
+        earnings = new EnumMap<Material, Integer>(Material.class);
         if (prof == TimeProfession.MINER)
             blocks_worth = new Config(this.plugin,"exp_miner.yml");
         else if (prof == TimeProfession.FARMER)
