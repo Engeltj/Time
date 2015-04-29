@@ -6,9 +6,9 @@
 
 package com.tengel.time;
 
+import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.tengel.time.runnables.UpdatePlayers;
 import com.tengel.time.runnables.UpdateSigns;
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
@@ -128,7 +128,15 @@ public final class Time extends JavaPlugin {
             return;
         }
         
+        
         pluginName = "[" + pm.getPlugin("Time").getName() + "] ";
+        
+        if (this.getServer().getWorld("Time") == null){
+            this.sendConsole("World 'Time' does not exist, unloading ..");
+            this.onDisable();
+            return;
+        }
+        
         pm.registerEvents(playerListener, this);
         pm.registerEvents(creative_plots, this);
         pm.registerEvents(worldGuardListener, this);
@@ -148,17 +156,25 @@ public final class Time extends JavaPlugin {
         });
         getLogger().info("Time by Engeltj has been enabled");
         //processSchematics();
+        
+        
     }
     
     public void save(){
-        this.shop_signs.save();
-        this.item_reputation.save();
-        this.shop_prices.save();
-        this.shop_stock.save();
-        for (String key : homes.keySet())
-            homes.get(key).save();
-        for (String key : players.keySet())
-            players.get(key).save();
+        if (this.shop_signs != null)
+            this.shop_signs.save();
+        if (this.item_reputation != null)
+            this.item_reputation.save();
+        if (this.shop_prices != null)
+            this.shop_prices.save();
+        if (this.shop_stock != null)
+            this.shop_stock.save();
+        if (this.homes != null)
+            for (String key : homes.keySet())
+                homes.get(key).save();
+        if (this.players != null)
+            for (String key : players.keySet())
+                players.get(key).save();
     }
  
     @Override
