@@ -134,13 +134,13 @@ public class TimeSigns extends Config {
     }
     
     private boolean buyBlockLicense(TimePlayer tp, Material m, int cost){
-        EconomyResponse es = plugin.getEconomy().withdrawPlayer(tp.getName(), cost*60);
+        EconomyResponse es = plugin.getEconomy().withdrawPlayer(tp.getPlayer(), cost*60);
         if (es.transactionSuccess()){
-            if (tp.addBlockLicense(m.getId())){
+            if (tp.addBlockLicense(m.getData().getName())){
                 tp.sendMessage(ChatColor.BLUE + m.name().toLowerCase() + ChatColor.YELLOW + " license aquired!");
             } else {
                 tp.sendMessage("It appears you already own the license to mine " + m.name().toLowerCase());
-                plugin.getEconomy().depositPlayer(tp.getName(), cost*60);
+                plugin.getEconomy().depositPlayer(tp.getPlayer(), cost*60);
             }
             return true;
         }
@@ -149,7 +149,7 @@ public class TimeSigns extends Config {
     
     public void buyBlockLicense(TimePlayer tp, Sign sign){
         if (plugin.getPlayerListener().checkPermissions(tp.getPlayer(), "buy.license", false)){
-            double balance = plugin.getEconomy().getBalance(tp.getName());
+            double balance = plugin.getEconomy().getBalance(tp.getPlayer());
             Material m = plugin.getItemMaterial(sign.getLine(1));
             int cost = Integer.valueOf(sign.getLine(3));
             if (balance >= cost)
@@ -163,7 +163,7 @@ public class TimeSigns extends Config {
     private void buyItem(TimePlayer tp, Sign sign, Material m, int cost){
         int savings = (int) Math.floor(Math.min(tp.getRep()/50000D, 1.00) * 0.15 * cost);
         cost -= savings;
-        EconomyResponse es = plugin.getEconomy().withdrawPlayer(tp.getName(), cost*60);
+        EconomyResponse es = plugin.getEconomy().withdrawPlayer(tp.getPlayer(), cost*60);
         if (es.transactionSuccess()){
             ItemStack item = new ItemStack(m);
             int new_stock = plugin.getConfigItemStock().removeStock(m.name(), 1);
@@ -229,7 +229,7 @@ public class TimeSigns extends Config {
             payment *= quantity;
             tp.getPlayer().updateInventory();
             int bonus = (int) Math.floor(Math.min(tp.getRep()/50000D, 1.00) * 0.50 * payment);
-            plugin.getEconomy().depositPlayer(tp.getName(), (payment+bonus)*60);
+            plugin.getEconomy().depositPlayer(tp.getPlayer(), (payment+bonus)*60);
             tp.sendMessage(ChatColor.YELLOW + "You have just sold "+String.valueOf(quantity)+"x " + ChatColor.GREEN + m.name().toLowerCase()+ChatColor.YELLOW+" for "+ChatColor.GREEN+ 
                     String.valueOf(payment+bonus) +  " mins" + ChatColor.YELLOW+ " of time, earning an extra " + ChatColor.GREEN + bonus + " min(s)" + ChatColor.YELLOW+
                     " because of your reputation!");

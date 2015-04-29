@@ -112,7 +112,7 @@ public class Commands implements Listener{
             sender.sendMessage(ChatColor.GRAY + "/"+command+" password" + ChatColor.GREEN + "  > Sets your website account password");
             sender.sendMessage(ChatColor.GRAY + "/"+command+" job" + ChatColor.GREEN + "  > Profession specific commands");
         }
-        
+
         else if (args[0].equalsIgnoreCase("age")){
             double seconds = plugin.getPlayer(sender.getName()).getAge();
             String time = convertSecondsToTime(seconds);
@@ -121,13 +121,13 @@ public class Commands implements Listener{
         else if (args[0].equalsIgnoreCase("left")){
             double seconds = plugin.getEconomy().getBalance(sender.getName());
             String time = convertSecondsToTime(seconds);
-            sender.sendMessage(ChatColor.DARK_GREEN + time); 
+            sender.sendMessage(ChatColor.DARK_GREEN + time);
         }
         else if (args[0].equalsIgnoreCase("plot")){
             if (args.length == 1){
                 sender.sendMessage(ChatColor.GRAY + "create" + ChatColor.GREEN + "  > Claims a new plot where you stand");
                 sender.sendMessage(ChatColor.GRAY + "destroy" + ChatColor.GREEN + "  > Unclaims plot where you stand, your blocks will be destroyed");
-            } else 
+            } else
                 return commandsPlot(sender, args);
         }
         else if (args[0].equalsIgnoreCase("bounty")){
@@ -166,7 +166,7 @@ public class Commands implements Listener{
                         return true;
                     }
                 }
-                
+
                 plugin.getServer().getScheduler().runTaskLater(plugin, new BukkitRunnable() {
                     public void run() {
                         tp.flagConfirm = false;
@@ -178,7 +178,7 @@ public class Commands implements Listener{
                     if (tp.getJobs().size() == 2)
                         job = args[1] + " ";
                     tp.flagConfirm = true;
-                    sender.sendMessage(ChatColor.GREEN + "Type " + ChatColor.BOLD + "/"+command+" unemploy " + job + ChatColor.RESET + ChatColor.GREEN 
+                    sender.sendMessage(ChatColor.GREEN + "Type " + ChatColor.BOLD + "/"+command+" unemploy " + job + ChatColor.RESET + ChatColor.GREEN
                             + "again to leave your job at the cost of " + ChatColor.RED + convertSecondsToTime(cost));
                 } else {
                     EconomyResponse es = plugin.getEconomy().withdrawPlayer(sender.getName(), cost);
@@ -192,7 +192,7 @@ public class Commands implements Listener{
                         sender.sendMessage(ChatColor.RED + "It seems you cannot afford to lose your job");
                 }
             }
-            
+
         } else if (args[0].equalsIgnoreCase("employ")){
             if (args.length < 2){
                 sender.sendMessage(ChatColor.RED + "Specify the job title you wish to obtain");
@@ -206,7 +206,7 @@ public class Commands implements Listener{
                     sender.sendMessage(ChatColor.RED + "The profession '"+args[1]+"' does not exist, try again");
                 }
             }
-            
+
         } else if (args[0].equalsIgnoreCase("home")){
             if (args.length == 1){
                 TimePlayer tp = plugin.getPlayer(sender.getName());
@@ -218,7 +218,7 @@ public class Commands implements Listener{
                     sender.sendMessage(ChatColor.GRAY + "unrent" + ChatColor.GREEN + "  > Unrent the home you are currently standing in");
                 sender.sendMessage(ChatColor.GRAY + "buy" + ChatColor.GREEN + "  > Purchase the home to get a cut of the income from renters");
                 sender.sendMessage(ChatColor.GRAY + "teleport <home>" + ChatColor.GREEN + "  > Teleports you to one of your specified homes");
-            } else 
+            } else
                 return commandsHome(sender, args);
         } else if (args[0].equalsIgnoreCase("test")){
             //plugin.prof_builder.createBuild(sender, "test.schematic");
@@ -230,7 +230,7 @@ public class Commands implements Listener{
                 TimePlayer tp = plugin.getPlayer(sender.getName());
                 tp.setPassword(args[1]);
                 sender.sendMessage(ChatColor.GREEN + "Password has been set, visit " + ChatColor.GRAY + "http://depthsonline.com/minecraft" + ChatColor.GREEN + " to login");
-            } else 
+            } else
                 sender.sendMessage(ChatColor.RED + "Please specify a password!");
         } else if (args[0].equalsIgnoreCase("job")){
             List<TimeProfession> jobs = plugin.getPlayer(sender.getName()).getJobs();
@@ -255,7 +255,7 @@ public class Commands implements Listener{
             sender.sendMessage(ChatColor.GRAY + "Invalid command, type " + ChatColor.GREEN + "/life" + ChatColor.GRAY + " for more info");
         return true;
     }
-    
+
     private void adminCommand(CommandSender sender, String[] args){
         if (args.length == 1){
             sender.sendMessage(ChatColor.GRAY + "on|off" + ChatColor.GREEN + "  > Set admin mode on/off");
@@ -301,14 +301,14 @@ public class Commands implements Listener{
             } catch (Exception ex){
                 sender.sendMessage(ChatColor.RED+"Invalid monster, your choices are: ");
                 sender.sendMessage(ChatColor.RED+"BLAZE CAVE_SPIDER CREEPER ENDERMAN GHAST GIANT IRON_GOLEM MAGMA_CUBE PIG_ZOMBIE SILVERFISH SKELETON SLIME SPIDER WOLF ZOMBIE ");
-            }   
+            }
         } else if (args[1].equalsIgnoreCase("save")){
             plugin.save();
             sender.sendMessage(ChatColor.GREEN+"All data saved :) ");
         } else
             sender.sendMessage(ChatColor.RED+"Invalid option");
     }
-    
+
     public boolean commandsPlot(CommandSender sender, String[] args){
         if (args[1].equalsIgnoreCase("create")){
             plugin.getCreativePlots().create(plugin.getServer().getPlayer(sender.getName()));
@@ -318,8 +318,8 @@ public class Commands implements Listener{
             return false;
         return true;
     }
-    
-    
+
+
     public boolean commandsHome(CommandSender sender, String[] args){
         TimePlayer tp = plugin.getPlayer(sender.getName());
         Player p = plugin.getServer().getPlayer(sender.getName());
@@ -343,7 +343,7 @@ public class Commands implements Listener{
                 if (h.evict())
                     p.sendMessage(ChatColor.GREEN + "You have been evicted");
                 else
-                    p.sendMessage(ChatColor.GREEN + "Something went wrong with evict, please speak with an admin");                    
+                    p.sendMessage(ChatColor.GREEN + "Something went wrong with evict, please speak with an admin");
             }else
                 p.sendMessage(ChatColor.RED + "You are currently not renting this homes");
         } else if (args[1].equalsIgnoreCase("buy")){

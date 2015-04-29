@@ -11,6 +11,7 @@ import com.tengel.time.Time;
 import com.tengel.time.structures.TimePlayer;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 /**
@@ -39,7 +40,7 @@ public class Police{
                                             ChatColor.RESET + ChatColor.RED + " if you wish to seek freedom faster!");
                     cop.sendMessage("You've arrested " + ChatColor.RED + villian.getName() + ChatColor.WHITE + 
                                             " and collected a bounty of " + ChatColor.GREEN + tp.getBountyString());
-                    plugin.getEconomy().depositPlayer(cop.getName(), bounty);
+                    plugin.getEconomy().depositPlayer((OfflinePlayer) cop, bounty);
                 } else
                     plugin.sendConsole("No jail found for " + tp.getName());
             } else

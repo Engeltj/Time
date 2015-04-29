@@ -9,6 +9,7 @@ package com.tengel.time;
 import com.mewin.WGRegionEvents.events.RegionEnterEvent;
 import com.sk89q.worldguard.domains.DefaultDomain;
 import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.tengel.time.profs.TimeProfession;
 import org.bukkit.ChatColor;
@@ -17,8 +18,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-import com.sk89q.worldguard.protection.GlobalRegionManager;
-import com.sk89q.worldguard.protection.databases.ProtectionDatabaseException;
 import com.tengel.time.structures.Home;
 import com.tengel.time.structures.TimePlayer;
 import java.util.HashMap;
@@ -229,9 +228,10 @@ public class RegionControl implements Listener {
     public void saveRegions(World w){
         try {
             plugin.worldGuard.getRegionManager(w).save();
-        } catch (ProtectionDatabaseException ex) {
-            Logger.getLogger(RegionControl.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (StorageException e) {
+            e.printStackTrace();
         }
+
     }
     
     public void addRegionOwner(String owner, ProtectedRegion pr){

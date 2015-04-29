@@ -16,8 +16,11 @@ import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.bukkit.selections.Polygonal2DSelection;
 import com.sk89q.worldedit.bukkit.selections.Selection;
 import com.sk89q.worldedit.data.DataException;
+import com.sk89q.worldedit.extent.clipboard.Clipboard;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.schematic.SchematicFormat;
+import com.sk89q.worldedit.world.registry.WorldData;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.domains.DefaultDomain;
 import com.sk89q.worldguard.protection.flags.DefaultFlag;
@@ -37,7 +40,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -71,7 +76,7 @@ public class WorldGuardUtil {
     }
 
     public boolean updateBuildWorth(String schematic){
-        CuboidClipboard cc = getClipboard(schematic);
+        Clipboard cc = getClipboard(schematic);
         if (cc == null){
             plugin.sendConsole("schematic file '"+schematic+"' seems to be missing.. failed to update home");
             return false;
@@ -82,7 +87,7 @@ public class WorldGuardUtil {
             for (int y=0;y<size.getY();y++)
                 for (int z=0;z<size.getZ();z++){
                     Vector pos = new Vector(x,y,z);
-                    earnings = earnings + plugin.prof_miner.getBlockWorth(cc.getBlock(pos).getType());
+                    earnings = earnings + plugin.prof_miner.getBlockWorth(cc.getBlock(pos).);
                 }
 
         Connection con = plugin.getSql().getConnection();
@@ -103,7 +108,7 @@ public class WorldGuardUtil {
 
     public ProtectedRegion createBuildRegion(String player, Location start, Location end) throws Exception{
         String id = "buildplot_"+player;
-        RegionManager mgr = wgp.getGlobalRegionManager().get(world);
+        RegionManager mgr = wgp.getRegionContainer().get(world);
         mgr.removeRegion(id);
         ProtectedRegion region;
 
@@ -141,7 +146,8 @@ public class WorldGuardUtil {
     }
 
     public ProtectedRegion createRegionFromSelection(Player p, String rgName){
-        RegionManager mgr = wgp.getGlobalRegionManager().get(world);
+
+        RegionManager mgr = wgp.getRegionContainer().get(world);
         WorldEditPlugin wep = plugin.worldEdit;
         //final LocalSession session = wep.getSession(p);
         //LocalWorld w = BukkitUtil.getLocalWorld(p.getWorld());
@@ -288,18 +294,18 @@ public class WorldGuardUtil {
         }
     }
 
-    public boolean pasteSchematic(ProtectedRegion pr, String schematic) {
-        return pasteSchematic(pr, schematic, "");
+    public boolean pasteSchematic(Player p, ProtectedRegion pr, String schematic) {
+        return pasteSchematic(p, pr, schematic, "");
     }
 
-    public boolean pasteSchematic(ProtectedRegion pr, String schematic, String subdir) {
+    public boolean pasteSchematic(Player p, ProtectedRegion pr, String schematic, String subdir) {
         final WorldEditPlugin wep = plugin.worldEdit;
-        LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(), Bukkit.getConsoleSender(), world);
-        final LocalSession session = wep.getWorldEdit().getSession(bcs);
+        final LocalSession session = wep.getSession(p);
         session.setUseInventory(false);
-        EditSession editSession = session.createEditSession(bcs);
+        EditSession editSession = session.createEditSession((com.sk89q.worldedit.entity.Player) p);
         Vector pos = new Vector(pr.getMinimumPoint());
         try {
+
             session.setClipboard(getClipboard(schematic, subdir));
             session.getClipboard().paste(editSession, pos, false, false);
             clearRegion(pr, world.getName());
@@ -320,10 +326,6 @@ public class WorldGuardUtil {
             @Override
             public boolean isPlayer() {
                     return true;
-            }
-            @Override
-            public LocalWorld getWorld() {
-                    return world;
             }
     }
 
@@ -468,19 +470,21 @@ public class WorldGuardUtil {
         return null;
     }
 
-    public CuboidClipboard getClipboard(String schematic){
-        return getClipboard(schematic, "");
+    public Clipboard getClipboard(Player p, String schematic){
+        return getClipboard(p, schematic, "");
     }
 
-    public CuboidClipboard getClipboard(String schematic, String subdir){
+    public Clipboard getClipboard(Player p, String schematic, String subdir){
         final WorldEditPlugin wep = plugin.worldEdit;
-        LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(), Bukkit.getConsoleSender(), world);
         final WorldEdit we = wep.getWorldEdit();
         File dir = new File(plugin.getDataFolder() + File.separator + "schematics"+File.separator+subdir);
         try {
-            File f = we.getSafeOpenFile(bcs, dir, schematic, "schematic", "schematic");
-            SchematicFormat format = SchematicFormat.getFormat(f);
-            return format.load(f);
+            File f = we.getSafeOpenFile(p, dir, schematic, "schematic", new String[]{"schematic"});
+            FileInputStream fis = (FileInputStream)closer.register(new FileInputStream(f));
+            BufferedInputStream bis = (BufferedInputStream)closer.register(new BufferedInputStream(fis));
+            ClipboardReader reader = format.getReader(bis);
+            WorldData worldData = player.getWorld().getWorldData();
+            Clipboard clipboard = reader.read(player.getWorld().getWorldData());
         } catch (Exception e){
             printError(bcs,"Error : " + e.getMessage());
         }

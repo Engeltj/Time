@@ -9,6 +9,7 @@ package com.tengel.time.profs;
 import com.tengel.time.Config;
 import com.tengel.time.Time;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,8 +32,8 @@ public class Gatherer {
         loadEarnings();
     }
     
-    public int getBlockWorth(int block_id){
-        Material m = Material.getMaterial(block_id);
+    public int getBlockWorth(Block block){
+        Material m = block.getType();
         return earnings.get(m);
     }
     

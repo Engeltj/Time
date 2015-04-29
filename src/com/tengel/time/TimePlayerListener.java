@@ -10,16 +10,25 @@ import com.tengel.time.profs.Police;
 import com.tengel.time.profs.TimeProfession;
 import com.tengel.time.structures.TimeMonster;
 import com.tengel.time.structures.TimePlayer;
+
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.*;
+
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.ExperienceOrb;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -33,8 +42,16 @@ import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
-import org.bukkit.event.player.*;
-
+import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLevelChangeEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.inventory.Inventory;
@@ -56,16 +73,16 @@ public class TimePlayerListener implements Listener {
     
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent event) {
-        Player p = event.getPlayer();
+        OfflinePlayer p = event.getPlayer();
         String msg = event.getMessage();
         if (msg.equalsIgnoreCase("I love Depths")){
-            p.sendMessage("Depths loves you!");
+            p.getPlayer().sendMessage("Depths loves you!");
         }
         else if (msg.equalsIgnoreCase("balance"))
-            p.sendMessage(Double.toString(plugin.getEconomy().getBalance(p.getName())));
+            p.getPlayer().sendMessage(Double.toString(plugin.getEconomy().getBalance(p)));
     }
     
-    @EventHandler(priority=EventPriority.NORMAL)
+    @EventHandler(priority= EventPriority.NORMAL)
     public void onSignChange(SignChangeEvent event){
         String type = event.getLine(0);
         if (type.contains("[License]") || type.contains("[Buy]") || type.contains("[Job]") || type.contains("[Sell]")){
@@ -129,7 +146,7 @@ public class TimePlayerListener implements Listener {
         int cost_secs = event.getExpLevelCost()*24*60*60;
         TimePlayer tp = plugin.getPlayer(event.getEnchanter().getName());
         if (tp.confirmEnchantment(event.getItem())){
-            EconomyResponse er = plugin.getEconomy().withdrawPlayer(tp.getName(), cost_secs);
+            EconomyResponse er = plugin.getEconomy().withdrawPlayer(tp.getPlayer(), cost_secs);
             if (er.transactionSuccess()){
                 event.setExpLevelCost(0);
             } else {
@@ -175,7 +192,7 @@ public class TimePlayerListener implements Listener {
             TimePlayer tp = plugin.getPlayer(player.getName());
             event.setCancelled(true);
             if (tp.hasJob(TimeProfession.MINER)){
-                if (!tp.hasBlockLicense(block.getType().getId()))//(plugin.prof_miner.getMinerBlacklist().contains(block.getType())){
+                if (!tp.hasBlockLicense(block))//(plugin.prof_miner.getMinerBlacklist().contains(block.getType())){
                     player.sendMessage(ChatColor.RED + "You need a " + ChatColor.BLUE + "license" + ChatColor.RED + " to obtain this material");
                 else {
                     int earned = plugin.prof_miner.getSkillEarned(block.getType());
@@ -259,12 +276,12 @@ public class TimePlayerListener implements Listener {
     private void updatePlayerScoreboardHealth(Player p){
         Scoreboard board = plugin.getServer().getScoreboardManager().getMainScoreboard();
         Objective obj = board.getObjective(DisplaySlot.BELOW_NAME);
-        obj.getScore(p).setScore((int) Math.round(p.getHealth()/p.getMaxHealth()*100));        
+        obj.getScore(p.getName()).setScore((int) Math.round(p.getHealth()/p.getMaxHealth()*100));
     }
     
     private void updatePlayerScoreboardLevel(Player p){
         Scoreboard board = plugin.getServer().getScoreboardManager().getMainScoreboard();
-        board.getObjective(DisplaySlot.PLAYER_LIST).getScore(p).setScore(p.getLevel());
+        board.getObjective(DisplaySlot.PLAYER_LIST).getScore(p.getName()).setScore(p.getLevel());
     }
     
     @EventHandler(priority=EventPriority.NORMAL)
@@ -351,7 +368,7 @@ public class TimePlayerListener implements Listener {
         float balance_lost = 0;
         if (!tp.hasDied())
             balance_lost = (float) Math.floor(balance * 0.05);
-        plugin.getEconomy().withdrawPlayer(tp.getName(), balance_lost);
+        plugin.getEconomy().withdrawPlayer(tp.getPlayer(), balance_lost);
         
         if (killer != null){
             TimePlayer tp_killer = plugin.getPlayer(killer.getName());
@@ -379,7 +396,9 @@ public class TimePlayerListener implements Listener {
         if (tp != null && !tp.getAdminMode()){
             if (!event.hasBlock()) {
                 try {
-                    b = event.getPlayer().getTargetBlock(null, 5);
+                    Set<Material> set = new HashSet<Material>();
+                    set.add(Material.AIR);
+                    b = event.getPlayer().getTargetBlock(set, 5);
                 } catch (Exception e) {
                     return;
                 }
@@ -511,7 +530,8 @@ public class TimePlayerListener implements Listener {
                 attacker = (Player) ((Projectile)attacker).getShooter();
             if (attacker == null)
                 event.setCancelled(true);
-            int lvl_attacker = plugin.getMobControl().getLevel(attacker);            
+            int lvl_attacker = plugin.getMobControl().getLevel(attacker);
+            double dmg = event.getDamage();
             event.setDamage(plugin.getMobControl().getDamage(lvl_attacker, event.getDamage()));
         }
     }

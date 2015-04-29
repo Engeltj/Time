@@ -7,6 +7,7 @@
 package com.tengel.time.structures;
 
 import com.google.common.base.Joiner;
+import com.sk89q.worldedit.blocks.BlockType;
 import com.tengel.time.Commands;
 import com.tengel.time.Time;
 import com.tengel.time.TimeBank;
@@ -24,10 +25,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Sound;
+
+import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -46,7 +46,7 @@ public class TimePlayer implements IStructure {
     private int reputation;
     private int reputation_gain = 0;
     private boolean jailed;
-    private List<Short> blockLicenses = new ArrayList<Short>();
+    private List<String> blockLicenses = new ArrayList<String>();
     private Time plugin;
     private TimePlayerInventory inventory;
     private TimeBank bank;
@@ -125,7 +125,7 @@ public class TimePlayer implements IStructure {
                 //blockLicenses = new ArrayList<Short>();
                 ResultSet licenses = st.executeQuery("SELECT * FROM `licenses` WHERE player='"+name+"';");
                 while (licenses.next())
-                    blockLicenses.add(licenses.getShort("license"));
+                    blockLicenses.add(licenses.getString("license"));
             } else
                 create();
             loaded = true;
@@ -152,7 +152,7 @@ public class TimePlayer implements IStructure {
                     st.executeUpdate("INSERT INTO `skills` SET skill="+pairs.getValue()+",job='"+pairs.getKey()+"',player='"+name+"';");
             }
             
-            for (short license : blockLicenses)
+            for (String license : blockLicenses)
                 st.executeUpdate("REPLACE INTO `licenses` SET license="+license+" WHERE player='"+name+"' AND license="+license+";");
             if (!this.player.isDead())
                 inventory.performSerialization();
@@ -249,7 +249,7 @@ public class TimePlayer implements IStructure {
     }
     
     public void outOfTimeRestore(){
-        player.sendMessage(ChatColor.GREEN+"It looks like you have accumulated 24 hours of time once again! You are no longer crippled");
+        player.sendMessage(ChatColor.GREEN + "It looks like you have accumulated 24 hours of time once again! You are no longer crippled");
         player.setMaxHealth(20D);
         died = false;
     }
@@ -286,13 +286,18 @@ public class TimePlayer implements IStructure {
     public boolean hasJob(TimeProfession job){
         return jobs.contains(job);
     }
-    
-    public boolean hasBlockLicense(int block){
-        for (short license : blockLicenses){
-            if (license == block)
+
+    private boolean hasBlockLicense(String blockName){
+        for (String license : blockLicenses){
+            if (license.equals(blockName))
                 return true;
         }
         return false;
+    }
+    
+    public boolean hasBlockLicense(Block block){
+        String blockName = block.getType().getData().getName();
+        return hasBlockLicense(blockName);
     }
     
     public void setPassword(String password){
@@ -353,9 +358,13 @@ public class TimePlayer implements IStructure {
         this.job_skill.put(tp, skill+amount);
     }
     
-    public boolean addBlockLicense(int block){
-        if (!hasBlockLicense(block))
-            return blockLicenses.add((short)block);
+    public boolean addBlockLicense(Block block){
+        return addBlockLicense(block.getType().getData().getName());
+    }
+
+    public boolean addBlockLicense(String blockName){
+        if (!hasBlockLicense(blockName))
+            return blockLicenses.add(blockName);
         return false;
     }
     
