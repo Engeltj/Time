@@ -10,17 +10,24 @@ package com.tengel.time;
 import com.sk89q.minecraft.util.commands.CommandContext;
 import com.sk89q.worldedit.*;
 import com.sk89q.worldedit.bukkit.BukkitCommandSender;
-import com.sk89q.worldedit.bukkit.BukkitPlayer;
 import com.sk89q.worldedit.bukkit.BukkitServerInterface;
 import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.bukkit.selections.Polygonal2DSelection;
 import com.sk89q.worldedit.bukkit.selections.Selection;
-import com.sk89q.worldedit.extension.platform.Actor;
+import com.sk89q.worldedit.extension.platform.permission.ActorSelectorLimits;
+import com.sk89q.worldedit.extent.clipboard.BlockArrayClipboard;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
+import com.sk89q.worldedit.function.operation.Operation;
+import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.regions.Region;
+import com.sk89q.worldedit.regions.RegionSelector;
+import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
 import com.sk89q.worldedit.schematic.SchematicFormat;
+import com.sk89q.worldedit.session.ClipboardHolder;
+import com.sk89q.worldedit.util.io.Closer;
 import com.sk89q.worldedit.world.registry.WorldData;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.domains.DefaultDomain;
@@ -34,7 +41,6 @@ import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.CommandException;
 import org.bukkit.command.CommandSender;
@@ -43,9 +49,6 @@ import org.bukkit.entity.Item;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
@@ -59,7 +62,6 @@ import org.bukkit.entity.Player;
  */
 
 public class WorldGuardUtil {
-    private final WorldGuardUtil2 wgu2 = new WorldGuardUtil2();
     private static WorldGuardPlugin wgp;
     private final Time plugin;
     private final World world;
@@ -275,7 +277,7 @@ public class WorldGuardUtil {
     public com.sk89q.worldedit.entity.Player getPlayer(Player p){
         BukkitServerInterface bsi = new BukkitServerInterface(plugin.worldEdit, plugin.getServer());
         Iterator i = bsi.getConnectedUsers().iterator();
-        com.sk89q.worldedit.entity.Player p_wep = null;
+        com.sk89q.worldedit.entity.Player p_wep;
         while (i.hasNext()){
             p_wep = (com.sk89q.worldedit.entity.Player) i.next();
             if (p_wep.getUniqueId().equals(p.getUniqueId())){
@@ -312,25 +314,53 @@ public class WorldGuardUtil {
 //            plugin.sendConsole("Failed to pasteSchematic() of name '"+schematic+"', "+ex);
 //        }
     }
+    
+    public void paste(com.sk89q.worldedit.entity.Player player, LocalSession session, EditSession editSession, boolean ignoreAirBlocks, boolean atOrigin,
+            boolean selectPasted) throws WorldEditException {
+
+        ClipboardHolder holder = session.getClipboard();
+        Clipboard clipboard = holder.getClipboard();
+        Region region = clipboard.getRegion();
+
+
+        Vector to = atOrigin ? clipboard.getOrigin() : session.getPlacementPosition(player);
+        Operation operation = holder
+             .createPaste(editSession, editSession.getWorld().getWorldData())
+             .to(to)
+             .ignoreAirBlocks(ignoreAirBlocks)
+             .build();
+        Operations.completeLegacy(operation);
+
+        if (selectPasted) {
+            Vector max = to.add(region.getMaximumPoint().subtract(region.getMinimumPoint()));
+            RegionSelector selector = new CuboidRegionSelector(player.getWorld(), to, max);
+            session.setRegionSelector(player.getWorld(), selector);
+            selector.learnChanges();
+            selector.explainRegionAdjust(player, session);
+        }
+
+//        player.print("The clipboard has been pasted at " + to);
+    }
 
     public boolean pasteSchematic(Player p, ProtectedRegion pr, String schematic) {
         return pasteSchematic(p, pr, schematic, "");
     }
 
     public boolean pasteSchematic(Player p, ProtectedRegion pr, String schematic, String subdir) {
-//        final WorldEditPlugin wep = plugin.worldEdit;
-//        wep.getWorldEdit().getSessionManager().
-//        EditSession editSession = wep.createEditSession(p);
-//        Vector pos = new Vector(pr.getMinimumPoint());
-//        try {
-//
-//            session.setClipboard(getClipboard(schematic, subdir));
-//            session.getClipboard().paste(editSession, pos, false, false);
-//            clearRegion(pr, world.getName());
-//            return true;
-//        } catch (Exception ex) {
-//            plugin.sendConsole("Failed to pasteSchematic() of name '"+schematic+"', "+ex);
-//        }
+        final WorldEditPlugin wep = plugin.worldEdit;
+        LocalSession session = wep.getSession(p);
+        EditSession editSession = session.createEditSession(getPlayer(p));
+        Vector pos = new Vector(pr.getMinimumPoint());
+        try {
+            Clipboard clipboard = loadSchematic(p, schematic, subdir);
+            clipboard.setOrigin(pos);
+            session.setClipboard(new ClipboardHolder(clipboard, editSession.getWorld().getWorldData()));
+            this.paste(getPlayer(p), session, editSession, false, true, false);
+            clearRegion(pr, world.getName());
+            return true;
+        } catch (Exception ex) {
+            plugin.sendConsole("Failed to pasteSchematic() of name '"+schematic+"', "+ex);
+        }
         return false;
     }
     
@@ -390,35 +420,56 @@ public class WorldGuardUtil {
     }   
     
     public boolean saveSchematic(Player p, ProtectedRegion region, String subdir, String schematicName){
-//        WorldEditPlugin wep = plugin.worldEdit;
-//        final LocalSession session = wep.getSession(p);
-//        final BukkitPlayer lPlayer = wep.wrapPlayer(p);
-//        EditSession editSession = session.createEditSession(lPlayer);
-//        try {
-//            Vector min = region.getMinimumPoint();
-//            Vector max = region.getMaximumPoint();
-//            Clipboard clipboard = new CuboidClipboard(
-//                            max.subtract(min).add(new Vector(1, 1, 1)),
-//                            min, new Vector(0,0,0));
-//            clipboard.copy(editSession);
-//            session.setClipboard(clipboard);
-//
-//            String args2[] = {"save", "mcedit", schematicName};
-//            CommandContext cc = new CommandContext(args2);
-//            save(cc, session, lPlayer, subdir);
-//            return true;
-//        } catch (Exception ex) {
-//            plugin.sendConsole("Failed to saveSchematic of name '" + schematicName +"', reason: " + ex);
-//            return false;
-//        }
-        return false;
+        final WorldEditPlugin wep = plugin.worldEdit;
+        final LocalSession session = wep.getSession(p);
+        com.sk89q.worldedit.entity.Player p_wep = this.getPlayer(p);
+        EditSession editSession = session.createEditSession(p_wep);
+        try {
+            Vector min = region.getMinimumPoint();
+            Vector max = region.getMaximumPoint();
+            session.getRegionSelector(session.getSelectionWorld()).selectPrimary(max.subtract(min).add(new Vector(1, 1, 1)),ActorSelectorLimits.forActor(p_wep));
+            session.getRegionSelector(session.getSelectionWorld()).selectSecondary(min,ActorSelectorLimits.forActor(p_wep));
+            
+            BlockArrayClipboard clipboard = new BlockArrayClipboard(session.getSelection(session.getSelectionWorld()));
+            clipboard.setOrigin(session.getPlacementPosition(p_wep));
+            session.setClipboard(new ClipboardHolder(clipboard, editSession.getWorld().getWorldData()));
+
+            String args2[] = {"save", "mcedit", schematicName};
+            CommandContext cc = new CommandContext(args2);
+            save(cc, session, p, subdir);
+            return true;
+        } catch (Exception ex) {
+            plugin.sendConsole("Failed to saveSchematic of name '" + schematicName +"', reason: " + ex);
+            return false;
+        }
     }
 
     public boolean saveSchematic(Player p, String subdir, String schematicName){
+        final WorldEditPlugin wep = plugin.worldEdit;
+        final LocalSession session = wep.getSession(p);
+        com.sk89q.worldedit.entity.Player p_wep = this.getPlayer(p);
+        EditSession editSession = session.createEditSession(p_wep);
+        try {
+            BlockArrayClipboard clipboard = new BlockArrayClipboard(session.getSelection(session.getSelectionWorld()));
+            clipboard.setOrigin(session.getPlacementPosition(p_wep));
+            session.setClipboard(new ClipboardHolder(clipboard, editSession.getWorld().getWorldData()));
+
+            String args2[] = {"save", "mcedit", schematicName};
+            CommandContext cc = new CommandContext(args2);
+            save(cc, session, p, subdir);
+            return true;
+        } catch (Exception ex) {
+            plugin.sendConsole("Failed to saveSchematic of name '" + schematicName +"', reason: " + ex);
+            return false;
+        }
+        
+        
+        
 //        WorldEditPlugin wep = plugin.worldEdit;
 //        final LocalSession session = wep.getSession(p);
-//        final BukkitPlayer lPlayer = wep.wrapPlayer(p);
-//        EditSession editSession = session.createEditSession(lPlayer);
+//        com.sk89q.worldedit.entity.Player p_wep = this.getPlayer(p);
+//        EditSession editSession = session.createEditSession(p_wep);
+//        session.getSelection(session.getSelectionWorld());
 //        try {
 //            Region region = session.getSelection(lPlayer.getWorld());
 //            Vector min = region.getMinimumPoint();
@@ -437,39 +488,38 @@ public class WorldGuardUtil {
 //            plugin.sendConsole("Failed to saveSchematic of name '" + schematicName +"', reason: " + ex);
 //            return false;
 //        }
-        return false;
+//        return false;
     }
 
-    private void save(CommandContext args, LocalSession session, LocalPlayer player, String subdir) throws WorldEditException, CommandException {
-//        WorldEditPlugin wep = plugin.worldEdit;
-//        WorldEdit we = wep.getWorldEdit();
-//        SchematicFormat format = SchematicFormat.getFormat(args.getString(0));
-//        String filename = args.getString(args.argsLength() - 1);
-//        File dir = new File(plugin.getDataFolder() + File.separator + "schematics" + File.separator + subdir);
-//        File f = we.getSafeSaveFile(player, dir, filename, "schematic", "schematic");
-//        if (!dir.exists()) {
-//            if (!dir.mkdirs()) {
-//                player.printError(plugin.getDataFolder() + File.separator + "schematics" + File.separator + subdir);
-//                player.printError("The storage folder could not be created.");
-//                return;
-//            }
-//        }
-//        try {
-//            // Create parent directories
-//            File parent = f.getParentFile();
-//            if (parent != null && !parent.exists()) {
-//                if (!parent.mkdirs()) {
-//                    throw new CommandException("Could not create folder for schematics!");
-//                }
-//            }
-//            format.save(session.getClipboard(), f);
-//            plugin.sendConsole(player.getName() + " saved " + f.getCanonicalPath());
-//            player.print(filename + " saved.");
-//        } catch (DataException se) {
-//            player.printError("Save error: " + se.getMessage());
-//        } catch (IOException e) {
-//            player.printError("Schematic could not written: " + e.getMessage());
-//        }
+    private void save(CommandContext args, LocalSession session, Player p, String subdir) throws WorldEditException, CommandException {
+        WorldEditPlugin wep = plugin.worldEdit;
+        WorldEdit we = wep.getWorldEdit();
+        com.sk89q.worldedit.entity.Player p_wep = this.getPlayer(p);
+        SchematicFormat format = SchematicFormat.getFormat(args.getString(0));
+        String filename = args.getString(args.argsLength() - 1);
+        File dir = new File(plugin.getDataFolder() + File.separator + "schematics" + File.separator + subdir);
+        File f = we.getSafeSaveFile(p_wep, dir, filename, "schematic", "schematic");
+        if (!dir.exists()) {
+            if (!dir.mkdirs()) {
+                p_wep.printError(plugin.getDataFolder() + File.separator + "schematics" + File.separator + subdir);
+                p_wep.printError("The storage folder could not be created.");
+                return;
+            }
+        }
+        try {
+            // Create parent directories
+            File parent = f.getParentFile();
+            if (parent != null && !parent.exists()) {
+                if (!parent.mkdirs()) {
+                    throw new CommandException("Could not create folder for schematics!");
+                }
+            }
+            format.save((CuboidClipboard) session.getClipboard().getClipboard(), f);
+            plugin.sendConsole(p.getName() + " saved " + f.getCanonicalPath());
+            p_wep.print(filename + " saved.");
+        } catch (Exception e) {
+            p_wep.printError("Save error: " + e.getMessage());
+        }
     }
 
     public Vector getSchematicDimensions(String schematic){
@@ -493,24 +543,28 @@ public class WorldGuardUtil {
         return null;
     }
 
-    public Clipboard getClipboard(Player p, String schematic){
-        return getClipboard(p, schematic, "");
+    public Clipboard loadSchematic(Player p, String schematic){
+        return loadSchematic(p, schematic, "");
     }
 
-    public Clipboard getClipboard(Player p, String schematic, String subdir){
-//        final WorldEditPlugin wep = plugin.worldEdit;
-//        final WorldEdit we = wep.getWorldEdit();
-//        File dir = new File(plugin.getDataFolder() + File.separator + "schematics"+File.separator+subdir);
-//        try {
-//            File f = we.getSafeOpenFile(p, dir, schematic, "schematic", new String[]{"schematic"});
-//            FileInputStream fis = (FileInputStream)closer.register(new FileInputStream(f));
-//            BufferedInputStream bis = (BufferedInputStream)closer.register(new BufferedInputStream(fis));
-//            ClipboardReader reader = format.getReader(bis);
-//            WorldData worldData = player.getWorld().getWorldData();
-//            Clipboard clipboard = reader.read(player.getWorld().getWorldData());
-//        } catch (Exception e){
-//            printError(bcs,"Error : " + e.getMessage());
-//        }
+    public Clipboard loadSchematic(Player p, String schematic, String subdir){
+        final WorldEditPlugin wep = plugin.worldEdit;
+        final WorldEdit we = wep.getWorldEdit();
+        com.sk89q.worldedit.entity.Player p_wep = getPlayer(p);
+        File dir = new File(plugin.getDataFolder() + File.separator + "schematics"+File.separator+subdir);
+        Closer closer = Closer.create();
+        ClipboardFormat format = ClipboardFormat.SCHEMATIC;
+        try {
+            File f = we.getSafeOpenFile(p_wep, dir, schematic, "schematic", new String[]{"schematic"});
+            FileInputStream fis = closer.register(new FileInputStream(f)); 
+            BufferedInputStream bis = closer.register(new BufferedInputStream(fis));
+            ClipboardReader reader = format.getReader(bis);
+            WorldData worldData = p_wep.getWorld().getWorldData();
+            Clipboard clipboard = reader.read(worldData);
+            return clipboard;
+        } catch (Exception e){
+            p_wep.printError("Error : " + e.getMessage());
+        }
         return null;
     }
 
@@ -529,7 +583,8 @@ public class WorldGuardUtil {
 //        return cc;
         return null;
     }
-
+    
+	
     private static void printError(LocalPlayer player, String msg){
             if (player != null)
                     player.printError(msg);

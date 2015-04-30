@@ -79,6 +79,9 @@ public class RegionControl implements Listener {
         Home h = plugin.getHome(event.getRegion().getId());
         if (h != null){
             TimePlayer tp = plugin.getPlayer(event.getPlayer().getName());
+            if (tp == null){
+                return;
+            }
             if (!h.hasRenter()){
                 double price = h.getRentPrice();
                 tp.sendMessage(ChatColor.GREEN + "This home is available for " + ChatColor.GRAY + Commands.convertSecondsToTime(price) +

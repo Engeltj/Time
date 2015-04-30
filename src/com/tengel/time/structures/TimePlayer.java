@@ -131,6 +131,7 @@ public class TimePlayer implements IStructure {
             loaded = true;
         } catch (Exception ex) {
             plugin.sendConsole("Failed to load TimePlayer for '"+name+"', " + ex);
+            ex.printStackTrace();
             loaded = false;
             player.kickPlayer("Failed to load your data, email engeltj@gmail.com for assistance.");
         }
@@ -259,7 +260,7 @@ public class TimePlayer implements IStructure {
         if (interest > 0)
             sendMessage(ChatColor.YELLOW + "You've earned " + ChatColor.GREEN + Commands.convertSecondsToTime(interest) + ChatColor.YELLOW +
                     " in interest today due to your bank balance!");
-        long balance = (long) plugin.getEconomy().getBalance(name);
+        long balance = (long) plugin.getEconomy().getBalance(player);
         long owing = System.currentTimeMillis()/1000 - lastseen;
         if (owing > balance){
             owing -= balance;
