@@ -21,22 +21,16 @@
         </repository>
         <repository>
             <id>sk89q-repo</id>
-            <url>http://maven.sk89q.com/repo/</url>
+            <url>http://maven.sk89q.com/artifactory/repo/</url>
         </repository>
         <repository>
             <id>kitteh-repo</id>
             <url>http://repo.kitteh.org/content/repositories/public/</url>
         </repository>
-
         <repository>
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
         </repository>
-
-<!--	<repository>
-            <id>milkbowl-repo</id>
-            <url>http://ci.milkbowl.net/plugin/repository/everything/</url>
-	</repository>-->
     </repositories>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -57,18 +51,18 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.8.3-R0.1-SNAPSHOT</version>
+            <version>LATEST</version>
         </dependency>
         <!--Bukkit API-->
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.8.3-R0.1-SNAPSHOT</version>
+            <version>LATEST</version>
         </dependency>
         <dependency>
             <groupId>com.sk89q</groupId>
             <artifactId>worldguard</artifactId>
-            <version>LATEST</version>
+            <version>6.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.sk89q</groupId>
@@ -78,29 +72,23 @@
         <dependency>
             <groupId>WGRegionEvents</groupId>
             <artifactId>WGRegionEvents</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/WGRegionEvents-1.2.jar</systemPath>
+            <systemPath>${project.basedir}/lib/WGRegionEvents-1.3.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>CoreProtect</groupId>
             <artifactId>CoreProtect</artifactId>
-            <version>2.0.9</version>
+            <version>2.10.0</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/CoreProtect_2.0.9.jar</systemPath>
+            <systemPath>${project.basedir}/lib/CoreProtect_2.10.0.jar</systemPath>
         </dependency>
-        <!--<dependency>
-                <groupId>Essentials</groupId>
-                <artifactId>Essentials</artifactId>
-                <version>2.x-SNAPSHOT</version>
-                <scope>system</scope>
-                <systemPath>${project.basedir}/lib/Essentials-2.x-SNAPSHOT.jar</systemPath>
-        </dependency>-->
         <dependency>
-		<groupId>net.milkbowl.vault</groupId>
-		<artifactId>Vault</artifactId>
-		<version>LATEST</version>
-	</dependency>
+            <groupId>net.milkbowl.vault</groupId>
+            <artifactId>VaultAPI</artifactId>
+            <version>1.5</version>
+            <scope>provided</scope>
+        </dependency>
   </dependencies>
   
   
