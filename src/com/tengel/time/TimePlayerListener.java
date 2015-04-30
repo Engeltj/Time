@@ -256,6 +256,13 @@ public class TimePlayerListener implements Listener {
         }
     }*/
     
+    public void setPlayerSpeed(Player p, int level){
+        float walkspeed = level*0.0010F+0.2F;
+        if (walkspeed < 0.21F) 
+            walkspeed=0.21F;
+        p.setWalkSpeed(walkspeed);
+    }
+    
     public void setPlayerAttributes(Player p, int level){
         if (level > 150) //limit abilities to max out at 150
             level = 150;
@@ -263,10 +270,7 @@ public class TimePlayerListener implements Listener {
         //if (hp > 9999D) hp = 9999; //be sure to max HP at 9999
         //p.setMaxHealth(hp);
         //p.setHealthScale(20);
-        float walkspeed = level*0.0010F+0.2F;
-        //if (walkspeed > 0.425F) walkspeed = 0.425F; //approx level 150's speed is limit
-        if (walkspeed < 0.21F) walkspeed=0.21F;
-        p.setWalkSpeed(walkspeed);
+        setPlayerSpeed(p, level);
     }
     
     public void setPlayerAttributes(Player p){
@@ -430,6 +434,11 @@ public class TimePlayerListener implements Listener {
             } else if (b.getType().equals(Material.ANVIL) && event.getAction() == Action.RIGHT_CLICK_BLOCK){
                 tp.sendMessage(ChatColor.RED + "Anvils are currently disabled, repair system is in development, please be patient! (Keep your damaged items)");
                 event.setCancelled(true);
+            } else if (b.getType().equals(Material.STONE_PLATE)){
+                Location loc = b.getLocation();
+                if (loc.getBlockX() == 39 && loc.getBlockY() == 65 && loc.getBlockZ() == 35){
+                    tp.sendMessage("Promotion.");
+                }
             }
         }
     }

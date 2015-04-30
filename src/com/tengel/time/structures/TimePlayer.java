@@ -397,6 +397,10 @@ public class TimePlayer implements IStructure {
         return jobs;
     }
     
+    public int getLevel(){
+        return this.player.getLevel();
+    }
+    
     public short getZone(){
         return zone;
     }
