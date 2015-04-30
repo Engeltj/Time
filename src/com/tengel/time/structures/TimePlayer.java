@@ -334,8 +334,8 @@ public class TimePlayer implements IStructure {
     }
     
     public void setBalance(long balance){
-        plugin.getEconomy().withdrawPlayer(name, plugin.getEconomy().getBalance(name));
-        plugin.getEconomy().depositPlayer(name, balance);
+        plugin.getEconomy().withdrawPlayer(player, plugin.getEconomy().getBalance(player));
+        plugin.getEconomy().depositPlayer(player, balance);
     }
     
     public void setRep(int rep){

@@ -568,7 +568,7 @@ public class WorldGuardUtil {
         return null;
     }
 
-    public CuboidClipboard getClipboard(CommandSender sender, ProtectedRegion pr){
+  //  public CuboidClipboard getClipboard(CommandSender sender, ProtectedRegion pr){
 //        final WorldEditPlugin wep = plugin.worldEdit;
 //        LocalPlayer bcs = new ConsolePlayer(wep,wep.getServerInterface(), sender, world);
 //        final LocalSession session = wep.getWorldEdit().getSession(bcs);
@@ -581,17 +581,17 @@ public class WorldGuardUtil {
 //        EditSession editSession = session.createEditSession(bcs);
 //        cc.copy(editSession);
 //        return cc;
-        return null;
-    }
+   //     return null;
+  //  }
     
 	
-    private static void printError(LocalPlayer player, String msg){
-            if (player != null)
-                    player.printError(msg);
-    }
+//    private static void printError(LocalPlayer player, String msg){
+//            if (player != null)
+//                    player.printError(msg);
+//    }
 
     public static boolean contains(Location location, ProtectedRegion pr) {
-    return pr != null && pr.contains(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        return pr != null && pr.contains(location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
     public static boolean hasPlayer(String playerName, ProtectedRegion pr) {
